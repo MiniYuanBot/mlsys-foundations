@@ -5,7 +5,7 @@ tags: [mlsys, template, reproduction]
 
 # 机制复现报告｜主张名称
 
-[返回索引](../index.md)
+[返回索引](../guides/course-map.md)
 
 ## 1. 原论文到底主张什么
 

@@ -1,16 +1,18 @@
 ---
-title: L01｜Attention 正确性、计时与显存
+title: lab1｜Attention 正确性、计时与显存
 tags: [mlsys, lab, measurement]
-week: 2
+weeks: [2, 3]
 status: not-started
 ---
 
-# L01｜Attention 正确性、计时与显存
+本页为基础学习材料，系统任务与周次见 [课程安排](../syllabus.md)。
 
-[索引](../index.md) · [对应课程 M01](../modules/M01-measurement.md) · [实验规范](../02-experiment-standard.md)
+# lab1｜Attention 正确性、计时与显存
+
+[索引](../guides/course-map.md) · [对应课程 lab1](../modules/lab1-measurement.md) · [实验规范](../guides/experiments.md)
 
 > [!tip] AI 辅助增强
-> 本周可选：FP16 正确性、计时与后端对照（30–45 分钟）。具体步骤与验收见 [增强实验手册](../06-ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
+> 本周可选：FP16 正确性、计时与后端对照（30–45 分钟）。具体步骤与验收见 [增强实验手册](../guides/ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
 
 ## 目标、环境与资料
 
@@ -33,7 +35,7 @@ Q/K/V 形状均为 `[B, h, S, d]`，h=4、d=64、FP32、seed=42、contiguous。B
 | 90–150 | 编写/复用计时与显存采集，确认预热和同步 |
 | 150–210 | 跑 6×2×3=36 条性能记录，保存原始结果 |
 | 210–255 | 对一个中等配置采集 profiler，作两张图 |
-| 255–300 | 写解释、限制和周报，准备第 2 周反馈材料 |
+| 255–300 | 写解释、限制和周报，准备第 3 周反馈材料 |
 
 ## 操作步骤
 

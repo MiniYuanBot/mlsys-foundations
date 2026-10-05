@@ -1,26 +1,28 @@
 ---
-title: L04｜用负载矩阵区分吞吐与延迟
+title: lab4｜用负载矩阵区分吞吐与延迟
 tags: [mlsys, lab, workload]
-week: 5
+weeks: [8, 9]
 status: not-started
 ---
 
-# L04｜用负载矩阵区分吞吐与延迟
+本页为基础学习材料，系统任务与周次见 [课程安排](../syllabus.md)。
 
-[索引](../index.md) · [对应课程 M04](../modules/M04-scheduling.md) · [前置 L03](L03-serving.md)
+# lab4｜用负载矩阵区分吞吐与延迟
+
+[索引](../guides/course-map.md) · [对应课程 lab4](../modules/lab4-scheduling.md) · [前置 lab3](lab3-serving.md)
 
 > [!tip] AI 辅助增强
-> 本周可选：审计失败请求对 SLO 分母的影响（30–45 分钟）。具体步骤与验收见 [增强实验手册](../06-ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
+> 本周可选：审计失败请求对 SLO 分母的影响（30–45 分钟）。具体步骤与验收见 [增强实验手册](../guides/ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
 
 ## 要回答的问题
 
-在同一服务配置下，输入长度和到达率分别怎样影响 TTFT、TPOT、输出吞吐和 SLO 满足率？本实验建立负载意识，尚不改变服务算法。需要 L03 已通过，继续使用其模型、配置、版本和分析脚本。
+在同一服务配置下，输入长度和到达率分别怎样影响 TTFT、TPOT、输出吞吐和 SLO 满足率？本实验建立负载意识，尚不改变服务算法。需要 lab3 已通过，继续使用其模型、配置、版本和分析脚本。
 
-参考：[vLLM benchmark CLI](https://docs.vllm.ai/en/stable/cli/bench/serve/)、[DistServe](https://arxiv.org/abs/2401.09670)、[指标规范](../02-experiment-standard.md)。随机输入是容量/调度实验，不代表真实语义任务或生成质量评估。
+参考：[vLLM benchmark CLI](https://docs.vllm.ai/en/stable/cli/bench/serve/)、[DistServe](https://arxiv.org/abs/2401.09670)、[指标规范](../guides/experiments.md)。随机输入是容量/调度实验，不代表真实语义任务或生成质量评估。
 
 ## 固定运行矩阵
 
-从 L03 的 `calibration.json` 读取 C。设 `λ_low=0.3C`、`λ_high=0.7C`，单位 req/s，计算成明确数字写入配置。比如 C=4 时是 1.2 与 2.8；这只是算术示例，必须代入你的实测值。
+从 lab3 的 `calibration.json` 读取 C。设 `λ_low=0.3C`、`λ_high=0.7C`，单位 req/s，计算成明确数字写入配置。比如 C=4 时是 1.2 与 2.8；这只是算术示例，必须代入你的实测值。
 
 | 条件 | 目标输入 token | 输出 token | 到达率 | 重复/seed |
 |---|---:|---:|---|---|
@@ -52,7 +54,7 @@ status: not-started
 
 ## 如何执行 12 次运行
 
-复用 L03 的完整 benchmark 命令，每次只替换 `--random-input-len`、`--request-rate`、`--num-prompts`、`--seed`、文件名；显式添加 `--burstiness 1`。例如在“C=4 的示例”中 short-low 使用输入 128、rate 1.2，实际操作时用自己的数值。
+复用 lab3 的完整 benchmark 命令，每次只替换 `--random-input-len`、`--request-rate`、`--num-prompts`、`--seed`、文件名；显式添加 `--burstiness 1`。例如在“C=4 的示例”中 short-low 使用输入 128、rate 1.2，实际操作时用自己的数值。
 
 建立 `run_matrix.csv`，字段为 `run_id,input_len,output_len,request_rate,burstiness,num_prompts,seed`。每个 seed 内交错短/长和低/高条件，下一轮反向或事先随机打乱，保存顺序。全部串行完成，前一轮排空才开始下一轮。每次重启服务器后预热，但不因为结果差就随意重启某一条件。
 
@@ -83,4 +85,4 @@ status: not-started
 
 选做（不计入 5h）：用工具支持的 custom/timed trace 数据格式设计 50% 短＋50% 长的混合负载，并明确保存到达时间与实际 token 长度。不要直接将两次独立 benchmark 同时启动后声称得到精确混合 trace。
 
-资料回查：[bench CLI](https://docs.vllm.ai/en/stable/cli/bench/serve/) · [DistServe](https://arxiv.org/abs/2401.09670) · [实验规范](../02-experiment-standard.md)
+资料回查：[bench CLI](https://docs.vllm.ai/en/stable/cli/bench/serve/) · [DistServe](https://arxiv.org/abs/2401.09670) · [实验规范](../guides/experiments.md)

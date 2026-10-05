@@ -6,7 +6,7 @@ updated: 2026-10-05
 
 # 在线算子 OJ：平台选择与练习路线
 
-[返回索引](index.md) · [AI 辅助实验增强](06-ai-assisted-labs.md) · [融合算子挑战](labs/L02X-kernel-challenge.md)
+[返回索引](course-map.md) · [AI 辅助实验增强](ai-assisted-labs.md) · [融合算子挑战](../labs/lab2x-kernel-challenge.md)
 
 在线评测适合给算子实现增加外部正确性检查、远端硬件测量和陌生输入。课程优先选择与现有工具相容的 NVIDIA/Triton 平台；TensorOJ 用来探索 Ascend C / 昇腾。先选一个平台打通提交，不同时维护四套环境。
 
@@ -16,23 +16,23 @@ updated: 2026-10-05
 
 | 平台与官方入口 | 已核对的能力 | 在本课程中的安排 | 使用前检查 |
 |---|---|---|---|
-| [Tensara](https://tensara.org/) / [官方项目说明](https://github.com/tensara/tensara) | 支持 CUDA、Triton 等；真实 GPU 评测、按 GPU 排榜；有具体题面、测试规模和 CLI | **默认 Triton 补充平台**：M02 完成一次小算子提交；X 周做归约/融合拓展 | 当前题目的语言、GPU、额度；不同题目接口并不统一 |
+| [Tensara](https://tensara.org/) / [官方项目说明](https://github.com/tensara/tensara) | 支持 CUDA、Triton 等；真实 GPU 评测、按 GPU 排榜；有具体题面、测试规模和 CLI | **默认 Triton 补充平台**：lab2 完成一次小算子提交；X 周做归约/融合拓展 | 当前题目的语言、GPU、额度；不同题目接口并不统一 |
 | [LeetGPU](https://leetgpu.com/) / [题库](https://leetgpu.com/challenges) | 浏览器 GPU 编程；主页列出 CUDA、Triton、PyTorch 等；题库含 Reduction、Softmax、RMS Normalization、融合残差归一化 | Tensara 不便使用时的替代；按题名选择一题 | 具体题目的语言支持、免费/Pro 边界、测试限制；本次部分页面依赖脚本渲染 |
-| [TensorOJ / CANNJudge](https://tensoroj.cn/cann/home) / [Vector 题单](https://tensoroj.cn/cann/public/vector) | 公开题库含 Add、Relu、Softmax、AddRmsNorm；所查题面要求 Ascend C、昇腾 NPU，题目元数据标注 CANN 9.0.0 | **跨硬件选修**：M05 比较方向，或 X 周专做一次 Ascend C 入门 | 实际 NPU 型号、评测方式、版本、提交权限和额度未实测；不把 RTX 4060 当作昇腾运行环境 |
-| [GPU MODE](https://www.gpumode.com/) / [Popcorn CLI](https://github.com/gpu-mode/popcorn-cli) | 官方 CLI 支持提交到评测平台；README 指向面向初学者的 PMPP_v2 题集 | L02X 后再选；适合更深入的 kernel 训练 | 先选当前开放题集，检查设备和比赛规则；不要求参加有截止日期的竞赛 |
+| [TensorOJ / CANNJudge](https://tensoroj.cn/cann/home) / [Vector 题单](https://tensoroj.cn/cann/public/vector) | 公开题库含 Add、Relu、Softmax、AddRmsNorm；所查题面要求 Ascend C、昇腾 NPU，题目元数据标注 CANN 9.0.0 | **跨硬件选修**：lab5 比较方向，或 X 周专做一次 Ascend C 入门 | 实际 NPU 型号、评测方式、版本、提交权限和额度未实测；不把 RTX 4060 当作昇腾运行环境 |
+| [GPU MODE](https://www.gpumode.com/) / [Popcorn CLI](https://github.com/gpu-mode/popcorn-cli) | 官方 CLI 支持提交到评测平台；README 指向面向初学者的 PMPP_v2 题集 | lab2x 后再选；适合更深入的 kernel 训练 | 先选当前开放题集，检查设备和比赛规则；不要求参加有截止日期的竞赛 |
 
 选择建议：先用 Tensara 的小题确认能运行 Triton；若账号/网络不便，换 LeetGPU。两者都不通时，在 4060 上运行课程自测，记录“OJ 未完成”，继续学习。只有明确想探索昇腾时，才为 TensorOJ 单独安排学习时间。
 
-OJ 评测环境通常围绕单个算子设计。L03–L07 的 vLLM 常驻服务、到达过程、请求延迟与原始日志仍需自己的机器或获批服务器；通过一个 attention 题不能代替服务实验。
+OJ 评测环境通常围绕单个算子设计。lab3–lab7 的 vLLM 常驻服务、到达过程、请求延迟与原始日志仍需自己的机器或获批服务器；通过一个 attention 题不能代替服务实验。
 
 ## 题目路线：每个阶段只取一项
 
 | 时机 | 练习与入口 | 要学会什么 | 时间与完成边界 |
 |---|---|---|---|
-| M02 B 课 | [Tensara 题库](https://tensara.org/problems) 的 Vector Addition，或 LeetGPU 同名题 | 根据提交模板适配入口、mask、dtype、设备；读一次真实评测反馈 | 替换 B 课原 135–160 分钟的作业导航，25 分钟；排队/登录未完成就记阻塞 |
-| L02 增强 | 本地行 softmax 的参数消融；外部迁移可看 [Tensara Log Softmax](https://tensara.org/problems/log-softmax) | 稳定归约与形状变化；log-softmax 需要改变公式，不能直接提交 softmax 输出 | 消融在本周 5h 内，完整迁移到 OJ 放入 X 周；不以刷榜为验收 |
-| X 周 NVIDIA 路线 | [L02X 融合残差＋RMSNorm](labs/L02X-kernel-challenge.md)；LeetGPU 题库搜索 Fused Residual Add and RMS Norm | 独立参考实现、融合、FP32 累加、误差与性能权衡 | 5h 实验，另有两节准备课；先按本课程小规模规格实现，OJ 扩展另计 |
-| M05 / X 周 Ascend 路线 | [TensorOJ Relu](https://tensoroj.cn/cann/public/vector/relu) → [Add](https://tensoroj.cn/cann/public/vector/add)，二选一 | 读懂题面、数据搬运、分块与尾部处理；识别广播/多 dtype 增加的复杂度 | M05 只做题面比较；完整实现选 X 周，先跑受限子集，不把它报作全题通过 |
+| lab2 B 课 | [Tensara 题库](https://tensara.org/problems) 的 Vector Addition，或 LeetGPU 同名题 | 根据提交模板适配入口、mask、dtype、设备；读一次真实评测反馈 | 替换 B 课原 135–160 分钟的作业导航，25 分钟；排队/登录未完成就记阻塞 |
+| lab2 增强 | 本地行 softmax 的参数消融；外部迁移可看 [Tensara Log Softmax](https://tensara.org/problems/log-softmax) | 稳定归约与形状变化；log-softmax 需要改变公式，不能直接提交 softmax 输出 | 消融在本周 5h 内，完整迁移到 OJ 放入 X 周；不以刷榜为验收 |
+| X 周 NVIDIA 路线 | [lab2x 融合残差＋RMSNorm](../labs/lab2x-kernel-challenge.md)；LeetGPU 题库搜索 Fused Residual Add and RMS Norm | 独立参考实现、融合、FP32 累加、误差与性能权衡 | 5h 实验，另有两节准备课；先按本课程小规模规格实现，OJ 扩展另计 |
+| lab5 / X 周 Ascend 路线 | [TensorOJ Relu](https://tensoroj.cn/cann/public/vector/relu) → [Add](https://tensoroj.cn/cann/public/vector/add)，二选一 | 读懂题面、数据搬运、分块与尾部处理；识别广播/多 dtype 增加的复杂度 | lab5 只做题面比较；完整实现选 X 周，先跑受限子集，不把它报作全题通过 |
 | 后续 kernel 方向 | [Tensara Softmax](https://tensara.org/problems/softmax)、[TensorOJ Softmax](https://tensoroj.cn/cann/public/vector/softmax)、[AddRmsNorm](https://tensoroj.cn/cann/public/vector/addrmsnorm) | 任意归约维度、多 dtype、融合或多核分块 | 在已有可测 baseline 后选一题，估时 5–10h；不是第三周的额外必做 |
 
 上述题名和链接是本次核对结果，不依赖题库显示的行号。题目版本变更时以当前题面和模板为准，保留自己使用的版本记录。
@@ -60,14 +60,14 @@ TensorOJ 的公开入口与题面已经核对；没有核实具体 NPU 型号、
 2. **10–20 分钟：跑最小正确实现。** 按平台模板提交简单实现，先核对正确性及 GPU/NPU 信息。确认平台是否区分 Run 与正式 Submit；遵守当前题集的 AI/代码公开规则。
 3. **20–30 分钟：保存结果。** 保留提交 ID、源码 commit、语言、设备、每个用例结果/耗时和评分定义。未提供的字段写“平台未提供”。不要反推未公开的隐藏测试或将输出硬编码。
 
-这 30 分钟计入所选课程时间块；若 M02 只有 25 分钟，先完成前两步，记录留待 X 周补的内容。平台阻塞时及时转回本地，不用登录调试耗掉整个实验周。
+这 30 分钟计入所选课程时间块；若 lab2 只有 25 分钟，先完成前两步，记录留待 X 周补的内容。平台阻塞时及时转回本地，不用登录调试耗掉整个实验周。
 
 ## 同名算子的差异必须写清
 
-- L02 是二维、contiguous、最后一维、FP32 的 softmax。Tensara Softmax 的公开题面要求任意形状和指定维度，直接搬过去并不满足契约；其中某些输入明显大于本课程的本地矩阵。
+- lab2 是二维、contiguous、最后一维、FP32 的 softmax。Tensara Softmax 的公开题面要求任意形状和指定维度，直接搬过去并不满足契约；其中某些输入明显大于本课程的本地矩阵。
 - Tensara Log Softmax 是逐行归约，但结果应是对数概率。默认公开测试列宽可到 8192；先用本地小形状验证，再讨论远端规模。
 - TensorOJ Softmax 的题面还包含多 dtype、正负维度索引等要求；平台的完整规格与教学子集分别记录。
-- RMSNorm 是否有可学习权重、epsilon 的位置、残差是否输出及输出 dtype，都不能只靠题名判断。L02X 专门给出一份本地契约。
+- RMSNorm 是否有可学习权重、epsilon 的位置、残差是否输出及输出 dtype，都不能只靠题名判断。lab2x 专门给出一份本地契约。
 
 ## OJ 成绩怎样进入实验报告
 
@@ -75,7 +75,7 @@ TensorOJ 的公开入口与题面已经核对；没有核实具体 NPU 型号、
 
 保留逐形状耗时，不只贴榜单总分。若平台只给总分，就把它单列为“OJ 分数”，用本地逐形状实验支撑机制分析。不同卡型分别画图；不能用远端 H100 优化版除以本地 4060 baseline 得出算法加速比。编译是否计时、测试是否包括数据搬运、评分是算术/几何平均，都需按实际说明记录。
 
-平台无法提供自定义矩阵、原始耗时或 profiler 时，其结果只能补充现有报告，不能补全 L01/L02 缺失的测量项。模拟器/解释器的正确性通过与真机性能通过分别记录。
+平台无法提供自定义矩阵、原始耗时或 profiler 时，其结果只能补充现有报告，不能补全 lab1/lab2 缺失的测量项。模拟器/解释器的正确性通过与真机性能通过分别记录。
 
 ## 资料汇总与核对依据
 

@@ -1,13 +1,15 @@
 ---
-title: L02｜实现并测量 Triton Fused Softmax
+title: lab2｜实现并测量 Triton Fused Softmax
 tags: [mlsys, lab, triton]
-week: 3
+weeks: [4, 5]
 status: not-started
 ---
 
-# L02｜实现并测量 Triton Fused Softmax
+本页为基础学习材料，系统任务与周次见 [课程安排](../syllabus.md)。
 
-[索引](../index.md) · [对应课程 M02](../modules/M02-kernels.md) · [前置测量工具](L01-attention.md)
+# lab2｜实现并测量 Triton Fused Softmax
+
+[索引](../guides/course-map.md) · [对应课程 lab2](../modules/lab2-kernels.md) · [前置测量工具](lab1-attention.md)
 
 ## 问题与最小范围
 
@@ -15,7 +17,7 @@ status: not-started
 
 可从教程改写，并明确标注来源。你的独立工作至少包括：解释工作分配、处理非整齐列数、建立三种实现的公平测量、分析结果边界。
 
-借助 AI 时推荐使用下文的增强执行表：仍为一个 softmax kernel，增加验证和参数消融。更完整的第二个算子放在独立的 [L02X 挑战周](L02X-kernel-challenge.md)。
+借助 AI 时推荐使用下文的增强执行表：仍为一个 softmax kernel，增加验证和参数消融。更完整的第二个算子放在独立的 [lab2x 挑战周](lab2x-kernel-challenge.md)。
 
 ## 实现与输入
 
@@ -30,7 +32,7 @@ status: not-started
 | 0–40 | 在现有环境运行向量加法，验证非 block 整倍数输入 |
 | 40–110 | 写/改写 softmax kernel 与 Python wrapper，先过 128×128 |
 | 110–160 | 做全部形状、N=1、极值与尾部 mask 正确性检查 |
-| 160–220 | 用 L01 工具测量 6×3×3=54 条性能记录 |
+| 160–220 | 用 lab1 工具测量 6×3×3=54 条性能记录 |
 | 220–265 | 画耗时/相对速度图，解释中间访存和启动开销 |
 | 265–300 | 整理代码来源、实验说明、局限与周报 |
 
@@ -55,7 +57,7 @@ status: not-started
 
 增强交付另加：性质检查输出、消融/留出原始记录、配置选择依据和一个尚未解释的结果。90 条全部来自同一硬件；OJ 结果另表，不用远端总分代替这些记录。超过预算时优先保住原实验，消融或留出缺项标待补，不从矩阵中选择性删点。
 
-OJ 迁移可查看 [平台题目路线](../05-online-judge.md)。本周不要求在 5h 内再完整解决任意维度 softmax；第二个算子或 Ascend C 体验在 X 周做。
+OJ 迁移可查看 [平台题目路线](../guides/online-judge.md)。本周不要求在 5h 内再完整解决任意维度 softmax；第二个算子或 Ascend C 体验在 X 周做。
 
 ## kernel 的具体要求
 
@@ -69,7 +71,7 @@ OJ 迁移可查看 [平台题目路线](../05-online-judge.md)。本周不要求
 
 对 C 与 B 比较 `assert_close(rtol=1e-4, atol=1e-5)`，记录最大绝对误差、行和偏差与是否有限。N=1 的输出必须接近 1。极值输入仍应有限；错误先看稳定公式、mask 与行/列 stride。
 
-性能测量复用 L01 的同步/预热方法，20 次预热、每轮 100 次、三轮；所有实现的输入分配排除在计时外，输出分配口径保持一致。小输入噪声过大时整体增迭代数。逐点计算 A/C 与 B/C 的延迟比，标注分子分母，避免把“加速比 0.8”错误解释为加速。
+性能测量复用 lab1 的同步/预热方法，20 次预热、每轮 100 次、三轮；所有实现的输入分配排除在计时外，输出分配口径保持一致。小输入噪声过大时整体增迭代数。逐点计算 A/C 与 B/C 的延迟比，标注分子分母，避免把“加速比 0.8”错误解释为加速。
 
 若估算有效带宽，可用最低逻辑读写量 `2*M*N*4` 字节除以时间，但必须命名“按一次读写估算的有效带宽”；这不是实际硬件流量测量。解释 A 的中间张量为何增加读写，B 为什么已经可能融合或高度优化。
 
@@ -87,4 +89,4 @@ OJ 迁移可查看 [平台题目路线](../05-online-judge.md)。本周不要求
 
 Windows 原生环境报 Triton 问题先回到 WSL2 支持路径；不要无目的编译完整框架。参考 [LCPU 作业说明](https://github.com/lcpu-club/wmhpc-training-camp-x-lcpu-ai-infra-seminars/blob/main/assignment01/README.md) 的解释器调试线索；解释器适用于部分正确性排查，不能提供 CUDA 性能结论。超过 90 分钟仍无法运行时保留最小案例，申请组内帮助，并把 GPU 测量标为待补。
 
-资料回查：[Triton softmax](https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html) · [向量加法](https://triton-lang.org/main/getting-started/tutorials/01-vector-add.html) · [实验规范](../02-experiment-standard.md)
+资料回查：[Triton softmax](https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html) · [向量加法](https://triton-lang.org/main/getting-started/tutorials/01-vector-add.html) · [实验规范](../guides/experiments.md)

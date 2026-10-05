@@ -1,16 +1,18 @@
 ---
-title: L03｜建立可重复的单卡 vLLM 服务基线
+title: lab3｜建立可重复的单卡 vLLM 服务基线
 tags: [mlsys, lab, serving]
-week: 4
+weeks: [6, 7]
 status: not-started
 ---
 
-# L03｜建立可重复的单卡 vLLM 服务基线
+本页为基础学习材料，系统任务与周次见 [课程安排](../syllabus.md)。
 
-[索引](../index.md) · [对应课程 M03](../modules/M03-serving.md) · [环境手册](../01-environment.md)
+# lab3｜建立可重复的单卡 vLLM 服务基线
+
+[索引](../guides/course-map.md) · [对应课程 lab3](../modules/lab3-serving.md) · [环境手册](../guides/environment.md)
 
 > [!tip] AI 辅助增强
-> 本周可选：用可手算的反例检查指标脚本（30 分钟）。具体步骤与验收见 [增强实验手册](../06-ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
+> 本周可选：用可手算的反例检查指标脚本（30 分钟）。具体步骤与验收见 [增强实验手册](../guides/ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
 
 ## 目标与约束
 
@@ -31,7 +33,7 @@ status: not-started
 
 ## 步骤 1：启动与 smoke test
 
-在项目根目录创建 `results/L03`。使用 [环境手册](../01-environment.md) 的完整启动命令，保留服务端 stdout/stderr；一个终端运行服务，另一个终端运行客户端。关键固定项为 FP16、上下文 2048、max-num-seqs=4、token budget=2048、chunked prefill 开启、prefix caching 关闭、eager 开启、显存比例 0.70。
+在项目根目录创建 `results/lab3`。使用 [环境手册](../guides/environment.md) 的完整启动命令，保留服务端 stdout/stderr；一个终端运行服务，另一个终端运行客户端。关键固定项为 FP16、上下文 2048、max-num-seqs=4、token budget=2048、chunked prefill 开启、prefix caching 关闭、eager 开启、显存比例 0.70。
 
 先检查服务：
 
@@ -57,7 +59,7 @@ vllm bench serve \
   --num-prompts 120 --request-rate inf --ignore-eos \
   --seed 11 --save-result --save-detailed \
   --percentile-metrics ttft,tpot,e2el --metric-percentiles 50,95 \
-  --result-dir results/L03 --result-filename capacity-r1.json
+  --result-dir results/lab3 --result-filename capacity-r1.json
 ```
 
 后两轮 seed 为 22、33，文件名为 r2、r3。不要并行运行三个 benchmark，也不要在前一轮请求未排空时开始下一轮。每次模型重启后重新预热。`inf` 在这里只用于容量初测，后续有限到达率实验另行设置。
@@ -70,7 +72,7 @@ vllm bench serve \
 
 汇总表至少有：`run_id,seed,num_requested,num_success,num_failed,duration_s,total_output_tokens,request_throughput,output_throughput,p50_ttft_ms,p95_ttft_ms,p50_tpot_ms,p95_tpot_ms`。保留原 JSON，不用转换后的 CSV 代替原始数据。逐请求长度和失败明细也要保留，工具未提供的字段标“未提供”，不要补造。
 
-用简单例题验证脚本的单位：两请求 TTFT 为 0.1 与 0.3 秒时，毫秒表示分别为 100 与 300；100 个成功请求在 20 秒内完成，请求吞吐为 5 req/s。真实指标定义见 [实验规范](../02-experiment-standard.md)。
+用简单例题验证脚本的单位：两请求 TTFT 为 0.1 与 0.3 秒时，毫秒表示分别为 100 与 300；100 个成功请求在 20 秒内完成，请求吞吐为 5 req/s。真实指标定义见 [实验规范](../guides/experiments.md)。
 
 ## 步骤 4：容量估计
 
@@ -88,6 +90,6 @@ vllm bench serve \
 - [ ] C 可从原始 JSON 重算，TTFT/TPOT 单位正确。
 - [ ] 所有轮次使用同一模型、配置、设备与缓存设置。
 
-OOM 按 [降规模顺序](../01-environment.md) 处理；降级后全部基准重做，后面课程沿用新配置。安装/下载阻塞超过本周预算时，保留环境报告并将本周延长，不用理论吞吐代替实测。
+OOM 按 [降规模顺序](../guides/environment.md) 处理；降级后全部基准重做，后面课程沿用新配置。安装/下载阻塞超过本周预算时，保留环境报告并将本周延长，不用理论吞吐代替实测。
 
 资料回查：[bench CLI](https://docs.vllm.ai/en/stable/cli/bench/serve/) · [serve CLI](https://docs.vllm.ai/en/stable/cli/serve/) · [模型卡](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct)

@@ -5,17 +5,17 @@ tags: [mlsys, environment]
 
 # 设备、环境与算力使用
 
-[返回索引](index.md) · [实验规范](02-experiment-standard.md)
+[返回索引](course-map.md) · [实验规范](experiments.md)
 
 ## 设备分工
 
 | 设备 | 本课程用途 | 不能据此推出的结论 |
 |---|---|---|
-| Mac mini，16 GB 统一内存 | 阅读、笔记、Python、L00、CPU 正确性、L05 模拟、数据分析；MPS 可作为选做 | Mac CPU/MPS 与 NVIDIA CUDA 的耗时不能直接拼成一条优化对比曲线 |
+| Mac mini，16 GB 统一内存 | 阅读、笔记、Python、lab0、CPU 正确性、lab5 模拟、数据分析；MPS 可作为选做 | Mac CPU/MPS 与 NVIDIA CUDA 的耗时不能直接拼成一条优化对比曲线 |
 | Windows＋RTX 4060 8 GB | WSL2 Linux 下的 PyTorch CUDA、Triton、0.5B 模型推理 | 小模型单卡现象不自动推广到 70B、多卡或生产服务 |
 | Intel UHD 集显 | 无必做任务 | 不把它当成第二块可用于 NCCL 的 CUDA GPU |
 | 北大 HPC / 课题组服务器 | 后续外部有效性验证、多卡研究 | 未确认账号、卡型、驱动、队列、费用前，不假定可用 |
-| 在线算子 OJ | 通过浏览器/平台工具做远端算子评测，详见 [平台手册](05-online-judge.md) | 远端卡型、权限和额度需核实；不能默认支持常驻 vLLM 服务或自定义 profiler |
+| 在线算子 OJ | 通过浏览器/平台工具做远端算子评测，详见 [平台手册](online-judge.md) | 远端卡型、权限和额度需核实；不能默认支持常驻 vLLM 服务或自定义 profiler |
 
 必做实验采用小尺寸张量和 `Qwen/Qwen2.5-0.5B-Instruct`。8 GB 是课程设计约束，不是显存充足的保证。先运行检查点，再扩大规模。
 
@@ -62,7 +62,7 @@ if torch.cuda.is_available():
     print('CUDA output finite:', bool(torch.isfinite(z).all()))
 ```
 
-CPU 梯度通过即可开始 L00。CUDA 未通过时把结果标记为阻塞，不用重新学机器学习。
+CPU 梯度通过即可开始 lab0。CUDA 未通过时把结果标记为阻塞，不用重新学机器学习。
 
 ## Windows 上的 CUDA 路径
 
@@ -72,9 +72,9 @@ CPU 梯度通过即可开始 L00。CUDA 未通过时把结果标记为阻塞，�
 
 将实验代码与结果放在 WSL 自己的 Linux 文件系统中，避免把 Windows 挂载盘 I/O 混入测量。每次实验先确认显存占用；`nvidia-smi` 在 WSL 的部分监控功能有限，因此不把某个利用率数字作为唯一证据。
 
-第三周使用 [Triton 官方向量加法](https://triton-lang.org/main/getting-started/tutorials/01-vector-add.html) 检查工具链。优先使用与 PyTorch 环境兼容的 Triton 依赖，避免无目的升级所有包。若教程报 API 不匹配，记录当前版本并查对应版本文档。
+第4周使用 [Triton 官方向量加法](https://triton-lang.org/main/getting-started/tutorials/01-vector-add.html) 检查工具链。优先使用与 PyTorch 环境兼容的 Triton 依赖，避免无目的升级所有包。若教程报 API 不匹配，记录当前版本并查对应版本文档。
 
-## 第四周：单独建 vLLM 环境
+## 第6周：单独建 vLLM 环境
 
 [vLLM GPU 安装文档](https://docs.vllm.ai/en/stable/getting_started/installation/gpu/) 以 Linux 为主；本课程选择 WSL2。Mac 上存在社区路径，但课程不要求你维护第二套服务栈。
 
@@ -97,7 +97,7 @@ vllm bench serve --help > results/environment/vllm-bench-help.txt
 
 使用 [Qwen 官方模型卡](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) 所对应的模型。记录模型仓库名、实际下载的 revision/commit、tokenizer revision 和下载时间。后续所有对照使用同一份权重与 tokenizer；不在实验中途自动换版本。
 
-本课程的保守起始配置如下，完整使用方法见 [L03](labs/L03-serving.md)：
+本课程的保守起始配置如下，完整使用方法见 [lab3](../labs/lab3-serving.md)：
 
 ```bash
 vllm serve Qwen/Qwen2.5-0.5B-Instruct \
@@ -114,7 +114,7 @@ vllm serve Qwen/Qwen2.5-0.5B-Instruct \
 
 1. 分辨是 Windows/其他进程占用、权重加载失败，还是 KV cache/并发不足；保存错误与可用显存。
 2. 结束自己启动且不用的实验服务。每次只运行一台服务。检查是否误用了 7B 或更大模型。
-3. 先将 `max-num-seqs` 从 4 降至 2；仍失败时将上下文降至 1536，再至 1024，同时缩短输入，确保输入＋最大输出不超过限制。L07 的长输入条件必须相应改写。
+3. 先将 `max-num-seqs` 从 4 降至 2；仍失败时将上下文降至 1536，再至 1024，同时缩短输入，确保输入＋最大输出不超过限制。lab7 的长输入条件必须相应改写。
 4. 若启动日志显示预留比例超过当前可用显存，才降低 `gpu-memory-utilization`；这个参数降低后 KV cache 也变少，它不是所有 OOM 的通用解法。
 5. 所有对照统一使用降级后的配置，重做容量标定。不要只缩小表现差的那个实验。
 
@@ -149,7 +149,11 @@ python /ABSOLUTE/PATH/TO/PROJECT/smoke.py
 - [ ] CPU 自动微分有限值检查通过。
 - [ ] CUDA 矩阵乘检查通过，或已提交阻塞记录。
 - [ ] 软件版本、驱动、卡型与内存限制已记录。
-- [ ] 第四周另建 vLLM 环境，保留 CLI 帮助与启动日志。
+- [ ] 第6周另建 vLLM 环境，保留 CLI 帮助与启动日志。
 - [ ] 没有把 HPC、多卡或付费资源当作前四周前提。
 
 参考：[PyTorch 安装](https://pytorch.org/get-started/locally/) · [WSL CUDA](https://docs.nvidia.com/cuda/wsl-user-guide/index.html) · [vLLM 安装](https://docs.vllm.ai/en/stable/getting_started/installation/gpu/) · [Qwen 模型卡](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) · [北大 HPC](https://hpc.pku.edu.cn/)
+
+## 系统实现补充
+
+16周安排与各阶段资源见[主线](../syllabus.md)。按章节准备C++17/CMake、WSL CUDA Toolkit/nvcc/cuBLAS、MPI；PyTorch wheel不等于完整CUDA编译工具链。按配套[全局setup](../../mlsys-research-labs/setup.md)与子项目setup逐步由你配置，分开源码引擎环境。CPU/Gloo/MPI提供真实进程或通信语义，不能证明多GPU/NCCL吞吐。FA3/Hopper、Blackwell特定路径和完整RL大模型只作指定硬件阅读/远端选修。

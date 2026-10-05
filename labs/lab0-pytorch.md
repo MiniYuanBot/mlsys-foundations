@@ -1,16 +1,18 @@
 ---
-title: L00｜从零写可检查的小型训练实验
+title: lab0｜从零写可检查的小型训练实验
 tags: [mlsys, lab, pytorch]
-week: 1
+weeks: [1]
 status: not-started
 ---
 
-# L00｜从零写可检查的小型训练实验
+本页为基础学习材料，系统任务与周次见 [课程安排](../syllabus.md)。
 
-[索引](../index.md) · [对应课程 M00](../modules/M00-pytorch.md) · [实验记录模板](../templates/experiment-record.md)
+# lab0｜从零写可检查的小型训练实验
+
+[索引](../guides/course-map.md) · [对应课程 lab0](../modules/lab0-pytorch.md) · [实验记录模板](../templates/experiment-record.md)
 
 > [!tip] AI 辅助增强
-> 本周可选：断点续训与连续训练的等价性检查（45–60 分钟）。具体步骤与验收见 [增强实验手册](../06-ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
+> 本周可选：断点续训与连续训练的等价性检查（45–60 分钟）。具体步骤与验收见 [增强实验手册](../guides/ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
 
 ## 问题与实验边界
 
@@ -35,7 +37,7 @@ status: not-started
 
 | 时间 | 任务 | 检查点 |
 |---|---|---|
-| 0–40 | 验证 Python/PyTorch CPU 环境，创建脚本和日志目录 | [环境手册](../01-environment.md) 的 CPU 梯度检查通过 |
+| 0–40 | 验证 Python/PyTorch CPU 环境，创建脚本和日志目录 | [环境手册](../guides/environment.md) 的 CPU 梯度检查通过 |
 | 40–100 | 写数据生成、固定划分、MLP 与训练循环 | 单批量 forward/backward 正常、shape/dtype 正确 |
 | 100–145 | 做 32 样本过拟合与有限差分梯度检查 | loss 确实下降、梯度可核对 |
 | 145–205 | 运行完整训练，保存每 epoch 数据和 checkpoint | 一张 loss 图与完整 CSV |
@@ -54,7 +56,7 @@ status: not-started
 
 **步骤 5：检查点。** 保存模型的 state_dict、配置和 seed。重新创建相同网络并加载，固定一批 32 个测试输入，在 eval/no_grad 下比较保存前后 logits，CPU `assert_close(rtol=1e-6, atol=1e-6)`。为未来可恢复训练，可选保存优化器状态，但不作为必做。
 
-**步骤 6：重跑。** 同一设备、相同 seed 和配置重跑；比较曲线和结论，记录是否逐值一致。随机性或后端差异不自动代表 bug，但需说明。在 M00 学到的三个故障中挑一个，保留最小错误样例和修正说明。
+**步骤 6：重跑。** 同一设备、相同 seed 和配置重跑；比较曲线和结论，记录是否逐值一致。随机性或后端差异不自动代表 bug，但需说明。在 lab0 学到的三个故障中挑一个，保留最小错误样例和修正说明。
 
 ## 交付物
 

@@ -5,11 +5,11 @@ tags: [mlsys, methodology]
 
 # 贯穿课程的实验规范
 
-[返回索引](index.md)
+[返回索引](course-map.md)
 
 ## 每次实验保留什么
 
-课程笔记与实验仓库分开。课程文件可以放 Obsidian；代码另建 Git 仓库。每次运行的目录至少包含 `config.json`（全部参数）、`command.txt`、`environment.txt`、`stdout.log`、`raw.json` 或 `raw.csv`、`summary.csv`。图从原始数据生成，不能手改数值。文件名包含实验、配置和重复编号，例如 `L04-long-high-r2`。
+课程笔记与实验仓库分开。课程文件可以放 Obsidian；代码另建 Git 仓库。每次运行的目录至少包含 `config.json`（全部参数）、`command.txt`、`environment.txt`、`stdout.log`、`raw.json` 或 `raw.csv`、`summary.csv`。图从原始数据生成，不能手改数值。文件名包含实验、配置和重复编号，例如 `lab4-long-high-r2`。
 
 配置须包括：日期、代码 commit、设备、OS/WSL、驱动、Python、PyTorch/vLLM/Triton 版本、模型/tokenizer revision、dtype、输入/输出长度、seed、预热次数、重复编号、到达率、并发/批 token 限制、缓存设置、是否 eager。未用到的字段写 `not applicable`，不留让人猜测的空白。
 
@@ -63,9 +63,9 @@ elapsed_ms = (time.perf_counter() - t0) * 1000 / 100
 
 ## 在线评测与 AI 辅助实现
 
-使用在线 OJ 时，额外保存题目 URL/版本、完整输入输出契约、提交 ID、代码版本、语言、硬件、计时范围与评分定义。平台若未提供逐形状耗时或重复测量，就不能把榜单总分写成独立性能证据；不同设备的 baseline 与优化版分别比较。完整记录要求见 [在线 OJ](05-online-judge.md)。
+使用在线 OJ 时，额外保存题目 URL/版本、完整输入输出契约、提交 ID、代码版本、语言、硬件、计时范围与评分定义。平台若未提供逐形状耗时或重复测量，就不能把榜单总分写成独立性能证据；不同设备的 baseline 与优化版分别比较。完整记录要求见 [在线 OJ](online-judge.md)。
 
-AI 辅助实现需要独立参考、至少一个新条件和一次解释/修改检查。避免参考代码与待测代码共用同一个可疑索引逻辑；合成数据验证分析器时明确标为 synthetic，不放入真实性能结果。详见 [增强实验](06-ai-assisted-labs.md)。
+AI 辅助实现需要独立参考、至少一个新条件和一次解释/修改检查。避免参考代码与待测代码共用同一个可疑索引逻辑；合成数据验证分析器时明确标为 synthetic，不放入真实性能结果。详见 [增强实验](ai-assisted-labs.md)。
 
 ## 每周结论的四句话
 
@@ -76,9 +76,17 @@ AI 辅助实现需要独立参考、至少一个新条件和一次解释/修改�
 
 课内可以用“超过 10% 且大于典型轮间波动”作为是否值得追加实验的启发式门槛，不能用它宣称统计显著或创新。负结果同样保留。模型缩小、工作负载合成、模拟环境均要写在图注中。
 
-## 资料
+## 系统实现与研究证据
+
+原生实验额外记录编译器/flags、目标架构、链接库、源码SHA、线程设置、传输/分配/packing的计时范围。CUDA kernel先检查尾块、输入不变性、边界与同步，再做sanitizer和资源分析；精度模式相同才能直接比较速度。完整参考成功只能证明参考入口可用，不能替代学生实现正确性。
+
+运行时实验保留可应用patch、真实import/二进制路径和调用链。给诊断开关做无patch/off/on对照，正式计时关闭重型观测；保留失败请求、调度决定和send-lag。分布式实验使用真实进程，先证明梯度与单进程oracle等价，再测通信；异步API返回不能作为通信完成或重叠的证据。CPU host性能与GPU互连性能分开报告。
+
+研究实验在结果前冻结主张、基线、矩阵、指标、消融、负对照和留出条件。报告最接近三项工作、实际修改、成本与反例；没有加速不扣结论分，缺正确性与公平对照不能用阅读分弥补。重建图表的命令只读归档raw数据，昂贵的硬件复跑另设显式入口。细则见 [课程主线](../syllabus.md) 与 [上游使用记录](../../mlsys-research-labs/templates/upstream-record.md)。
+
+## 参考资料
 
 - [PyTorch benchmark](https://docs.pytorch.org/tutorials/recipes/recipes/benchmark.html)
 - [PyTorch Profiler](https://docs.pytorch.org/tutorials/recipes/recipes/profiler_recipe.html)
 - [vLLM benchmark CLI](https://docs.vllm.ai/en/stable/cli/bench/serve/)
-- [实验记录模板](templates/experiment-record.md)
+- [实验记录模板](../templates/experiment-record.md)

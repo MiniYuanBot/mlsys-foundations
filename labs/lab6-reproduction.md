@@ -1,16 +1,18 @@
 ---
-title: L06｜检验 prefill token budget 的性能权衡
+title: lab6｜检验 prefill token budget 的性能权衡
 tags: [mlsys, lab, reproduction]
-week: 7
+weeks: [12, 13, 14]
 status: not-started
 ---
 
-# L06｜检验 prefill token budget 的性能权衡
+本页为基础学习材料，系统任务与周次见 [课程安排](../syllabus.md)。
 
-[索引](../index.md) · [对应课程 M06](../modules/M06-reproduction.md) · [前置 L04](L04-workloads.md)
+# lab6｜检验 prefill token budget 的性能权衡
+
+[索引](../guides/course-map.md) · [对应课程 lab6](../modules/lab6-reproduction.md) · [前置 lab4](lab4-workloads.md)
 
 > [!tip] AI 辅助增强
-> 本周可选：增加一项可解释的内部观测（30–45 分钟）。具体步骤与验收见 [增强实验手册](../06-ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
+> 本周可选：增加一项可解释的内部观测（30–45 分钟）。具体步骤与验收见 [增强实验手册](../guides/ai-assisted-labs.md)。原实验提前完成时使用剩余时间，未完成则顺延；不额外叠加到本周 5h。
 
 ## 实验定位
 
@@ -33,9 +35,9 @@ status: not-started
 | baseline A | chunked prefill 开启，`max-num-batched-tokens=2048` |
 | treatment B | chunked prefill 开启，`max-num-batched-tokens=512` |
 | 负载 | 目标输入 1024，输出 64，ignore_eos 开启，随机长度范围按固定长度设置 |
-| 到达率 | 沿用 L04 的 λ_low 与 λ_high，两个方案使用完全相同数值 |
+| 到达率 | 沿用 lab4 的 λ_low 与 λ_high，两个方案使用完全相同数值 |
 | 重复 | 每条件 seed 11/22/33；2 budget×2 rate×3=12 次 |
-| 请求数 | 沿用 L04 固定的 N；若必须改则整组改，并在运行前记录 |
+| 请求数 | 沿用 lab4 固定的 N；若必须改则整组改，并在运行前记录 |
 | 固定项 | 模型/revision、dtype、max-model-len、max-num-seqs、eager、prefix cache、软件、设备、SLO |
 
 本实验不关闭 chunked prefill，否则同时改变机制开关与 budget，无法用当前设计解释差异。若当前版本不允许某设置，先查日志与对应版本文档；不能静默换一个含义不同的参数。输入必须长于较小 budget，才更可能出现感兴趣的切分行为。
@@ -53,15 +55,15 @@ status: not-started
 
 ## 执行顺序
 
-1. 基于 L03 的完整服务命令，只把 `--max-num-batched-tokens` 分别设为 2048、512。启动后核对生效配置、模型与缓存设置；同一时间只运行一个服务。
+1. 基于 lab3 的完整服务命令，只把 `--max-num-batched-tokens` 分别设为 2048、512。启动后核对生效配置、模型与缓存设置；同一时间只运行一个服务。
 2. 每次切换服务，先让旧请求排空，停止自己启动的旧服务，确认显存释放到合理水平，再启动新服务。用相同形状的 8 个请求预热，预热不入正式结果。
 3. 保存事先确定的区组顺序：seed=11 时 A 的 low/high 后 B 的 low/high；seed=22 时先 B 后 A；seed=33 时再 A 后 B。每个服务实例完成两个 rate，减少重启成本；记录先后次序以便检查漂移。
 4. 每次 benchmark 完成立即检查成功数、实际长度与配置。失败运行保留，修复后另编号重跑，不能覆盖。
-5. **重新测量 A。** L04 的旧 baseline 可以作历史参考，但不能直接当本周唯一对照，因为温度、电源、后台任务或环境可能已经变化。
+5. **重新测量 A。** lab4 的旧 baseline 可以作历史参考，但不能直接当本周唯一对照，因为温度、电源、后台任务或环境可能已经变化。
 
 ## 结果分析
 
-主图以到达率为横轴、p95 TPOT 为纵轴，A/B 分组展示三轮点；权衡图分别展示 TTFT 与输出吞吐。给出每组的中位数、范围，不只给一个百分比。SLO 沿用 L04 的阈值，不为 B 重新定一个更宽目标。
+主图以到达率为横轴、p95 TPOT 为纵轴，A/B 分组展示三轮点；权衡图分别展示 TTFT 与输出吞吐。给出每组的中位数、范围，不只给一个百分比。SLO 沿用 lab4 的阈值，不为 B 重新定一个更宽目标。
 
 若 B 变快，检查是否实际输出变少、失败更多、缓存命中或后端变化。若 B 更慢，讨论小模型、小 batch、eager 模式或更多调度迭代是否改变瓶颈，但把这些标为解释候选。若差异很小，说明当前条件下未找到有力证据，不硬凑趋势。
 
