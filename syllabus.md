@@ -24,7 +24,7 @@ tags: [syllabus]
 | 3–4 | [L1 GPU 执行模型与 CUDA GEMM](lectures/L1-cuda-gemm.md) | [lab1](../mlsys-research-labs/lab1/README.md)（CUDA） | Tensor Core `mma.sync` 三级流水线 HGEMM，达到 cuBLAS 的 60–80% |
 | 5–6 | [L2 Attention：从 online softmax 到 FlashAttention](lectures/L2-attention.md) | [lab2](../mlsys-research-labs/lab2/README.md)（Triton + CUDA） | Triton FA2 与手写 `mma.sync` FA2 达到 SDPA 的 90%+；FlashDecoding split-KV |
 | 7–8 | [L3 深度学习编译器与超优化](lectures/L3-compilers.md) | [lab3](../mlsys-research-labs/lab3/README.md)（C++ + NVRTC） | mini-Mirage：改写 + 随机验证 + 代价搜索，自动发现 FlashAttention 式的重算 |
-| 9–11 | L4 LLM 推理系统 | lab4（Rust + CUDA） | PagedAttention + continuous batching + RadixAttention 前缀缓存 |
+| 9–11 | [L4 LLM 推理系统](lectures/L4-serving.md) | [lab4](../mlsys-research-labs/lab4/README.md)（Rust + CUDA） | 跑通 Qwen3-0.6B；PagedAttention + continuous batching + chunked prefill + 前缀缓存 |
 | 12 | L5 推测解码 | lab5（Rust + CUDA） | SpecInfer token tree 验证 |
 | 13–14 | L6 集合通信与并行训练 | lab6（C++ MPI / NCCL） | ring allreduce + bucket 化 DDP 计算/通信重叠 + ZeRO-1 |
 | 15–16 | L7 研究方法与研究项目 | lab7 | 从 lab2–lab6 中选一个方向，产出 2 页设计评审 + 提案 |
