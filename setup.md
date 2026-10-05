@@ -17,8 +17,8 @@
 | C++17 编译器 + CMake ≥ 3.18 | lab0 | Windows：[MSYS2](https://www.msys2.org/) 的 `mingw-w64-ucrt-x86_64-gcc cmake`，或 Visual Studio 2022；WSL/Linux：`sudo apt install build-essential cmake`；macOS：`xcode-select --install && brew install cmake` |
 | Python 3.10+、NumPy、matplotlib | lab0（基线和画图） | `python -m pip install numpy -r requirements-analysis.txt` |
 | WSL2 + CUDA Toolkit 12.x | lab1 | 见下文 |
-| Triton（随 PyTorch 安装） | lab2 | 在 WSL 里按 [PyTorch 官方选择器](https://pytorch.org/get-started/locally/) 安装 CUDA 版 PyTorch |
-| Rust（rustup）+ cudarc | lab4 | [rustup.rs](https://rustup.rs/)；lab4 README 会详细说明 |
+| PyTorch + Triton | lab2 | `tools/setup_wsl.sh`（见下文） |
+| Rust（rustup） | lab4、lab5 | `tools/setup_wsl.sh` |
 | MPI（Open MPI 或 MPICH） | lab6 | WSL/Linux：`sudo apt install openmpi-bin libopenmpi-dev`；macOS：`brew install open-mpi` |
 
 ## WSL2 与 CUDA（lab1 开始前做）
@@ -36,6 +36,32 @@
 4. 代码位置：仓库可以就放在 Windows 盘上（WSL 里通过 `/mnt/d/...` 访问），但构建目录放到 Linux 文件系统里，编译会快很多：`cmake -S lab1 -B ~/build/lab1`。
 
 > 为什么不用 Windows 原生的 nvcc？它要求特定版本的 MSVC 作为主机编译器。CUDA 12.6 支持 VS 2022（MSVC 14.3x）。作者机器上只有 VS 2026（MSVC 14.51），nvcc 的前端 `cudafe++` 会直接崩溃。WSL 里用 GCC 就没有这个问题。
+
+## lab2–lab7 的一次性安装（WSL）
+
+装好 CUDA 之后，在 WSL 里、仓库根目录下运行：
+
+```bash
+bash tools/setup_wsl.sh      # needs sudo once; ~15-30 min, ~12 GB download
+source ~/.bashrc
+bash tools/check_env.sh      # every required line must say OK
+```
+
+脚本会做五件事，可以重复运行（已装好的会跳过）：
+
+| 步骤 | 内容 | 位置 |
+|---|---|---|
+| 1 | apt：`python3-venv`、`python3-dev`（Triton 运行时要编译 C 启动代码）、`libssl-dev`、Open MPI | 系统 |
+| 2 | Python 虚拟环境：PyTorch（CUDA 12.6 版，自带 Triton）、numpy、matplotlib、pytest、transformers、safetensors、`hf` 命令 | `~/venvs/mlsys` |
+| 3 | Rust stable（rustup） | `~/.cargo`、`~/.rustup` |
+| 4 | `~/.bashrc`：CUDA 路径、cargo、`MLSYS_MODELS`，以及 `mlsys` 别名（用来激活虚拟环境） | |
+| 5 | 模型：Qwen3-0.6B（lab4 主模型、lab5 草稿模型）和 Qwen3-1.7B（lab5 目标模型） | `~/models` |
+
+说明：
+- **为什么是 CUDA 12.6 版的 PyTorch**：驱动 566.x 最高支持 CUDA 12.7，PyTorch 的 cu128 及更新版本需要更新的驱动。以后升级了 Windows 驱动，也可以换用更新的版本。
+- **不装 vLLM**：lab4 会自己实现推理引擎。如果想用 vLLM 当外部强基线，它的当前版本要求比 566.x 更新的驱动，需要先升级 Windows 驱动，再在**另一个**虚拟环境里安装。
+- 如果下载 Hugging Face 模型太慢，先 `export HF_ENDPOINT=https://hf-mirror.com`，再运行脚本。
+- **NCCL** 只在多 GPU 时有意义，lab6 会在 HPC 上使用，本机不需要装。
 
 ## 记录环境
 

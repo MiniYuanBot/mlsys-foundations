@@ -6,6 +6,8 @@
 |---|---|
 | `doctor.py` | 检查解释器与实验依赖，导出环境信息 |
 | `capture.py` | 运行外部命令，并保存配置、环境与日志 |
+| `setup_wsl.sh` | WSL 中一次性安装 lab2–lab7 的环境（Python 虚拟环境、PyTorch/Triton、Rust、模型） |
+| `check_env.sh` | 逐项检查全部工具链，必需项都 OK 时退出码为 0 |
 | `plot.py` | 从 CSV 画散点图（拒绝把模拟数据和实测数据、或不同设备画在同一张图里） |
 
-这些工具不会安装任何依赖。
+除 `setup_wsl.sh` 外，这些工具都不会安装任何依赖。
