@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 COURSE = ROOT.parent / "mlsys-research-course"
 # Labs that have been migrated to the new layout. Extend as each lab is rebuilt.
-LABS = ["lab0", "lab1"]
+LABS = ["lab0", "lab1", "lab2"]
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
 

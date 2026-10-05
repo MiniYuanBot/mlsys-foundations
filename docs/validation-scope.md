@@ -33,6 +33,21 @@
 
 **未验证**：Windows 原生构建。CUDA 12.6 与 VS 2026（MSVC 14.51）不兼容，`cudafe++` 会崩溃；VS 2022（MSVC 14.3x）应当可以，但没有测试。也没有在其他 GPU（RTX 30、A100、H100）上验证过。
 
+## lab2（2026-10-06）
+
+| 检查 | 环境 | 结果 |
+|---|---|---|
+| 构建 C1 共享库 | WSL2，CUDA 12.6，sm_89 | 参考实现与学生桩都无警告；C1 kernel 用 123 个寄存器、27 KB smem，没有溢出 |
+| 参考实现 + pytest | RTX 4060 Laptop，PyTorch 2.14.1+cu126，Triton 3.8.0 | 96 项全部通过 |
+| 学生桩 + pytest | 同上 | 95 项失败，只有 `test_C1_rejects_bad_shape` 通过（参数检查在 TODO 之前执行） |
+| softmax（4096×4096） | 同上 | torch.softmax 241 GB/s；A1 226（94%）；A2 234（97%）；unfused 60 |
+| attention D=64、S=4096 | 同上，B=4、H=16 | SDPA flash 28.8 TFLOP/s；Triton B2 27.5（95%）；CUDA C1 27.1（94%）；SDPA math 0.32 |
+| causal、S=4096 | 同上 | SDPA 27.8；Triton 25.4（91%，耗时为非 causal 的 54%）；CUDA 26.3（95%） |
+| D=128、S=4096 | 同上 | 默认 64/32/4w：67%；128/64/8w：98%（作为 B4 调参题） |
+| decode B=1、H=8、S=32768 | 同上 | 不切分 86 GB/s；自动切分 193 GB/s（2.3×）；SDPA 213 |
+
+**未验证**：其他 GPU；Triton 解释器模式（`TRITON_INTERPRET=1`）：A1 全部通过；B1 中 S=1 的 3 项因 Triton 3.8 解释器自身的 bug（`ConstTensorWrapper` 缺少 `untyped_storage`）失败，同样的用例在 GPU 上通过。
+
 ## 尚未重构的 lab
 
 `legacy/` 下是重构前的 lab1–lab7（新 lab1 已替代旧 lab1 的 CUDA 部分），只用于迁移参考，不保证可以运行。
