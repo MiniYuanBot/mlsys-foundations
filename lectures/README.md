@@ -18,6 +18,6 @@
 | [L2](L2-attention.md) | Attention：从 online softmax 到 FlashAttention | ✅ |
 | [L3](L3-compilers.md) | 深度学习编译器与超优化 | ✅ |
 | [L4](L4-serving.md) | LLM 推理系统 | ✅ |
-| L5 | 推测解码 | 🚧 |
+| [L5](L5-speculative.md) | 推测解码 | ✅ |
 | L6 | 集合通信与并行训练 | 🚧 |
 | L7 | 研究方法与研究项目 | 🚧 |
