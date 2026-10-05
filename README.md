@@ -2,6 +2,8 @@
 
 MLSys 课程的实验代码、任务说明与自评工具。配套的课程安排和论文阅读在 [课程仓库](../mlsys-research-course/README.md)。
 
+在 VS Code 中打开 [mlsys-research.code-workspace](mlsys-research.code-workspace)，可同时编辑课程和实验。两个仓库需保留现有目录名，并放在同一父目录下。
+
 | 目录 | 内容 |
 |---|---|
 | [lab0](lab0/README.md) | 训练检查与 C++ 张量布局 |

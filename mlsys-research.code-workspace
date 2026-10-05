@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "name": "mlsys-research-course",
+      "path": "../mlsys-research-course"
+    },
+    {
+      "name": "mlsys-research-labs",
+      "path": "."
+    }
+  ]
+}
