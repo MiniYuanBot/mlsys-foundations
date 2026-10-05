@@ -111,11 +111,22 @@ pub struct AttnArgs<'a> {
     pub kv_heads: usize,
     pub max_blocks: usize,
     pub block_size: usize,
+    /// lab5 tree attention: (per-token ancestor mask, prefix length). None = causal.
+    pub tree: Option<(&'a CudaSlice<u64>, usize)>,
 }
 
 pub fn paged_attention(gpu: &Gpu, which: AttnImpl, q: &Buf, k_cache: &Buf, v_cache: &Buf, out: &mut Buf, a: &AttnArgs) -> Result<()> {
     let scale = 1.0f32 / (128f32).sqrt();
     let (ti, hi, ki, mi, bi) = (a.t as i32, a.heads as i32, a.kv_heads as i32, a.max_blocks as i32, a.block_size as i32);
+    if let Some((mask, prefix_len)) = a.tree {
+        // lab5: kernel "tree_attention", registered through Gpu::with_extra_kernels.
+        let pl = prefix_len as i32;
+        let mut b = gpu.stream.launch_builder(gpu.func("tree_attention"));
+        b.arg(q).arg(k_cache).arg(v_cache).arg(a.block_tables).arg(mask).arg(&pl).arg(out);
+        b.arg(&ti).arg(&hi).arg(&ki).arg(&mi).arg(&bi).arg(&scale);
+        unsafe { b.launch(grid((a.t * a.heads).div_ceil(4), 128))? };
+        return Ok(());
+    }
     let name = if which == AttnImpl::Fast { "paged_attention" } else { "paged_attention_naive" };
     let mut b = gpu.stream.launch_builder(gpu.func(name));
     b.arg(q).arg(k_cache).arg(v_cache).arg(a.block_tables).arg(a.token_seq).arg(a.token_pos).arg(out);

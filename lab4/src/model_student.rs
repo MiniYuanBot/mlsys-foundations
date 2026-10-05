@@ -71,6 +71,7 @@ impl Qwen3 {
             kv_heads,
             max_blocks: b.max_blocks,
             block_size: cache.block_size,
+            tree: b.tree_mask.as_ref().map(|m| (m, b.prefix_len)),
         };
 
         ops::embedding(gpu, &self.w.embed_tokens, &b.tokens, &mut hidden, t, h)?;

@@ -74,6 +74,16 @@
 
 **未验证**：Qwen3-1.7B 的 HF 对齐（`make_reference.py --model Qwen3-1.7B` 可以生成参考，但测试默认只跑 0.6B）；与 vLLM 的对比（需要更新驱动）。
 
+## lab5（2026-10-06）
+
+| 检查 | 环境 | 结果 |
+|---|---|---|
+| 构建 | WSL2，Rust 1.99，依赖 lab4 的**参考实现** | 参考实现与学生桩都无警告 |
+| 参考实现 + `cargo test --release` | RTX 4060 Laptop，Qwen3-1.7B + 0.6B | verify 6/6、spec 5/5；拒绝采样的经验分布误差 0.0017；greedy 的 n-gram、draft、tree 都是 64/64 个 token 与 plain 相同 |
+| 学生桩 + 测试（链接 lab4 参考实现） | 同上 | 11 项全部失败 |
+| lab4 扩展点（tree attention 接口与额外 kernel 注册）之后重测 lab4 | 同上 | lab4 33/33 仍然通过 |
+| bench（192 个 token） | plain 56 tok/s | n-gram k=8：chat 1.24×、code 2.05×、copy 2.85×；draft k=2 约 1.2×；tree [3,2,1,1] 每次 forward 产出 3.84–4.47 个 token，但加速只有 1.05–1.17×；采样 T=0.8 k=3：1.04–1.07×；code 上 greedy 在第 152 个 token 处因 bf16 打平而分叉 |
+
 ## 尚未重构的 lab
 
 `legacy/` 下是重构前的 lab1–lab7（新 lab1 已替代旧 lab1 的 CUDA 部分），只用于迁移参考，不保证可以运行。

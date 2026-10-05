@@ -163,7 +163,7 @@ fn attention_case(which: AttnImpl) {
     let q = randn(t * hq * 128, 14, 1.0);
     let db = DeviceBatch::upload(&g, &batch).unwrap();
     let mut out = g.alloc::<bf16>(t * hq * 128).unwrap();
-    let args = AttnArgs { block_tables: &db.block_tables, token_seq: &db.token_seq, token_pos: &db.positions, t, heads: hq, kv_heads: hk, max_blocks: db.max_blocks, block_size: bs };
+    let args = AttnArgs { block_tables: &db.block_tables, token_seq: &db.token_seq, token_pos: &db.positions, t, heads: hq, kv_heads: hk, max_blocks: db.max_blocks, block_size: bs, tree: None };
     ops::paged_attention(&g, which, &g.upload(&to_bf16(&q)).unwrap(), &g.upload(&to_bf16(&kc)).unwrap(), &g.upload(&to_bf16(&vc)).unwrap(), &mut out, &args).unwrap();
     let want = attention_ref(&q, &kc, &vc, &batch, hq, hk, bs);
     assert_close(&format!("paged_attention {which:?}"), &to_f32(&g.download(&out).unwrap()), &want, 1e-2, 1e-2);

@@ -29,6 +29,12 @@ pub struct BatchInput {
     pub block_tables: Vec<i32>,
     pub max_blocks: usize,
     pub sample_rows: Vec<i32>,
+    /// Tree attention (lab5 Part C). Empty = normal causal attention. Otherwise
+    /// one sequence only: token i is tree node i, its K/V sit at cache position
+    /// `prefix_len + i`, and it attends to cache positions 0..prefix_len plus
+    /// the tree nodes j whose bit is set in tree_mask[i] (its ancestors and itself).
+    pub tree_mask: Vec<u64>,
+    pub prefix_len: usize,
 }
 
 impl BatchInput {
@@ -83,6 +89,8 @@ pub struct DeviceBatch {
     pub num_tokens: usize,
     pub num_samples: usize,
     pub max_blocks: usize,
+    pub tree_mask: Option<CudaSlice<u64>>,
+    pub prefix_len: usize,
 }
 
 impl DeviceBatch {
@@ -97,6 +105,8 @@ impl DeviceBatch {
             num_tokens: b.tokens.len(),
             num_samples: b.sample_rows.len(),
             max_blocks: b.max_blocks,
+            tree_mask: if b.tree_mask.is_empty() { None } else { Some(gpu.upload(&b.tree_mask)?) },
+            prefix_len: b.prefix_len,
         })
     }
 }

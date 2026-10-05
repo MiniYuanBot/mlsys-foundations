@@ -31,8 +31,16 @@ pub struct Gpu {
     _modules: Vec<Arc<CudaModule>>,
 }
 
+/// Extra kernel files registered by crates built on top of this one (lab5):
+/// (file name, source, function names).
+pub type ExtraKernels = &'static [(&'static str, &'static str, &'static [&'static str])];
+
 impl Gpu {
     pub fn new() -> Result<Self> {
+        Self::with_extra_kernels(&[])
+    }
+
+    pub fn with_extra_kernels(extra: ExtraKernels) -> Result<Self> {
         let ctx = CudaContext::new(0).context("no CUDA device (are you inside WSL with the driver visible?)")?;
         // One stream only: cudarc's cross-stream event tracking is pure overhead here.
         unsafe { ctx.disable_event_tracking() };
@@ -43,7 +51,11 @@ impl Gpu {
         let cuda_home = std::env::var("CUDA_HOME").unwrap_or_else(|_| "/usr/local/cuda".to_string());
         let mut functions = HashMap::new();
         let mut modules = Vec::new();
-        for (file, src) in SOURCES {
+        let all = SOURCES
+            .iter()
+            .map(|(f, s)| (*f, *s, FUNCTIONS.iter().find(|(g, _)| g == f).map(|(_, n)| *n).unwrap_or(&[])))
+            .chain(extra.iter().copied());
+        for (file, src, names) in all {
             let opts = CompileOptions {
                 arch: Some(arch),
                 include_paths: vec![format!("{cuda_home}/include")],
@@ -53,7 +65,6 @@ impl Gpu {
             };
             let ptx = compile_ptx_with_opts(src, opts).map_err(|e| anyhow!("NVRTC failed on kernels/{file}:\n{e:?}"))?;
             let module = ctx.load_module(ptx)?;
-            let names = FUNCTIONS.iter().find(|(f, _)| f == file).map(|(_, n)| *n).unwrap_or(&[]);
             for name in names {
                 let f = module.load_function(name).with_context(|| format!("kernel `{name}` missing from kernels/{file}"))?;
                 functions.insert(*name, f);
@@ -64,7 +75,7 @@ impl Gpu {
     }
 
     pub fn func(&self, name: &str) -> &CudaFunction {
-        self.functions.get(name).unwrap_or_else(|| panic!("unknown kernel {name}"))
+        self.functions.get(name).unwrap_or_else(|| panic!("unknown kernel {name} (not registered with Gpu::with_extra_kernels?)"))
     }
 
     pub fn upload<T: DeviceRepr>(&self, host: &[T]) -> Result<CudaSlice<T>> {
