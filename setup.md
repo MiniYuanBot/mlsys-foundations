@@ -23,11 +23,19 @@
 
 ## WSL2 与 CUDA（lab1 开始前做）
 
-1. 在 Windows PowerShell 执行 `wsl --install`，按提示重启，然后安装 Ubuntu。
-2. Windows 上装好最新的 NVIDIA 驱动即可。**不要在 WSL 里安装 Linux 显卡驱动**。参见 [NVIDIA CUDA on WSL](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
-3. 在 WSL 里执行 `nvidia-smi`，能看到 4060 就说明驱动正常。如果找不到命令，试试 `/usr/lib/wsl/lib/nvidia-smi`。
-4. 按 NVIDIA 文档中 “WSL-Ubuntu” 一节安装 CUDA Toolkit，再用 `nvcc --version` 确认。注意：`nvidia-smi` 里显示的 CUDA 版本只表示驱动支持到哪个版本，并不代表已经装了 toolkit。
-5. 把代码放在 WSL 的 Linux 文件系统里（如 `~/code/mlsys-research-labs`），不要放在 `/mnt/c` 或 `/mnt/d` 下，否则编译和 IO 会慢很多。两个仓库都 clone 到同一个父目录。
+1. 在 Windows PowerShell 执行 `wsl --install`，按提示重启，再安装 Ubuntu 24.04。
+2. Windows 上装好最新的 NVIDIA 驱动即可。**不要在 WSL 里安装 Linux 显卡驱动**：Windows 驱动会自动透传进 WSL，所以 WSL 里 `nvidia-smi` 能用。但这**不代表**已经装了 CUDA Toolkit（`nvcc`）。参见 [NVIDIA CUDA on WSL](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
+3. 在 WSL 里安装 Toolkit（需要 sudo，约 3 GB）：
+   ```bash
+   cd /tmp && wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-keyring_1.1-1_all.deb
+   sudo dpkg -i cuda-keyring_1.1-1_all.deb && sudo apt-get update && sudo apt-get -y install cuda-toolkit-12-6
+   echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc && source ~/.bashrc
+   nvcc --version     # should print release 12.6
+   ```
+   一定要选 `wsl-ubuntu` 仓库，不要选普通的 `ubuntu2404`：后者会把 Linux 显卡驱动一起装上。
+4. 代码位置：仓库可以就放在 Windows 盘上（WSL 里通过 `/mnt/d/...` 访问），但构建目录放到 Linux 文件系统里，编译会快很多：`cmake -S lab1 -B ~/build/lab1`。
+
+> 为什么不用 Windows 原生的 nvcc？它要求特定版本的 MSVC 作为主机编译器。CUDA 12.6 支持 VS 2022（MSVC 14.3x）。作者机器上只有 VS 2026（MSVC 14.51），nvcc 的前端 `cudafe++` 会直接崩溃。WSL 里用 GCC 就没有这个问题。
 
 ## 记录环境
 

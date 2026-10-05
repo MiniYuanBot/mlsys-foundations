@@ -13,7 +13,7 @@ MLSys 自学课程的实验代码。课程大纲、讲义和阅读材料在相�
 | Lab | 主题 | 语言 | 硬件 | 状态 |
 |---|---|---|---|---|
 | [lab0](lab0/README.md) | minitensor：strided 张量、GEMM 优化阶梯、lazy 融合 | C++17 | 任意 CPU | ✅ 已完成 |
-| lab1 | CUDA 执行模型与 GEMM：tiling → 寄存器分块 → Tensor Core | CUDA C++ | RTX 4060 | 🚧 重构中 |
+| [lab1](lab1/README.md) | CUDA 执行模型与 GEMM：tiling → 寄存器分块 → Tensor Core | CUDA C++ | RTX 4060（WSL2） | ✅ 已完成 |
 | lab2 | Attention kernel：online softmax → FlashAttention-2 → FlashDecoding / paged | Triton + CUDA | RTX 4060 | 🚧 |
 | lab3 | 张量编译器：IR → 融合 → CUDA 代码生成 → mini-Mirage 搜索 | C++ + NVRTC | RTX 4060 | 🚧 |
 | lab4 | 推理引擎：KV cache、paged 分配器、continuous batching、前缀缓存 | Rust 控制平面 + CUDA kernel | RTX 4060 | 🚧 |
