@@ -26,7 +26,7 @@ tags: [syllabus]
 | 7–8 | [L3 深度学习编译器与超优化](lectures/L3-compilers.md) | [lab3](../mlsys-research-labs/lab3/README.md)（C++ + NVRTC） | mini-Mirage：改写 + 随机验证 + 代价搜索，自动发现 FlashAttention 式的重算 |
 | 9–11 | [L4 LLM 推理系统](lectures/L4-serving.md) | [lab4](../mlsys-research-labs/lab4/README.md)（Rust + CUDA） | 跑通 Qwen3-0.6B；PagedAttention + continuous batching + chunked prefill + 前缀缓存 |
 | 12 | [L5 推测解码](lectures/L5-speculative.md) | [lab5](../mlsys-research-labs/lab5/README.md)（Rust + CUDA） | 无损的拒绝采样；SpecInfer token tree + tree attention |
-| 13–14 | L6 集合通信与并行训练 | lab6（C++ MPI / NCCL） | ring allreduce + bucket 化 DDP 计算/通信重叠 + ZeRO-1 |
+| 13–14 | [L6 集合通信与并行训练](lectures/L6-distributed.md) | [lab6](../mlsys-research-labs/lab6/README.md)（C++ MPI） | 手写 ring / recursive doubling allreduce + α-β 模型；DDP bucket 重叠 + ZeRO-1 |
 | 15–16 | L7 研究方法与研究项目 | lab7 | 从 lab2–lab6 中选一个方向，产出 2 页设计评审 + 提案 |
 
 > 讲义 L1–L7 和对应 lab 正在按 L0 的格式逐个重构。旧版内容暂存在 `legacy/`。
