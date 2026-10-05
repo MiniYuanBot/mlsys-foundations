@@ -84,6 +84,19 @@
 | lab4 扩展点（tree attention 接口与额外 kernel 注册）之后重测 lab4 | 同上 | lab4 33/33 仍然通过 |
 | bench（192 个 token） | plain 56 tok/s | n-gram k=8：chat 1.24×、code 2.05×、copy 2.85×；draft k=2 约 1.2×；tree [3,2,1,1] 每次 forward 产出 3.84–4.47 个 token，但加速只有 1.05–1.17×；采样 T=0.8 k=3：1.04–1.07×；code 上 greedy 在第 152 个 token 处因 bf16 打平而分叉 |
 
+## lab6（2026-10-06）
+
+| 检查 | 环境 | 结果 |
+|---|---|---|
+| 构建 | WSL2，GCC 13.3，Open MPI 4.1.6 | 参考实现与学生桩都无警告 |
+| 参考实现 + `ctest` | 同上，P = 1、2、3、4、8（test_coll）与 1、2、4（test_train） | 8/8 次运行全部通过 |
+| 学生桩 + 测试 | 同上 | 8/8 次运行失败；只有提供的 chunk_range、MPI 基线、C0 同步 DDP 通过 |
+| ping-pong | 2 个 rank，共享内存 | α ≈ 0.24 µs，β ≈ 19 GB/s，n_1/2 ≈ 4.5 KB |
+| allreduce（P=4） | 同上 | 4 B：RD 0.6 µs、ring 1.7 µs；4 MB：ring 592 µs、MPI 718 µs、RD 1390 µs、star 2161 µs；α-β 模型约为实测的 1/2 到 1/3 |
+| 训练（P=4，batch 16，3.2M 参数） | 同上 | sync 23.1 ms（comm_wait 6.2）；overlap 4 MB bucket 21.4 ms（comm_wait 3.7）；zero1 15.3 ms，优化器状态 6 MB（sync 为 24 MB）；comm_wait 在多次运行之间波动约 ±30% |
+
+**未验证**：macOS（Open MPI 通过 Homebrew 安装）；`hpc/` 下的 NCCL 脚本（没有 HPC 账号）。
+
 ## 尚未重构的 lab
 
 `legacy/` 下是重构前的 lab1–lab7（新 lab1 已替代旧 lab1 的 CUDA 部分），只用于迁移参考，不保证可以运行。

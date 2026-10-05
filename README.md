@@ -18,7 +18,7 @@ MLSys 自学课程的实验代码。课程大纲、讲义和阅读材料在相�
 | [lab3](lab3/README.md) | tinycomp 张量编译器：IR → 融合 → CUDA 代码生成（NVRTC）→ mini-Mirage 搜索 | C++17 | RTX 4060（WSL2） | ✅ 已完成 |
 | [lab4](lab4/README.md) | minillm 推理引擎（Qwen3-0.6B）：PagedAttention、continuous batching、chunked prefill、前缀缓存 | Rust + CUDA | RTX 4060（WSL2） | ✅ 已完成 |
 | [lab5](lab5/README.md) | specdec 推测解码：n-gram 草稿、无损拒绝采样、SpecInfer token tree（Qwen3-1.7B + 0.6B） | Rust + CUDA | RTX 4060（WSL2） | ✅ 已完成 |
-| lab6 | 集合通信与并行训练：ring allreduce → α-β 模型 → DDP 重叠 / ZeRO | C++ MPI（HPC 上用 NCCL） | CPU 多进程 / HPC | 🚧 |
+| [lab6](lab6/README.md) | 集合通信与数据并行：ring / recursive doubling allreduce、α-β 模型、DDP bucket 重叠、ZeRO-1 | C++17 + MPI | 多核 CPU（HPC 上 NCCL 可选） | ✅ 已完成 |
 | lab7 | 研究项目：从 lab2–lab6 中选一个方向扩展 | — | 视方向而定 | 🚧 |
 
 `legacy/` 下是重构前的旧版 lab1–lab7，只作为迁移参考，之后会逐步删除。
