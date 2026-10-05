@@ -35,10 +35,10 @@ tags: [lecture, tensor, stride, gemm, roofline, fusion, compiler]
 无论张量有几维，内存都只是一长串地址。一个 2×3 的矩阵：
 
 ```
-逻辑视图（你脑中的样子）          物理存储（内存里真实的样子）
+logical view (in your head)          physical storage (in memory)
         col0 col1 col2
 row0  [  0    1    2  ]         storage: [ 0 | 1 | 2 | 3 | 4 | 5 ]
-row1  [  3    4    5  ]                   ^0  ^1  ^2  ^3  ^4  ^5   ← 存储下标
+row1  [  3    4    5  ]          index:    0   1   2   3   4   5
 ```
 
 把逻辑位置 `(i, j)` 映射到存储下标的规则，就是张量的**布局**。最常见的是**行优先**（row-major，也叫 C order），同一行的元素在内存里挨在一起。
@@ -62,7 +62,7 @@ $$
 
 ```
 shape   = [2, 3, 4]
-strides = [3×4, 4, 1] = [12, 4, 1]
+strides = [3x4, 4, 1] = [12, 4, 1]
 ```
 
 所以，一个张量 = **一块共享的存储** + **shape、strides、offset 三样元数据**。PyTorch 的 `Tensor`、NumPy 的 `ndarray` 都是这样设计的，你在 lab A 里写的 `mt::Tensor` 也一样。
@@ -113,13 +113,13 @@ flowchart LR
 一个切片例子：`arange(12).view({3,4})` 取第 1 维的 `1:4:2`，也就是第 1、3 列：
 
 ```
-原张量 shape=[3,4] strides=[4,1]        切片后 shape=[3,2] strides=[4,2] offset=1
+original: shape=[3,4] strides=[4,1]     slice: shape=[3,2] strides=[4,2] offset=1
 
    0  1  2  3                               1  3
-   4  5  6  7          ──────►              5  7
+   4  5  6  7          ------->             5  7
    8  9 10 11                               9 11
 
-storage: [ 0 |█1█| 2 |█3█| 4 |█5█| 6 |█7█| 8 |█9█|10 |█11█]   █ = 切片能访问到的元素
+storage: [ 0 |*1*| 2 |*3*| 4 |*5*| 6 |*7*| 8 |*9*|10 |*11*]   *x* = reachable from the slice
 ```
 
 ### 2.2 广播：stride 为 0 的魔法
@@ -128,19 +128,19 @@ NumPy 的广播规则只有一条：**两个 shape 从右往左对齐，每一�
 
 ```
 a:      [3, 1, 5]
-b:         [4, 5]      → 补齐成 [1, 4, 5]
-结果:   [3, 4, 5]
+b:         [4, 5]      -> padded on the left to [1, 4, 5]
+result: [3, 4, 5]
 ```
 
 实现上，把大小为 1 的维度“拉伸”成 n，只需把它的 stride 设成 **0**：沿这一维无论走多少步，地址都不变，读到的永远是同一个元素。
 
 ```
 row = [1, 2, 3]   shape=[3] stride=[1]
-row.broadcast_to([4, 3])  →  shape=[4,3] strides=[0,1]
+row.broadcast_to([4, 3])  ->  shape=[4,3] strides=[0,1]
 
-逻辑视图             读到的存储下标
+logical view         storage index read
 [1 2 3]              0 1 2
-[1 2 3]              0 1 2     ← 每一行都指向同一块内存
+[1 2 3]              0 1 2     <- every row points at the same memory
 [1 2 3]              0 1 2
 [1 2 3]              0 1 2
 ```
@@ -216,20 +216,20 @@ $$
 $$
 
 ```
- GFLOP/s (对数)
+ GFLOP/s (log)
    ^
-150|- - - - - - - - - - -┌───────────────────  ← 计算上限（峰值）
+150|- - - - - - - - - - -+-------------------  <- compute roof (peak)
    |                    /:
    |                  /  :
    |                /    :       GEMM n=1024
-   |              /      :         ● I≈170
+   |              /      :         o  I~170
  10|            /        :
-   |          /  ← 斜率 = 带宽
+   |          /  <- slope = memory bandwidth
    |        /            :
-  1|  ●   /              :
-   | 逐元素加 I≈0.08     :
-   +-----------------------------------------> 算术强度 I (FLOP/Byte, 对数)
-       0.1      1     ~7.5 (拐点)    100
+  1|  o   /              :
+   |  elementwise add, I~0.08
+   +-----------------------------------------> arithmetic intensity I (FLOP/Byte, log)
+       0.1      1     ~7.5 (ridge)   100
 ```
 
 两个例子（float32，每个元素 4 字节）：
@@ -263,12 +263,12 @@ for i: for k: { a = A[i][k];  for j: C[i][j] += a * B[k][j]; }
 现在最内层沿 j 走，`B[k][j]` 和 `C[i][j]` 都是连续访问，编译器还可以把这个循环自动向量化，一次处理 8 个 j。只是交换了两层循环，速度就能提升 10–30 倍。
 
 ```
-i-j-k: 最内层读 B 的一列           i-k-j: 最内层读 B 的一行
-   B                                 B
-  [█ . . .]                         [. . . .]
-  [█ . . .]  ← 每个 █ 在不同的        [█ █ █ █]  ← 一条缓存行装下 16 个
-  [█ . . .]    缓存行                 [. . . .]
-  [█ . . .]                         [. . . .]
+i-j-k: inner loop reads a COLUMN of B     i-k-j: inner loop reads a ROW of B
+   B                                        B
+  [# . . .]                                [. . . .]
+  [# . . .]  <- each # is on a             [# # # #]  <- one cache line holds 16 floats
+  [# . . .]     different cache line       [. . . .]
+  [# . . .]                                [. . . .]
 ```
 
 ### 3.5 第二步：分块（lab B2）
@@ -278,12 +278,12 @@ i-k-j 循环中，对每个 i 都要把**整个 B**（N×N）扫一遍。N=1024 
 **分块**（blocking / tiling）的思路是：把 B 切成能装进缓存的小块，让一块在被挤出缓存之前，尽量多地被复用。
 
 ```
-          N                        把 C = A·B 切成块：
-   ┌──┬──┬──┬──┐                  对 B 的每个 KC×NC 块（能装进 L2/L3）：
- K │B00│B01│..│                     对 A 的每个 MC 行块：
-   ├──┼──┼──┼──┤                       用这个 B 块更新 C 的对应块
-   │B10│..│  │                    → 每个 B 块从内存读一次，被 M/MC 个行块复用
-   └──┴──┴──┴──┘
+          N                        Cut C = A*B into blocks:
+   +---+---+---+---+               for each KC x NC block of B (fits in L2/L3):
+ K |B00|B01|...|   |                 for each MC-row block of A:
+   +---+---+---+---+                   update the matching block of C
+   |B10|...|   |   |               -> each B block is read from memory once
+   +---+---+---+---+                  and reused by M/MC row blocks
 ```
 
 只套三层分块循环通常能再快 1.5 倍左右（lab 参考实现从 31 提到 47 GFLOP/s）。要离 BLAS 更近，还需要下一步。
@@ -295,14 +295,14 @@ Kazushige Goto 的方法（[Goto & van de Geijn, TOMS 2008](https://www.cs.utexa
 **想法 1：在寄存器里分块（微内核）。** 用 MR×NR 个累加器把 C 的一个小块整块留在寄存器里。每一步 k：
 
 ```
-         NR=16 (2 个 YMM)
-        ┌────────────────┐
-  b_k → │ b b b b ... b b│   从打包的 B 读 16 个 float（2 次向量 load）
-        └────────────────┘
- MR=6  a0 ─► acc[0][0..15] += a0 * b    a_r 用 broadcast 复制成 8 份
-       a1 ─► acc[1][0..15] += a1 * b
-       ...                               共 6×2 = 12 条 FMA 指令
-       a5 ─► acc[5][0..15] += a5 * b
+         NR=16 (2 YMM registers)
+        +------------------+
+  b_k ->| b b b b ... b b  |   16 floats from packed B (2 vector loads)
+        +------------------+
+ MR=6  a0 --> acc[0][0..15] += a0 * b    a_r is broadcast to 8 lanes
+       a1 --> acc[1][0..15] += a1 * b
+       ...                               6 x 2 = 12 FMA instructions
+       a5 --> acc[5][0..15] += a5 * b
 ```
 
 寄存器预算（AVX2 共 16 个 YMM）：12 个累加器 + 2 个放 b + 1 个放广播的 a = **15 个**，刚好装下。每一步读 6+16 = 22 个 float，做 6×16 = 96 次 FMA，计算/访存比很高。
@@ -310,10 +310,10 @@ Kazushige Goto 的方法（[Goto & van de Geijn, TOMS 2008](https://www.cs.utexa
 **想法 2：打包（packing）。** 把 A 的 MC×KC 块和 B 的 KC×NC 块，事先复制成微内核要求的顺序（lab B3a、B3b）：
 
 ```
-打包后的 A 面板（MR 行一组，按 k 排列）     打包后的 B 面板（NR 列一组，按 k 排列）
-k=0: a00 a10 a20 a30 a40 a50                k=0: b00 b01 ... b0,15
-k=1: a01 a11 a21 a31 a41 a51                k=1: b10 b11 ... b1,15
-...  （微内核按顺序读，完全连续）           ...
+packed A panel (MR rows, k-major)            packed B panel (NR cols, k-major)
+k=0: a00 a10 a20 a30 a40 a50                 k=0: b00 b01 ... b0,15
+k=1: a01 a11 a21 a31 a41 a51                 k=1: b10 b11 ... b1,15
+...  (the micro-kernel reads both sequentially)
 ```
 
 打包要多花一次复制，但换来：微内核的读取完全连续、能对齐、不会有 TLB 缺失；边界补零后，微内核里不需要任何 if。
@@ -366,24 +366,24 @@ C 的不同行块之间互不依赖，按行切块交给多个线程，不需要
 PyTorch 默认是 **eager** 模式：写一行算一行。看这个计算：
 
 ```python
-y = relu(x * w + b)        # x, w, b 都是 N 个 float
+y = relu(x * w + b)        # x, w, b each hold N floats
 ```
 
 eager 下它是 3 个 kernel：
 
 ```
-kernel 1: t1 = x * w      读 x, w (8N 字节)   写 t1 (4N)
-kernel 2: t2 = t1 + b     读 t1, b (8N)       写 t2 (4N)
-kernel 3: y  = relu(t2)   读 t2 (4N)          写 y  (4N)
-                          ─────────────────────────────
-                          共读 20N 字节，写 12N 字节，其中 t1、t2 是中间结果
+kernel 1: t1 = x * w      read x, w  (8N bytes)   write t1 (4N)
+kernel 2: t2 = t1 + b     read t1, b (8N)         write t2 (4N)
+kernel 3: y  = relu(t2)   read t2    (4N)         write y  (4N)
+                          ------------------------------------
+                          total: read 20N, write 12N bytes; t1, t2 are temporaries
 ```
 
 **融合**（fusion）成一个 kernel：
 
 ```
-fused:   y[i] = relu(x[i]*w[i] + b[i])   读 x,w,b (12N)  写 y (4N)
-                                          共 16N 字节，是原来的一半
+fused:   y[i] = relu(x[i]*w[i] + b[i])   read x,w,b (12N)  write y (4N)
+                                          total 16N bytes: half of unfused
 ```
 
 每个元素只做 3 次运算，整个计算都在 Roofline 拐点的左边，**时间几乎正比于搬运的字节数**，所以流量减半就约等于提速一倍。链条越长（比如 GELU 有 9 个算子），省得越多。
