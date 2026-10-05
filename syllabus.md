@@ -21,7 +21,7 @@ tags: [syllabus]
 | 周 | 讲义 | Lab | ③ 前沿复现目标 |
 |---|---|---|---|
 | 1–2 | [L0 张量、内存与 CPU 性能](lectures/L0-tensor-runtime.md) | [lab0 minitensor](../mlsys-research-labs/lab0/README.md)（C++） | Goto GEMM 达到 BLAS 的 80%；tinygrad 式 lazy 融合 |
-| 3–4 | L1 GPU 执行模型与 CUDA GEMM | lab1（CUDA） | Tensor Core HGEMM 达到 cuBLAS 的 70% |
+| 3–4 | [L1 GPU 执行模型与 CUDA GEMM](lectures/L1-cuda-gemm.md) | [lab1](../mlsys-research-labs/lab1/README.md)（CUDA） | Tensor Core `mma.sync` 三级流水线 HGEMM，达到 cuBLAS 的 60–80% |
 | 5–6 | L2 Attention：从 online softmax 到 FlashAttention | lab2（Triton → CUDA） | FlashAttention-2 前向；FlashDecoding split-KV |
 | 7–8 | L3 深度学习编译器与超优化 | lab3（C++ + NVRTC） | mini-Mirage：融合方案搜索 + 概率等价验证 |
 | 9–11 | L4 LLM 推理系统 | lab4（Rust + CUDA） | PagedAttention + continuous batching + RadixAttention 前缀缓存 |

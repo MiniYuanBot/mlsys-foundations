@@ -7,7 +7,7 @@ tags: [lecture, tensor, stride, gemm, roofline, fusion, compiler]
 
 # L0 张量、内存与 CPU 性能
 
-[← 课程大纲](../syllabus.md) · 配套实验：[lab0 minitensor](../../mlsys-research-labs/lab0/README.md) · 下一讲：L1 GPU 执行模型与 CUDA GEMM（重构中）
+[← 课程大纲](../syllabus.md) · 配套实验：[lab0 minitensor](../../mlsys-research-labs/lab0/README.md) · 下一讲：[L1 GPU 执行模型与 CUDA GEMM](L1-cuda-gemm.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **一个张量在内存里到底长什么样？** 为什么转置、切片、广播都可以“免费”完成？

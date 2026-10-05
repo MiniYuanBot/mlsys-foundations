@@ -14,7 +14,7 @@
 | 讲 | 主题 | 状态 |
 |---|---|---|
 | [L0](L0-tensor-runtime.md) | 张量、内存与 CPU 性能 | ✅ |
-| L1 | GPU 执行模型与 CUDA GEMM | 🚧 |
+| [L1](L1-cuda-gemm.md) | GPU 执行模型与 CUDA GEMM | ✅ |
 | L2 | Attention：从 online softmax 到 FlashAttention | 🚧 |
 | L3 | 深度学习编译器与超优化 | 🚧 |
 | L4 | LLM 推理系统 | 🚧 |
