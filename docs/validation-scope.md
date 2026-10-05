@@ -48,6 +48,16 @@
 
 **未验证**：其他 GPU；Triton 解释器模式（`TRITON_INTERPRET=1`）：A1 全部通过；B1 中 S=1 的 3 项因 Triton 3.8 解释器自身的 bug（`ConstTensorWrapper` 缺少 `untyped_storage`）失败，同样的用例在 GPU 上通过。
 
+## lab3（2026-10-06）
+
+| 检查 | 环境 | 结果 |
+|---|---|---|
+| 构建 | WSL2，GCC 13.3，CUDA 12.6（NVRTC 与 driver API，不需要 nvcc） | 参考实现与学生桩都无警告 |
+| 参考实现 + 测试 | RTX 4060 Laptop | test_a 9/9、test_b 12/12、test_c 9/9 |
+| 学生桩 + 测试 | 同上 | 全部失败，只有 `C0_canonical_distinguishes_sharing_from_copies` 通过（它只测已提供的代码） |
+| `bench_fusion` | 8192×4096 | softmax：unfused 5 个 kernel 55 GB/s → fused 1 个 236；layernorm 36 → 239；rmsnorm 63 → 227；matmul_bias_gelu 4096×1024×4096：15.2 → 6.5 ms（5.3 TFLOP/s） |
+| `bench_search` | softmax_matmul 8192×8192×64 | unfused 11.9 ms；搜索找到 6 个等价候选；模型排第一的实测 6.6 ms（实测第二），实测最快 5.8 ms（模型第四） |
+
 ## 尚未重构的 lab
 
 `legacy/` 下是重构前的 lab1–lab7（新 lab1 已替代旧 lab1 的 CUDA 部分），只用于迁移参考，不保证可以运行。
