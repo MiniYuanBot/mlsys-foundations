@@ -16,7 +16,7 @@ MLSys 自学课程的实验代码。课程大纲、讲义和阅读材料在相�
 | [lab1](lab1/README.md) | CUDA 执行模型与 GEMM：tiling → 寄存器分块 → Tensor Core | CUDA C++ | RTX 4060（WSL2） | ✅ 已完成 |
 | [lab2](lab2/README.md) | Attention kernel：online softmax → FlashAttention-2（Triton 与手写 mma.sync）→ FlashDecoding | Triton + CUDA | RTX 4060（WSL2） | ✅ 已完成 |
 | [lab3](lab3/README.md) | tinycomp 张量编译器：IR → 融合 → CUDA 代码生成（NVRTC）→ mini-Mirage 搜索 | C++17 | RTX 4060（WSL2） | ✅ 已完成 |
-| lab4 | 推理引擎：KV cache、paged 分配器、continuous batching、前缀缓存 | Rust 控制平面 + CUDA kernel | RTX 4060 | 🚧 |
+| [lab4](lab4/README.md) | minillm 推理引擎（Qwen3-0.6B）：PagedAttention、continuous batching、chunked prefill、前缀缓存 | Rust + CUDA | RTX 4060（WSL2） | ✅ 已完成 |
 | lab5 | 推测解码：n-gram 草稿 → 拒绝采样 → SpecInfer token tree | Rust + CUDA | RTX 4060 | 🚧 |
 | lab6 | 集合通信与并行训练：ring allreduce → α-β 模型 → DDP 重叠 / ZeRO | C++ MPI（HPC 上用 NCCL） | CPU 多进程 / HPC | 🚧 |
 | lab7 | 研究项目：从 lab2–lab6 中选一个方向扩展 | — | 视方向而定 | 🚧 |

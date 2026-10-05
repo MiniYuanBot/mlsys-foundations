@@ -58,6 +58,22 @@
 | `bench_fusion` | 8192×4096 | softmax：unfused 5 个 kernel 55 GB/s → fused 1 个 236；layernorm 36 → 239；rmsnorm 63 → 227；matmul_bias_gelu 4096×1024×4096：15.2 → 6.5 ms（5.3 TFLOP/s） |
 | `bench_search` | softmax_matmul 8192×8192×64 | unfused 11.9 ms；搜索找到 6 个等价候选；模型排第一的实测 6.6 ms（实测第二），实测最快 5.8 ms（模型第四） |
 
+## lab4（2026-10-06）
+
+| 检查 | 环境 | 结果 |
+|---|---|---|
+| 构建 | WSL2，Rust 1.99，cudarc 0.17.8，CUDA 12.6（NVRTC 与 cuBLAS） | 参考实现与学生桩都无警告 |
+| 参考实现 + `cargo test --release` | RTX 4060 Laptop，Qwen3-0.6B（bf16） | 33/33：kernels 8、model 2、kv 10、scheduler 9、engine 4 |
+| 与 HF transformers 5.18（fp32）对齐 | 同上，4 个 prompt（7–241 个 token） | teacher forcing 下最小余弦相似度 0.998–0.9999，top-1 一致率 0.996–1.0；greedy 24 个 token：3 个 prompt 全同，1 个前 13 个相同 |
+| 学生桩 + 测试 | 同上 | 32 项失败，只有 `b0_paged_attention_naive_reference` 通过 |
+| 单请求 decode | 同上 | 119 tok/s（带宽上限约 142） |
+| bench：attention | 16 个请求 × 1024 + 64 | naive 19 → fast 224 tok/s（11.8×） |
+| bench：batching | 64 个请求 × 256 + 32–224（输出长度随机），max_seqs 16 | static 363 → continuous 858 tok/s（2.4×）；TTFT p50 10.9 → 2.7 s |
+| bench：前缀缓存 | 64 个请求 × 512（共享 448）+ 32 | 431 → 1325 tok/s（3.1×）；TTFT p50 2084 → 658 ms；块命中率 0.96 |
+| bench：chunked prefill | 40 个请求 × 1536 + 128，Poisson 到达，rate = 2 | 不分块（2048）TPOT p99 61 ms；分块 256：53 ms，0 次抢占。没有准入控制时，分块会出现 63–201 次抢占，反而更慢（已写入 README） |
+
+**未验证**：Qwen3-1.7B 的 HF 对齐（`make_reference.py --model Qwen3-1.7B` 可以生成参考，但测试默认只跑 0.6B）；与 vLLM 的对比（需要更新驱动）。
+
 ## 尚未重构的 lab
 
 `legacy/` 下是重构前的 lab1–lab7（新 lab1 已替代旧 lab1 的 CUDA 部分），只用于迁移参考，不保证可以运行。
