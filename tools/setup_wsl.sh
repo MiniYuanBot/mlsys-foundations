@@ -52,14 +52,14 @@ if [[ $WITH_MODELS == 1 ]]; then
     step "5/5 models -> $MODELS (Qwen3-0.6B ~1.5 GB, Qwen3-1.7B ~4 GB)"
     mkdir -p "$MODELS"
     for m in Qwen3-0.6B Qwen3-1.7B; do
-        if [[ -f "$MODELS/$m/config.json" ]]; then
+        if [[ -f "$MODELS/$m/config.json" && -f "$MODELS/$m/tokenizer.json" ]]; then
             echo "$m already present"
         else
-            # If huggingface.co is slow from your network, run
+            # Download the whole repo (configs, tokenizer, weights); files
+            # already on disk are skipped. If huggingface.co is slow, run
             #   export HF_ENDPOINT=https://hf-mirror.com
             # before this script.
-            "$VENV/bin/hf" download "Qwen/$m" --local-dir "$MODELS/$m" \
-                --include "*.json" "*.safetensors" "*.txt"
+            "$VENV/bin/hf" download "Qwen/$m" --local-dir "$MODELS/$m"
         fi
     done
 else

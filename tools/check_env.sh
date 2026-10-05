@@ -32,14 +32,24 @@ check 1 "MPI (lab6)"       bash -c "mpirun --version | head -1"
 echo "== python venv ($VENV)"
 check 1 "python"           "$PY" -c "import sys; print(sys.version.split()[0])"
 check 1 "torch + CUDA"     "$PY" -c "import torch; assert torch.cuda.is_available(), 'cuda not available'; x=torch.randn(512,512,device='cuda'); (x@x).sum().item(); print(torch.__version__, torch.version.cuda, torch.cuda.get_device_name())"
-check 1 "triton kernel"    "$PY" -c "
+# Triton reads kernel source from a file, so the test kernel goes into a temp file.
+TRITON_TEST=$(mktemp --suffix=.py)
+trap 'rm -f "$TRITON_TEST"' EXIT
+cat > "$TRITON_TEST" <<'PY'
 import torch, triton, triton.language as tl
+
 @triton.jit
 def add(x, y, o, n, B: tl.constexpr):
-    i = tl.program_id(0) * B + tl.arange(0, B); m = i < n
+    i = tl.program_id(0) * B + tl.arange(0, B)
+    m = i < n
     tl.store(o + i, tl.load(x + i, mask=m) + tl.load(y + i, mask=m), mask=m)
-a = torch.randn(1000, device='cuda'); b = torch.randn_like(a); c = torch.empty_like(a)
-add[(4,)](a, b, c, 1000, B=256); assert torch.allclose(c, a + b); print('triton', triton.__version__)"
+
+a = torch.randn(1000, device="cuda"); b = torch.randn_like(a); c = torch.empty_like(a)
+add[(4,)](a, b, c, 1000, B=256)
+assert torch.allclose(c, a + b)
+print("triton", triton.__version__, "compiled and ran a kernel")
+PY
+check 1 "triton kernel"    "$PY" "$TRITON_TEST"
 check 1 "transformers"     "$PY" -c "import transformers, safetensors, numpy, matplotlib; print('transformers', transformers.__version__)"
 
 echo "== rust"
