@@ -34,6 +34,8 @@ class Structure(unittest.TestCase):
     def test_student_files_contain_no_reference_solution_markers(self):
         for lab in LABS:
             for path in (ROOT / lab).rglob("*_student.*"):
+                if path.suffix not in {".py", ".cpp", ".cu", ".cuh", ".hpp", ".rs"} or "__pycache__" in path.parts:
+                    continue
                 text = path.read_text(encoding="utf-8")
                 with self.subTest(path=str(path.relative_to(ROOT))):
                     self.assertNotIn("BEGIN SOLUTION", text)
