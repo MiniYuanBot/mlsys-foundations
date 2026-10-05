@@ -14,8 +14,10 @@
 | `bench_gemm` 参考实现 | Intel i9 Alder Lake（24 线程），n=1024 | naive 0.85，reordered 31，blocked 47，packed 113，parallel(24t) 369；n=2048 时 parallel 605 GFLOP/s |
 | BLAS 基线 | NumPy 2.5 + MKL 2025 | 1 线程 129，24 线程 650 GFLOP/s |
 | `bench_fusion` 参考实现 | 同上，n=2^24 | affine：unfused 340 ms，tiled 37 ms；gelu：unfused 2.7 s，tiled 0.79 s |
+| 参考实现 + 测试 | WSL2 Ubuntu 24.04，GCC 13.3，CMake 3.28 | 全部通过；`bench_gemm` n=1024：packed 123，parallel(24t) 494 GFLOP/s |
+| `MT_SANITIZE=ON`（ASan + UBSan） | 同上 | 全部通过，无报告 |
 
-**未验证**：MSVC、Apple clang（arm64/NEON）、Linux GCC 下的构建与性能；`MT_SANITIZE=ON`（MinGW 不支持 ASan）。如果你在这些平台上遇到问题，请记录编译器版本与报错。
+**未验证**：MSVC、Apple clang（arm64/NEON）。如果你在这些平台上遇到问题，请记录编译器版本与报错。
 
 ## 尚未重构的 lab
 
