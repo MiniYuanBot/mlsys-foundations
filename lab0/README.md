@@ -36,14 +36,14 @@ PyTorch 的 `Tensor` 背后其实只有一块平坦的内存，再加上 shape�
 ```bash
 cmake -S lab0 -B build/lab0 -DCMAKE_BUILD_TYPE=Release        # Windows+MinGW 加 -G "MinGW Makefiles"
 cmake --build build/lab0 -j
-ctest --test-dir build/lab0 --output-on-failure                # 一开始三项都会失败，这是正常的
+ctest --test-dir build/lab0 --output-on-failure                # all 3 fail at first: expected
 ```
 
 常用命令：
 
 ```bash
-build/lab0/test_a_tensor          # 运行 Part A 全部测试
-build/lab0/test_a_tensor A5       # 只运行名字含 "A5" 的测试
+build/lab0/test_a_tensor          # all Part A tests
+build/lab0/test_a_tensor A5       # only tests whose name contains "A5"
 ctest --test-dir build/lab0 -L partB --output-on-failure
 ```
 
@@ -55,16 +55,16 @@ ctest --test-dir build/lab0 -L partB --output-on-failure
 
 ```
 lab0/
-├── include/mt/
-│   ├── tensor.hpp        Tensor 类与算子声明（先通读一遍，注释就是规格说明）
-│   ├── gemm.hpp          GEMM 接口、分块参数 MR/NR/MC/KC/NC、打包布局说明
-│   └── lazy.hpp          Lazy 图、Kernel、Program（后缀指令）的定义
-├── src/
-│   ├── *_core.cpp        已提供的实现：读懂它们，一般不需要改
-│   └── *_student.cpp     你要写的部分：所有 TODO(A*/B*/C*) 都在这三个文件里
-├── tests/                测试（check.hpp 是一个 60 行的迷你测试框架）
-├── bench/                bench_gemm、bench_fusion 两个性能测试程序
-└── scripts/              blas_baseline.py（强基线）、plot_gemm.py（画图）
++-- include/mt/
+|   +-- tensor.hpp        Tensor class + ops (read it first: comments are the spec)
+|   +-- gemm.hpp          GEMM API, blocking knobs MR/NR/MC/KC/NC, packing layout
+|   +-- lazy.hpp          lazy graph, Kernel, Program (postfix code)
++-- src/
+|   +-- *_core.cpp        provided: read them, normally no changes needed
+|   +-- *_student.cpp     YOUR code: every TODO(A*/B*/C*) lives in these 3 files
++-- tests/                tests (check.hpp is a 60-line test framework)
++-- bench/                bench_gemm, bench_fusion
++-- scripts/              blas_baseline.py (strong baseline), plot_gemm.py (plots)
 ```
 
 规则：**只改 `src/*_student.cpp`**。`gemm.hpp` 中的分块常量可以调，调完必须重跑测试。其他文件不要改；如果你认为某个测试本身有错，写进报告里。
@@ -117,7 +117,7 @@ std::cout << t.slice(1, 1, 4, 2).describe();
    ```bash
    mkdir -p results/lab0
    python lab0/scripts/blas_baseline.py --threads 1 > results/lab0/blas_1t.csv
-   python lab0/scripts/blas_baseline.py --threads 8 > results/lab0/blas_8t.csv   # 换成你的核数
+   python lab0/scripts/blas_baseline.py --threads 8 > results/lab0/blas_8t.csv   # use your core count
    ```
 3. 跑一次 `build/lab0/bench_gemm`，现在只会有 naive 一行数据。把它和 BLAS 比一比，差距通常有 30–100 倍。
 
@@ -144,7 +144,7 @@ std::cout << t.slice(1, 1, 4, 2).describe();
 ```bash
 build/lab0/bench_gemm --sizes 128,256,512,1024,2048 > results/lab0/gemm.csv
 python lab0/scripts/plot_gemm.py results/lab0/gemm.csv results/lab0/blas_1t.csv results/lab0/blas_8t.csv \
-    --peak <你算的单核峰值> --out results/lab0/gemm.png
+    --peak <your-1-core-peak> --out results/lab0/gemm.png
 ```
 
 **通过标准**
