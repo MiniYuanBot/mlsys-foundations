@@ -35,7 +35,7 @@ capture 保存命令、环境、输出和退出码；**不会从 stdout 猜造 r
 
 ## 服务数据
 
-原 JSON 原样保留。根据安装版本记录字段映射，再转成 [请求规范](../lab3/schema.md)。成功/失败、实际长度、时段和分母需一一可核对。duration 应注明是否含排空阶段；统计采用已核实的工具口径，TTFT 不等于纯 prefill GPU 时间，TPOT 不等于最坏 ITL。
+原 JSON 原样保留。根据安装版本记录字段映射，再转成该 lab 规定的请求格式。成功/失败、实际长度、时段和分母需一一可核对。duration 应注明是否含排空阶段；统计采用已核实的工具口径，TTFT 不等于纯 prefill GPU 时间，TPOT 不等于最坏 ITL。
 
 容量阶段允许 rate=inf，正式矩阵只用有限 rate、burstiness=1；不加客户端 max-concurrency。每次重启服务先等 readiness，再运行 8 个相同形状预热请求。客户端与服务端分终端，同一时刻只有一个服务、一个 benchmark；不要把 commands.txt 整体当 shell 脚本执行。
 

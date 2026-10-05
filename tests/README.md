@@ -1,10 +1,9 @@
-# 框架自检
+# 仓库自检
 
-这里检查公共工具、评分器、目录结构和文档链接。
+检查已迁移的 lab 的目录结构、Python 语法和 Markdown 链接，并确认学生文件里没有残留参考答案标记。
 
-- `test_infrastructure.py`：数据约束、命令生成与证据校验。
-- `test_grading.py`：评分状态及层次隔离。
-- `test_structure.py`：任务文件、评分配置、语法与链接。
-- `grader_fixtures.py`：评分器测试样例。
+```bash
+python -m unittest discover -s tests -v
+```
 
-修改公共工具或调整文件后，从仓库根目录运行 `python -m unittest discover -s tests -v`。这些检查通过不代表完成了 lab；学生测试在各实验目录。
+这些检查通过，不代表你完成了 lab。每个 lab 的测试在该 lab 目录内，用 CTest 或 cargo test 运行。

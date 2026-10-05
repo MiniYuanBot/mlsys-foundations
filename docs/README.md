@@ -1,14 +1,10 @@
 # 实验手册
 
-这里集中存放各实验共用的说明。
+各 lab 共用的说明。
 
 | 文件 | 用途 |
 |---|---|
-| [course-map.md](course-map.md) | 课程内容与实验代码的对应关系 |
-| [experiment-records.md](experiment-records.md) | 运行记录、测量与结果归档 |
-| [grading.md](grading.md) | 测试入口、分层评分与证据填写 |
-| [validation-scope.md](validation-scope.md) | 已检查和未实测的范围 |
-| [course-sources.json](course-sources.json) | 配套课程文件的来源与哈希 |
-| `provenance/` | 保留的课程来源快照 |
+| [experiment-records.md](experiment-records.md) | 运行记录、测量规范与结果归档 |
+| [validation-scope.md](validation-scope.md) | 脚手架本身在什么环境下验证过、哪些部分还没有实测 |
 
-开始实验前读实验规范，提交报告前读评分说明。具体任务和环境步骤在各 lab 目录。
+各 lab 的任务、构建命令与验收清单在对应目录的 `README.md` 和 `grade.md` 中。

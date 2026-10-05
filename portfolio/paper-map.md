@@ -4,5 +4,5 @@
 |---|---|---|---|---|---|---|
 | 待填 | | | | | | |
 
-按 [论文路线](../../mlsys-research-course/readings/papers.md) 完成16份指定阅读的短卡（含artifact规范），选择6–8份深入讨论；不要求把所有拓展论文全文读完。卡片可用 [课程模板](../../mlsys-research-course/templates/paper-card.md)。每卡包括原文定位、主张、实验证据、限制、一个能检验的问题。论文标题/结论需回到原文核查。
+按 各讲讲义指定的必读论文写短卡（论文脉络见 [资料汇总](../../mlsys-research-course/readings/resources.md)）（含artifact规范），选择6–8份深入讨论；不要求把所有拓展论文全文读完。卡片可用 [课程模板](../../mlsys-research-course/templates/paper-card.md)。每卡包括原文定位、主张、实验证据、限制、一个能检验的问题。论文标题/结论需回到原文核查。
 
