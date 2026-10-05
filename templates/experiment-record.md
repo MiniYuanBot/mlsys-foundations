@@ -5,7 +5,7 @@ tags: [mlsys, template, experiment]
 
 # 实验记录｜实验编号与运行日期
 
-[返回索引](../guides/course-map.md) · [实验规范](../guides/experiments.md)
+[返回大纲](../syllabus.md) · [实验规范](../guides/experiments.md)
 
 ## 运行前填写
 

@@ -6,7 +6,7 @@ updated: 2026-10-05
 
 # 在线算子 OJ：平台选择与练习路线
 
-[返回索引](course-map.md) · [AI 辅助实验增强](ai-assisted-labs.md) · [融合算子挑战](../labs/lab2x-kernel-challenge.md)
+[返回大纲](../syllabus.md)
 
 在线评测适合给算子实现增加外部正确性检查、远端硬件测量和陌生输入。课程优先选择与现有工具相容的 NVIDIA/Triton 平台；TensorOJ 用来探索 Ascend C / 昇腾。先选一个平台打通提交，不同时维护四套环境。
 
@@ -31,7 +31,7 @@ OJ 评测环境通常围绕单个算子设计。lab3–lab7 的 vLLM 常驻服�
 |---|---|---|---|
 | lab2 B 课 | [Tensara 题库](https://tensara.org/problems) 的 Vector Addition，或 LeetGPU 同名题 | 根据提交模板适配入口、mask、dtype、设备；读一次真实评测反馈 | 替换 B 课原 135–160 分钟的作业导航，25 分钟；排队/登录未完成就记阻塞 |
 | lab2 增强 | 本地行 softmax 的参数消融；外部迁移可看 [Tensara Log Softmax](https://tensara.org/problems/log-softmax) | 稳定归约与形状变化；log-softmax 需要改变公式，不能直接提交 softmax 输出 | 消融在本周 5h 内，完整迁移到 OJ 放入 X 周；不以刷榜为验收 |
-| X 周 NVIDIA 路线 | [lab2x 融合残差＋RMSNorm](../labs/lab2x-kernel-challenge.md)；LeetGPU 题库搜索 Fused Residual Add and RMS Norm | 独立参考实现、融合、FP32 累加、误差与性能权衡 | 5h 实验，另有两节准备课；先按本课程小规模规格实现，OJ 扩展另计 |
+| X 周 NVIDIA 路线 | 融合残差＋RMSNorm；LeetGPU 题库搜索 Fused Residual Add and RMS Norm | 独立参考实现、融合、FP32 累加、误差与性能权衡 | 5h 实验，另有两节准备课；先按本课程小规模规格实现，OJ 扩展另计 |
 | lab5 / X 周 Ascend 路线 | [TensorOJ Relu](https://tensoroj.cn/cann/public/vector/relu) → [Add](https://tensoroj.cn/cann/public/vector/add)，二选一 | 读懂题面、数据搬运、分块与尾部处理；识别广播/多 dtype 增加的复杂度 | lab5 只做题面比较；完整实现选 X 周，先跑受限子集，不把它报作全题通过 |
 | 后续 kernel 方向 | [Tensara Softmax](https://tensara.org/problems/softmax)、[TensorOJ Softmax](https://tensoroj.cn/cann/public/vector/softmax)、[AddRmsNorm](https://tensoroj.cn/cann/public/vector/addrmsnorm) | 任意归约维度、多 dtype、融合或多核分块 | 在已有可测 baseline 后选一题，估时 5–10h；不是第三周的额外必做 |
 

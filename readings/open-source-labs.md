@@ -1,6 +1,6 @@
 # 开源实验选用指南
 
-本页于 **2026-10-05** 核验所列一手仓库/课程入口；它为 [16 周论文与实验路线](papers.md) 提供现成脚手架、测试和真实系统源码。主线以本地 labs 的 README/setup/grade 为交付入口，每模块只选必要的一项外部依赖，不要求把下面所有项目安装一遍。
+本页于 **2026-10-05** 核验所列一手仓库/课程入口；它为 [资料汇总](resources.md) 提供现成脚手架、测试和真实系统源码。主线以本地 labs 的 README/setup/grade 为交付入口，每模块只选必要的一项外部依赖，不要求把下面所有项目安装一遍。
 
 ## 如何采用现成材料
 
@@ -39,7 +39,7 @@ vLLM 采用 **v0.10.2 作为源码阅读参照**，不要求为了阅读而覆�
 - [`vllm/v1/core/kv_cache_manager.py`](https://github.com/vllm-project/vllm/blob/v0.10.2/vllm/v1/core/kv_cache_manager.py)、[`single_type_kv_cache_manager.py`](https://github.com/vllm-project/vllm/blob/v0.10.2/vllm/v1/core/single_type_kv_cache_manager.py)、[`block_pool.py`](https://github.com/vllm-project/vllm/blob/v0.10.2/vllm/v1/core/block_pool.py)：追踪命中、分配、引用与可驱逐页。
 - [`vllm/benchmarks/serve.py`](https://github.com/vllm-project/vllm/blob/v0.10.2/vllm/benchmarks/serve.py)：研究到达过程和结果字段；该版本旧 `benchmarks/benchmark_serving.py` 已是转发入口，不能凭旧路径猜命令语义。
 
-先完成本地 [runtime 状态机](../../mlsys-research-labs/lab3/runtime/README.md)，再提交实际引擎 patch 与对应回归证据。可做有必要的生命周期诊断、已有事件缺失修补或受控策略修改；只改 launch 参数不满足「改运行时」交付。记录真实 import 文件路径，避免编辑 checkout 却测试了另一个安装包。若用其他版本运行，提交路径/机制映射；基线与改动版必须使用同一个基础 SHA 和依赖环境。
+先完成本地 runtime 状态机，再提交实际引擎 patch 与对应回归证据。可做有必要的生命周期诊断、已有事件缺失修补或受控策略修改；只改 launch 参数不满足「改运行时」交付。记录真实 import 文件路径，避免编辑 checkout 却测试了另一个安装包。若用其他版本运行，提交路径/机制映射；基线与改动版必须使用同一个基础 SHA 和依赖环境。
 
 缓存进阶参考 SGLang [`python/sglang/srt/mem_cache/radix_cache.py`](https://github.com/sgl-project/sglang/blob/main/python/sglang/srt/mem_cache/radix_cache.py)，[Apache-2.0](https://github.com/sgl-project/sglang/blob/main/LICENSE)。冻结 SHA，选择命中/引用/驱逐的一条调用链，做 uniform 与 skewed prefix 的公平对照；SGLang 作为第二系统是选修，不强制再安装一套重型 serving 环境。Python 调度控制代码仍然是 MLSys 系统代码，评价标准是机制、正确性与实验，而非单凭文件扩展名。
 

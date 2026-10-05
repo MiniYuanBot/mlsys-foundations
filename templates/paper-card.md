@@ -5,7 +5,7 @@ tags: [mlsys, template, paper]
 
 # 论文卡｜填写论文短名
 
-[返回索引](../guides/course-map.md) · [阅读方法](../guides/reading.md)
+[返回大纲](../syllabus.md) · [阅读方法](../guides/reading.md)
 
 - 论文链接、作者、年份、会议/预印本状态：
 - 阅读日期与深度（扫读 / 关键部分精读 / 复现）：

@@ -5,7 +5,7 @@ tags: [mlsys, template, weekly]
 
 # 第几周｜日期
 
-[返回索引](../guides/course-map.md)
+[返回大纲](../syllabus.md)
 
 ## 给自己与导师看的进展
 

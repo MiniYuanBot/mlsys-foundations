@@ -5,7 +5,7 @@ tags: [mlsys, roadmap]
 
 # 从本课程到 2027 年暑期申请
 
-[返回索引](course-map.md)
+[返回大纲](../syllabus.md)
 
 ## 将两个目标分开管理
 

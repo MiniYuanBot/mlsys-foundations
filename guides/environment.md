@@ -5,7 +5,7 @@ tags: [mlsys, environment]
 
 # 设备、环境与算力使用
 
-[返回索引](course-map.md) · [实验规范](experiments.md)
+[返回大纲](../syllabus.md) · [实验规范](experiments.md)
 
 ## 设备分工
 
@@ -97,7 +97,7 @@ vllm bench serve --help > results/environment/vllm-bench-help.txt
 
 使用 [Qwen 官方模型卡](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct) 所对应的模型。记录模型仓库名、实际下载的 revision/commit、tokenizer revision 和下载时间。后续所有对照使用同一份权重与 tokenizer；不在实验中途自动换版本。
 
-本课程的保守起始配置如下，完整使用方法见 [lab3](../labs/lab3-serving.md)：
+本课程的保守起始配置如下，推理服务 lab（lab4）会详细说明使用方法：
 
 ```bash
 vllm serve Qwen/Qwen2.5-0.5B-Instruct \

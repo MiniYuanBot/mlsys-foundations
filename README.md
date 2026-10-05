@@ -1,18 +1,17 @@
 # MLSys Research Course
 
-一门从系统基础走向研究实验的自学课程，涵盖原生算子、GPU kernel、推理服务和分布式训练。建议用 16 周完成，每周约 11 小时。
+一门从系统基础一路走到研究前沿的自学课程，内容涵盖张量运行时、GPU kernel、深度学习编译器、LLM 推理系统、推测解码和分布式训练。课程共 16 周，每周约 11 小时。
 
-本仓库放课程、阅读资料和实验要求；代码、测试与评分位于相邻的 [mlsys-research-labs](../mlsys-research-labs/README.md)。
+本仓库存放大纲、讲义和阅读资料；代码、测试和验收清单在相邻的 [mlsys-research-labs](../mlsys-research-labs/README.md)。两个仓库要放在同一个父目录下。本仓库可以直接作为 Obsidian vault 打开。
 
 | 入口 | 内容 |
 |---|---|
-| [syllabus.md](syllabus.md) | 学习顺序、系统任务、研究选题与完成要求 |
-| [guides/](guides/README.md) | 起步、环境、实验记录和论文阅读方法 |
-| [modules/](modules/README.md) | 各主题的基础课程与练习 |
-| [labs/](labs/README.md) | 基础实验题面与提交要求 |
-| [readings/](readings/README.md) | 推荐论文、参考课程和开源实验 |
-| [templates/](templates/README.md) | 阅读卡、实验记录、报告与提案模板 |
+| [syllabus.md](syllabus.md) | **精简大纲**：16 周总表、各讲要点、完成标准 |
+| [lectures/](lectures/README.md) | **详细讲义**：每讲从基础原理一步步推到前沿，配图、手算例子和自测题 |
+| [readings/](readings/README.md) | 资料汇总：每个主题的论文脉络、可视化资料、代码和参考课程 |
+| [guides/](guides/README.md) | 起步、环境、实验规范、论文阅读与研究路线 |
+| [templates/](templates/README.md) | 阅读卡、实验记录、周报、提案模板 |
 
-先读 [起步指南](guides/getting-started.md) 和 [课程计划](syllabus.md)，再按 lab0–lab7 学习。每章结合阅读、基础练习和系统任务，最后选择一个方向完成研究实验。
+**怎么开始**：先读 [起步指南](guides/getting-started.md)，再读 [大纲](syllabus.md)，然后从 [L0 讲义](lectures/L0-tensor-runtime.md) 和 [lab0](../mlsys-research-labs/lab0/README.md) 开始。
 
-环境需要自行配置。开始前按任务确认硬件需求；CPU 模拟、单卡实验和多 GPU 实验支持的结论不同，报告中应注明实际测量范围。
+`legacy/` 存放重构前的旧版模块与题面，只作迁移参考。

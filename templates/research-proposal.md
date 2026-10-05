@@ -5,7 +5,7 @@ tags: [mlsys, template, proposal]
 
 # 研究提案｜暂定题目
 
-[返回索引](../guides/course-map.md)
+[返回大纲](../syllabus.md)
 
 目标长度约 1,200–1,800 中文字，另附一张图与参考文献。Markdown 的屏幕分页不固定，“两页”指精简汇报的篇幅；需要打印时再排版。
 
