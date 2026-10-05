@@ -144,7 +144,7 @@ void adam_update(float* p, const float* g, float* m, float* v, size_t n, int t, 
     }
 }
 
-CommThread::CommThread(const Comm& c, AllreduceFn fn) : c_(c), fn_(fn), thread_([this] { loop(); }) {}
+CommThread::CommThread(const Comm& c, AllreduceFn fn) : c_(c), fn_(fn) { thread_ = std::thread([this] { loop(); }); }
 
 CommThread::~CommThread() {
     {

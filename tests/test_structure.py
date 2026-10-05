@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 COURSE = ROOT.parent / "mlsys-research-course"
 # Labs that have been migrated to the new layout. Extend as each lab is rebuilt.
-LABS = ["lab0", "lab1", "lab2", "lab3", "lab4", "lab5", "lab6"]
+LABS = ["lab0", "lab1", "lab2", "lab3", "lab4", "lab5", "lab6", "lab7"]
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
 
@@ -28,8 +28,8 @@ class Structure(unittest.TestCase):
                 folder = ROOT / lab
                 for name in ("README.md", "grade.md"):
                     self.assertTrue((folder / name).is_file(), f"{lab}/{name}")
-                self.assertTrue((folder / "CMakeLists.txt").is_file() or (folder / "Cargo.toml").is_file(),
-                                f"{lab} has no CMakeLists.txt or Cargo.toml")
+                builds = [folder / "CMakeLists.txt", folder / "Cargo.toml", folder / "tests" / "__init__.py"]
+                self.assertTrue(any(p.is_file() for p in builds), f"{lab} has no CMake, Cargo or Python test entry point")
 
     def test_student_files_contain_no_reference_solution_markers(self):
         for lab in LABS:

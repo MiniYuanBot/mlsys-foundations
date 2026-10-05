@@ -1,0 +1,18 @@
+{
+  "name": "bucket_overlap",
+  "question": "Does DDP-style gradient bucketing (4 MB buckets) shorten the training step of the lab6 MLP compared with one allreduce after backward?",
+  "hypothesis": "Overlapping bucket allreduces with the rest of backward hides part of the communication, so step time drops by at least 5% at P=4, and the effect persists for other batch sizes and rank counts.",
+  "metric": "step_ms",
+  "direction": "lower",
+  "min_effect": 0.05,
+  "repeats": 5,
+  "workdir": ".",
+  "command": "mpirun --oversubscribe -np {P} build/lab6/train --mode {mode} --bucket-mb {bucket} --batch {batch} --steps 12",
+  "arms": {
+    "baseline": {"mode": "sync", "bucket": 0},
+    "treatment": {"mode": "overlap", "bucket": 4},
+    "ablation_one_bucket": {"mode": "overlap", "bucket": 64}
+  },
+  "dev": [{"P": 4, "batch": 16}],
+  "heldout": [{"P": 2, "batch": 16}, {"P": 4, "batch": 64}]
+}

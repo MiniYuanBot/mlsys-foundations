@@ -97,6 +97,15 @@
 
 **未验证**：macOS（Open MPI 通过 Homebrew 安装）；`hpc/` 下的 NCCL 脚本（没有 HPC 账号）。
 
-## 尚未重构的 lab
+## lab7（2026-10-06）
 
-`legacy/` 下是重构前的 lab1–lab7（新 lab1 已替代旧 lab1 的 CUDA 部分），只用于迁移参考，不保证可以运行。
+| 检查 | 环境 | 结果 |
+|---|---|---|
+| 参考实现 + `python -m unittest lab7.tests.test_stats` | Windows Python 3.14 与 WSL Python 3.12 | 13/13；bootstrap 覆盖率测试通过 |
+| 学生桩 | 同上 | 9 项失败，只有提供的预注册、锁定、解析测试通过 |
+| 示例研究端到端（dev → 锁定前拒绝 held-out → lock → held-out → report） | WSL，lab6 参考实现 | 跑通；P=4、batch 64：0.907 [0.886, 0.944]，supported；P=2：inconclusive；消融无效果 |
+| 发现并修复的 bug | lab6 `CommThread` | 线程在成员构造完之前就已启动（初始化顺序 UB），在实验矩阵中 60 次运行里崩溃 2 次；已修复，lab6 测试重跑通过 |
+
+## 重构完成
+
+lab0–lab7 全部重构完毕，旧版 `legacy/` 已删除。

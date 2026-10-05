@@ -81,13 +81,16 @@ private:
     void loop();
     Comm c_;
     AllreduceFn fn_;
-    std::thread thread_;
     std::mutex mu_;
     std::condition_variable cv_;
     std::deque<std::pair<float*, size_t>> queue_;
     int pending_ = 0, submitted_ = 0;
     bool stop_ = false;
     double busy_ = 0;
+    // Declared LAST and started in the constructor body: members are
+    // initialised in declaration order, and the thread must not run loop()
+    // before mu_, cv_ and stop_ exist (this was a real intermittent crash).
+    std::thread thread_;
 };
 
 // ------------------------------------------------------- student: C1 ----
