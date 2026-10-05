@@ -1,0 +1,30 @@
+# Environments, caches, local secrets
+.venv*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.env
+.env.*
+!.env.example
+# Generated measurements: preserve locally; publish selected evidence intentionally.
+results/
+artifacts/
+build/
+external/
+*.o
+*.obj
+*.exe
+*.so
+*.dylib
+*.dll
+*.pt
+*.pth
+*.safetensors
+*.onnx
+*.log
+.DS_Store
+Thumbs.db

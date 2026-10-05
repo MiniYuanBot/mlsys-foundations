@@ -1,0 +1,45 @@
+{
+  "synthetic": true,
+  "run_id": "synthetic-four-requests",
+  "duration_s": 2,
+  "num_requested": 4,
+  "requests": [
+    {
+      "request_id": "0",
+      "success": true,
+      "input_tokens": 1024,
+      "output_tokens": 4,
+      "ttft_s": 0.1,
+      "tpot_s": 0.1,
+      "error": null
+    },
+    {
+      "request_id": "1",
+      "success": true,
+      "input_tokens": 1024,
+      "output_tokens": 2,
+      "ttft_s": 0.2,
+      "tpot_s": 0.3,
+      "error": null
+    },
+    {
+      "request_id": "2",
+      "success": true,
+      "input_tokens": 1024,
+      "output_tokens": 1,
+      "ttft_s": 0.4,
+      "tpot_s": null,
+      "error": null
+    },
+    {
+      "request_id": "3",
+      "success": false,
+      "input_tokens": null,
+      "output_tokens": 0,
+      "ttft_s": null,
+      "tpot_s": null,
+      "error": "synthetic timeout"
+    }
+  ]
+}
+

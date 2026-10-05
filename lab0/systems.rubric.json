@@ -1,0 +1,41 @@
+{
+  "lab": "lab0",
+  "tier": "systems",
+  "pass_threshold": 80,
+  "criteria": [
+    {
+      "id": "native",
+      "kind": "auto",
+      "points": 30,
+      "suite": "lab0.native.tests.Native",
+      "description": "C++ stride/非连续/边界/算子独立正确性",
+      "required": true,
+      "timeout_s": 300
+    },
+    {
+      "id": "ab",
+      "kind": "manual",
+      "points": 25,
+      "minimum": 20,
+      "description": "保留同精度A/B与BLAS强基线，开发三shape各三轮、线程/分配口径（25）",
+      "required": true
+    },
+    {
+      "id": "mechanism",
+      "kind": "manual",
+      "points": 25,
+      "minimum": 15,
+      "description": "布局/编译flag/资源账本、拷贝摊销与来源解释（25）",
+      "required": true
+    },
+    {
+      "id": "holdout",
+      "kind": "manual",
+      "points": 20,
+      "minimum": 15,
+      "description": "未见非方阵/stride、代码diff、原始记录与重建（20）",
+      "required": true
+    }
+  ]
+}
+

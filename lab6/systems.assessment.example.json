@@ -1,0 +1,33 @@
+{
+  "correctness": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "baseline": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "preregister": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "controls": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "artifact": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  }
+}
+

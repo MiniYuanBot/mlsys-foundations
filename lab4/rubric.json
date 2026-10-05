@@ -1,0 +1,51 @@
+{
+  "lab": "lab4",
+  "course_source": "L04-workloads.md",
+  "pass_threshold": 80,
+  "criteria": [
+    {
+      "id": "slo",
+      "kind": "auto",
+      "points": 20,
+      "suite": "lab4.tests.SLO",
+      "required": true,
+      "description": "所有发出请求为分母、联合 SLO、goodput、边界等号"
+    },
+    {
+      "id": "matrix",
+      "kind": "auto",
+      "points": 10,
+      "suite": "lab4.tests.Matrix",
+      "required": true,
+      "description": "完整 12 条矩阵、有限 rate、交错顺序与固定参数"
+    },
+    {
+      "id": "design",
+      "kind": "manual",
+      "points": 20,
+      "required": true,
+      "minimum": 20,
+      "title": "运行前冻结设计",
+      "description": "真实 C 与数值化 0.3C/0.7C（5）；30 请求稳定 pilot，2×中位数 SLO 预先冻结（10）；统一 N、顺序与时间预算（5）。"
+    },
+    {
+      "id": "measurements",
+      "kind": "manual",
+      "points": 30,
+      "required": true,
+      "minimum": 30,
+      "title": "真实矩阵证据",
+      "description": "12 次原始请求/命令/配置（15）；失败与长度/时段校验、每轮汇总（10）；没有客户端并发截断到达过程（5）。"
+    },
+    {
+      "id": "analysis",
+      "kind": "manual",
+      "points": 20,
+      "required": true,
+      "minimum": 10,
+      "title": "图与结论",
+      "description": "两张图显示逐轮 p95 TTFT、输出吞吐与 SLO（10）；600–900 字含替代解释、尾部样本局限和下一步（10）。"
+    }
+  ]
+}
+

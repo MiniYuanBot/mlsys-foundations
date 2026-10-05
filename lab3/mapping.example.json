@@ -1,0 +1,17 @@
+{
+  "vllm_version": null,
+  "source_file": null,
+  "request_array_layout": null,
+  "duration_field": null,
+  "duration_unit": null,
+  "success_field": null,
+  "input_tokens_field": null,
+  "output_tokens_field": null,
+  "ttft_field": null,
+  "ttft_unit": null,
+  "tpot_field_or_formula": null,
+  "tpot_unit": null,
+  "failure_alignment_evidence": null,
+  "implementation_reference": null
+}
+

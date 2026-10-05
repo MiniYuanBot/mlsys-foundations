@@ -1,0 +1,174 @@
+{
+  "course_directory": "../mlsys-research-course",
+  "snapshot_date": "2026-10-05",
+  "course_commit": "81f6f6447011870868f786dd1e41b6bc99c1e614",
+  "snapshot_kind": "working-tree",
+  "course_has_uncommitted_changes": true,
+  "provenance_snapshot": "provenance/course-snapshot.json",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "e6489cbc3ae315ad16c771642cab4e62968396c7c816a55d400cb15eb17a5a31"
+    },
+    {
+      "path": "guides/README.md",
+      "sha256": "3ab37e27d715be8a6214480a1b2fd554165e781e8d76af1e91bf7ed68ff6bfca"
+    },
+    {
+      "path": "guides/ai-assisted-labs.md",
+      "sha256": "c6303ed5e2328340e1df77dccd73c5e14446379c0d2011b8abe615ad10b2c8da"
+    },
+    {
+      "path": "guides/course-map.md",
+      "sha256": "f1dcd892114a18f312493e1602862509cc6d21c576f83a3484bb5cce950dd5ca"
+    },
+    {
+      "path": "guides/environment.md",
+      "sha256": "ba42ac347fe9cca60de51c649c9266293dea9a45a3d11ea1f5dac2261768311a"
+    },
+    {
+      "path": "guides/experiments.md",
+      "sha256": "52ad3293e81d5c3bf5a8eaa4b6c5bf452211da554520d8af38526c80185ce9b2"
+    },
+    {
+      "path": "guides/getting-started.md",
+      "sha256": "f253fc785c6fc5a008a858512d0eeaeb874ac9df89b2d622a7b82169a15faebd"
+    },
+    {
+      "path": "guides/online-judge.md",
+      "sha256": "f5e1406a233f81d8dbacbde1b1d77d2c48607e2e59f21f66bd49fabd00a3e01d"
+    },
+    {
+      "path": "guides/reading.md",
+      "sha256": "9dfb72070b6363d576badb832c75abfa7fd3da8c21c49a548cb7453562ab8e2b"
+    },
+    {
+      "path": "guides/research-roadmap.md",
+      "sha256": "eb4ae624f2783a3f23b6040e9eff65565d6f25c76ae94f8c9b9d868e6a16edb3"
+    },
+    {
+      "path": "labs/README.md",
+      "sha256": "ee0a733c98ac1b2ff5b56bef9c4bf65c79e7bd772b619d76e0e7a33534492aae"
+    },
+    {
+      "path": "labs/lab0-pytorch.md",
+      "sha256": "470c4170b8c2dc4260876abea9e9a96cb22e8a788229313084dafdfb9d420c18"
+    },
+    {
+      "path": "labs/lab1-attention.md",
+      "sha256": "96376103cf657e065f96545b7033bd610486bafd30380854164860d1531af100"
+    },
+    {
+      "path": "labs/lab2-softmax.md",
+      "sha256": "f12024f83c1ead396cff874f2e0fdd54e935f54030d05b87a3e34da38f64c91f"
+    },
+    {
+      "path": "labs/lab2x-kernel-challenge.md",
+      "sha256": "f8133c5e4dd2553d68d97404d79f4f5b2eeb607c38c5ce3642b53008c2f626cc"
+    },
+    {
+      "path": "labs/lab3-serving.md",
+      "sha256": "11f0556ed2e28c3cd460492e44901e619ea7df44fe3e31202f965a8992067540"
+    },
+    {
+      "path": "labs/lab4-workloads.md",
+      "sha256": "f64fad9eff59a3e77fa8b3bdb6b356226edd9490fba483db059ddd35976da9ea"
+    },
+    {
+      "path": "labs/lab5-tail.md",
+      "sha256": "e9537ed2eed443ae37bc84126c76e3b766441cc99486855bbc88424fd918ed7f"
+    },
+    {
+      "path": "labs/lab6-reproduction.md",
+      "sha256": "ca504ad9e2ef354c8f1ef2a04a135d8c53325d7ca6f6c975c063ada06d2ff9da"
+    },
+    {
+      "path": "labs/lab7-proposal.md",
+      "sha256": "750793ac97dcaa8c96626c5e0a4730a2ed77f6991d75bbdd41025e32705a0ef1"
+    },
+    {
+      "path": "modules/README.md",
+      "sha256": "cfe35447b6f738836d6963561b16d57f774ae875f8af1b4e70aa0c431937100e"
+    },
+    {
+      "path": "modules/lab0-pytorch.md",
+      "sha256": "a4beae03ff20af4c941e93218b5337c343f31e89bd2049d8a9c48d1832646d71"
+    },
+    {
+      "path": "modules/lab1-measurement.md",
+      "sha256": "243135499d3b919d800dd14a30cddeee72024e64ed620d5e441448f58d8c5e41"
+    },
+    {
+      "path": "modules/lab2-kernels.md",
+      "sha256": "fc935588d01b1100e709e6489917407ef219082ab1d36c5e3f9e1fda3bca3988"
+    },
+    {
+      "path": "modules/lab3-serving.md",
+      "sha256": "1352aef08b831c958e8d25fe18d0483f4326865093fcff970a19461f71e45139"
+    },
+    {
+      "path": "modules/lab4-scheduling.md",
+      "sha256": "0a32a1dfe5955c07d2259fdea642e2e32d491017e7cd0fb90ac57185ecf50ce7"
+    },
+    {
+      "path": "modules/lab5-directions.md",
+      "sha256": "ef22bb96625fe7b926b59b22ba1bf290374ba27c0e0adc82786c31c29aa86467"
+    },
+    {
+      "path": "modules/lab6-reproduction.md",
+      "sha256": "81e1ddfe9d68279a2db2cc89fb28c5222d2effd137151a9870e8e374aba5f7f0"
+    },
+    {
+      "path": "modules/lab7-proposal.md",
+      "sha256": "ccce9233f7f93e8e301c0331e0c90fbdd9aadae689b90aae899f3da4c9c1591f"
+    },
+    {
+      "path": "readings/README.md",
+      "sha256": "83035b22d18278142960441b871e1d0878bcb48dfed4899ce59a0a65011b76cd"
+    },
+    {
+      "path": "readings/open-source-labs.md",
+      "sha256": "c57317e854f60e8fc77a7ac1033a16c38e3b91b47a6687fdc8726e0ab014552b"
+    },
+    {
+      "path": "readings/papers.md",
+      "sha256": "48520c36a6ca58c39c559311c3fceca8ebdc81c57ffbd8b4482caab164f3fd35"
+    },
+    {
+      "path": "readings/resources.md",
+      "sha256": "45ad3f9545c77a9f6216c0bd260af9a54e499e9ac5bdb2793ff307d338dcf03e"
+    },
+    {
+      "path": "readings/visualizations.md",
+      "sha256": "eb1d1ab3f296c1039428e1e2918db97776b9c8bee48a44ea7a0bbf774329b400"
+    },
+    {
+      "path": "syllabus.md",
+      "sha256": "285b987e22d971beaa6503a39b439ea17a10caee683e1807a2e99088ac4c9aca"
+    },
+    {
+      "path": "templates/README.md",
+      "sha256": "76caf5c9e000156d62e8ca617613f190963cc7271aa1937f7b355f68bc9943b5"
+    },
+    {
+      "path": "templates/experiment-record.md",
+      "sha256": "41be8f1ce4b7e0db0acf1cff0b13d3c997843eef663c338f59bd416f32428929"
+    },
+    {
+      "path": "templates/paper-card.md",
+      "sha256": "e975dbdb6af134f5d9427166907698491faecbfeed79e52fd6a29bec58fb1041"
+    },
+    {
+      "path": "templates/reproduction-report.md",
+      "sha256": "e621ba1233eb1201236b5262cfe19252ed677f4052864e4962cdddc65f1eb4e0"
+    },
+    {
+      "path": "templates/research-proposal.md",
+      "sha256": "c7c54aec8623cf3da1168bb27497b5aa61bbf3295b4c65b2d3fd06d78f92281c"
+    },
+    {
+      "path": "templates/weekly-report.md",
+      "sha256": "60fb00300ab04f8ea0ab5cdba600fa1a53652340e29d6ecefa30f3260e4fd0c4"
+    }
+  ]
+}

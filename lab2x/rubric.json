@@ -1,0 +1,34 @@
+{
+  "lab": "lab2x",
+  "course_source": "L02X-kernel-challenge.md",
+  "pass_threshold": 80,
+  "criteria": [
+    {
+      "id": "gpu",
+      "kind": "auto",
+      "points": 40,
+      "suite": "lab2x.tests.GPU",
+      "required": true,
+      "description": "开发/留出/N=1、z/y 双输出、零输入/零 gamma/符号性质及输入不变"
+    },
+    {
+      "id": "ablation",
+      "kind": "manual",
+      "points": 35,
+      "required": true,
+      "minimum": 35,
+      "title": "开发、消融与留出",
+      "description": "开发 54 条与留出 18 条共 72 条（15）；仅改变 num_warps=4→8 并冻结选择（10）；双输出误差与延迟图、相同计时口径（10）。"
+    },
+    {
+      "id": "analysis",
+      "kind": "manual",
+      "points": 25,
+      "required": true,
+      "minimum": 15,
+      "title": "解释与外部契约",
+      "description": "解释实际 N、padding、epsilon、z 写回（10）；500–800 字分析与来源（10）；OJ 完整契约差异表或真实提交证据（5）。"
+    }
+  ]
+}
+

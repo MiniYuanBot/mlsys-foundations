@@ -1,0 +1,42 @@
+{
+  "lab": "lab5",
+  "course_source": "L05-tail.md",
+  "pass_threshold": 80,
+  "criteria": [
+    {
+      "id": "schedulers",
+      "kind": "auto",
+      "points": 20,
+      "suite": "lab5.tests.Schedulers",
+      "required": true,
+      "description": "手算 8/6、K=1、均匀负载、非整批"
+    },
+    {
+      "id": "conservation",
+      "kind": "auto",
+      "points": 20,
+      "suite": "lab5.tests.Conservation",
+      "required": true,
+      "description": "输入重放、下界、无丢失/重复/重叠、指标恒等式"
+    },
+    {
+      "id": "simulation",
+      "kind": "manual",
+      "points": 30,
+      "required": true,
+      "minimum": 30,
+      "title": "完整模拟证据",
+      "description": "配对输入 CSV、逐任务时序、24 行汇总（15）；两张注明独立等速槽位模型的图（10）；区分均匀重复确定性与长尾独立 seed（5）。"
+    },
+    {
+      "id": "directions",
+      "kind": "manual",
+      "points": 30,
+      "required": true,
+      "minimum": 20,
+      "title": "方向与研究边界",
+      "description": "三路线兴趣/工具/两项工作/资源证据表（15）；两周可验证问题与导师三个问题（10）；不将模拟收益称为 RL/GPU 实测加速（5）。"
+    }
+  ]
+}
+

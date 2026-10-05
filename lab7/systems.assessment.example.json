@@ -1,0 +1,27 @@
+{
+  "holdout": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "artifact": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "literature": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "proposal": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  }
+}
+

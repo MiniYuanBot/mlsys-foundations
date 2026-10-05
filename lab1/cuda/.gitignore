@@ -1,0 +1,5 @@
+build*/
+results/
+*.ncu-rep
+*.nsys-rep
+*.qdrep

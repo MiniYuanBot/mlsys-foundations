@@ -1,0 +1,50 @@
+{
+  "lab": "lab0",
+  "course_source": "L00-pytorch.md",
+  "pass_threshold": 80,
+  "criteria": [
+    {
+      "id": "training",
+      "kind": "auto",
+      "points": 20,
+      "suite": "lab0.tests.Training",
+      "required": true,
+      "description": "32 样本过拟合、参数/梯度更新、短末批次与 eval/no_grad"
+    },
+    {
+      "id": "gradient",
+      "kind": "auto",
+      "points": 15,
+      "suite": "lab0.tests.Gradient",
+      "required": true,
+      "description": "float64 中心差分、误差 <1e-5、输入未修改"
+    },
+    {
+      "id": "checkpoint",
+      "kind": "auto",
+      "points": 10,
+      "suite": "lab0.tests.Checkpoint",
+      "required": true,
+      "description": "真实更新后的 checkpoint 重载一致性"
+    },
+    {
+      "id": "full_run",
+      "kind": "manual",
+      "points": 30,
+      "required": true,
+      "minimum": 30,
+      "title": "完整训练与复跑",
+      "description": "20 epoch 的两次固定配置训练（10）；epochs.csv/loss 图/配置/日志（10）；训练 loss 下降、测试准确率如实记录及异常定位（10）。测试集不得参与挑 seed。"
+    },
+    {
+      "id": "explanation",
+      "kind": "manual",
+      "points": 25,
+      "required": true,
+      "minimum": 15,
+      "title": "调试、理解与记录",
+      "description": "一个真实 bug 与最小复现（10）；解释五个训练动作及有限差分（10）；AI/来源、周报和 CUDA 状态（5）。"
+    }
+  ]
+}
+

@@ -1,0 +1,39 @@
+{
+  "implementation": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "safety": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "layout": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "measurement": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "ablation": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "holdout": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  }
+}
+

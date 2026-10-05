@@ -1,0 +1,49 @@
+{
+  "lab": "lab5",
+  "tier": "systems",
+  "pass_threshold": 80,
+  "criteria": [
+    {
+      "id": "collective",
+      "kind": "auto",
+      "points": 30,
+      "suite": "lab5.distributed.tests.RealCollectives",
+      "description": "真实world_size1/2、均分/不均分、每步与独立oracle一致",
+      "required": true,
+      "timeout_s": 300
+    },
+    {
+      "id": "mpi",
+      "kind": "manual",
+      "points": 20,
+      "minimum": 15,
+      "description": "C++ MPI两阶段ring、1/2/3rank正确性、所有权/死锁图（20）",
+      "required": true
+    },
+    {
+      "id": "measurement",
+      "kind": "manual",
+      "points": 25,
+      "minimum": 20,
+      "description": "消息/形状/rank矩阵三轮、真实trace、payload/理论流量区分（25）",
+      "required": true
+    },
+    {
+      "id": "overlap",
+      "kind": "manual",
+      "points": 15,
+      "minimum": 10,
+      "description": "逐参数/bucket/DDP对照、同步完成边界与时间线或限制（15）",
+      "required": true
+    },
+    {
+      "id": "paper",
+      "kind": "manual",
+      "points": 10,
+      "minimum": 5,
+      "description": "FLUX/Comet/HybridFlow机制→源码→问题与预算（10）",
+      "required": true
+    }
+  ]
+}
+

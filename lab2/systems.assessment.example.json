@@ -1,0 +1,21 @@
+{
+  "streaming": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "measurement": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "holdout": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  }
+}
+

@@ -1,0 +1,27 @@
+{
+  "mpi": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "measurement": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "overlap": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  },
+  "paper": {
+    "status": "pending",
+    "score": 0,
+    "evidence": [],
+    "note": ""
+  }
+}
+

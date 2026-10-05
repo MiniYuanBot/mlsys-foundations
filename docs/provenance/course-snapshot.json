@@ -1,0 +1,103 @@
+{
+  "course_directory": "../mlsys-research-course",
+  "snapshot_date": "2026-10-05",
+  "course_commit": "81f6f6447011870868f786dd1e41b6bc99c1e614",
+  "files": [
+    {
+      "path": "00-start.md",
+      "sha256": "364dd8333480e580112cc0713edff411ebb043b5698ca99285eaaff61f6b9efe"
+    },
+    {
+      "path": "01-environment.md",
+      "sha256": "34b384218809a61661c92ae4d62bf87735b2a524117264710ca2bd9bacb3ad8e"
+    },
+    {
+      "path": "02-experiment-standard.md",
+      "sha256": "20e5256b4fe36345f5152ed6c5197f8ffe4973abca1841dc4bcabff244927596"
+    },
+    {
+      "path": "03-reading-method.md",
+      "sha256": "bd5e3b04aa92463179bc220ea54a56ca8746965b6d9694bc3d8b932c437c562b"
+    },
+    {
+      "path": "04-research-roadmap.md",
+      "sha256": "f8ccc3a3e199263253541d6991e8be68c5f3e35043f39a4101e330260cf95101"
+    },
+    {
+      "path": "05-online-judge.md",
+      "sha256": "ae2210e51180560fb71e0bf8ad73e246144bbd443a5474a3eef9c15c49046033"
+    },
+    {
+      "path": "06-ai-assisted-labs.md",
+      "sha256": "d5b20c2b127dc36c235c5457e2889879692fc10ff0acf46e22df2fd4b9f89b68"
+    },
+    {
+      "path": "index.md",
+      "sha256": "eb9188bb20b14fad08cb5da70153d6bd00c3651afe0a6b6dcbe0762bdcfb7b7c"
+    },
+    {
+      "path": "labs/L00-pytorch.md",
+      "sha256": "117c1abe370b8e84e5d7f3e008a7654237e18049a61d78c03895b7902c794cf0"
+    },
+    {
+      "path": "labs/L01-attention.md",
+      "sha256": "2c5d0caa880d7b832d4627cd9ab22385a443eadab30ced997ccad76ba7d9be8f"
+    },
+    {
+      "path": "labs/L02-softmax.md",
+      "sha256": "08fad1e5c6c1727b89e7695654ceb526b9b2060c85a7ee0d4bfdd13c0e9f2e0d"
+    },
+    {
+      "path": "labs/L02X-kernel-challenge.md",
+      "sha256": "5aeccd8e4f3703de9bf830fa54855c9162297daacc3f487920188baeb3fec321"
+    },
+    {
+      "path": "labs/L03-serving.md",
+      "sha256": "37badc0f48c51528f6bba7a912f7db2149159a43f00ce8c18ef522b5b0581f28"
+    },
+    {
+      "path": "labs/L04-workloads.md",
+      "sha256": "c872c8de910f5ba8dfb5d52b2c9ad80150e46deb9648dd5fe6083c2277ff7ba2"
+    },
+    {
+      "path": "labs/L05-tail.md",
+      "sha256": "ba603e209a2b4ce0b46e56977aecdf57cd02edf2998f5ceb4e189de4bed39635"
+    },
+    {
+      "path": "labs/L06-reproduction.md",
+      "sha256": "7171eba6dd65fbeeff5809bbbc6db4e65885fb481f161bde47971856490a95f3"
+    },
+    {
+      "path": "labs/L07-proposal.md",
+      "sha256": "7d8ed842679a4716463bca48acf61bf9868f707a8c84d46dd737e63820462814"
+    },
+    {
+      "path": "README.md",
+      "sha256": "c4a6dabec10b946262fa37024ef068820509b97da9e842ccd0f8d4e1dfc840c1"
+    },
+    {
+      "path": "resources.md",
+      "sha256": "7ee567633611c354568aa8b1f64f88a4b0775126fb555f204bc686c27ce15fad"
+    },
+    {
+      "path": "templates/experiment-record.md",
+      "sha256": "54eba7d3976899d90e34dffc618c9639a65a9641e06d73f9848183afd7e5f981"
+    },
+    {
+      "path": "templates/paper-card.md",
+      "sha256": "4e55f55c5fa0cda3736c6e2e5407374ff7f234386b12fc3d33f9d99aef2d1d8f"
+    },
+    {
+      "path": "templates/reproduction-report.md",
+      "sha256": "cf8b1c3812d2a86a5c67b3183a7dcebdf0d88c8ca922e5b211c972ca4101663e"
+    },
+    {
+      "path": "templates/research-proposal.md",
+      "sha256": "c302e498db1b787ec2d81be87412ff9cebc68d2685836d1c0b5d86297a57620f"
+    },
+    {
+      "path": "templates/weekly-report.md",
+      "sha256": "e3ae3f21383579dfe58c60e66f97dd7d4fb487b35f6db04d65014af37ca916d8"
+    }
+  ]
+}
