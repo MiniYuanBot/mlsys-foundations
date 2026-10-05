@@ -20,4 +20,4 @@
 | [L4](L4-serving.md) | LLM 推理系统 | ✅ |
 | [L5](L5-speculative.md) | 推测解码 | ✅ |
 | [L6](L6-distributed.md) | 集合通信与并行训练 | ✅ |
-| L7 | 研究方法与研究项目 | 🚧 |
+| [L7](L7-research.md) | 研究方法与研究项目 | ✅ |

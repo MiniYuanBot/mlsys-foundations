@@ -14,4 +14,4 @@
 
 **怎么开始**：先读 [起步指南](guides/getting-started.md)，再读 [大纲](syllabus.md)，然后从 [L0 讲义](lectures/L0-tensor-runtime.md) 和 [lab0](../mlsys-research-labs/lab0/README.md) 开始。
 
-`legacy/` 存放重构前的旧版模块与题面，只作迁移参考。
+
