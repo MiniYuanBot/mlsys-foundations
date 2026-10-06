@@ -11,13 +11,13 @@
 6. **研究问题种子**：可以作为后续选题的起点
 7. **可视化资料汇总**
 
-| 讲 | 主题 | 状态 |
-|---|---|---|
-| [L0](L0-tensor-runtime.md) | 张量、内存与 CPU 性能 | ✅ |
-| [L1](L1-cuda-gemm.md) | GPU 执行模型与 CUDA GEMM | ✅ |
-| [L2](L2-attention.md) | Attention：从 online softmax 到 FlashAttention | ✅ |
-| [L3](L3-compilers.md) | 深度学习编译器与超优化 | ✅ |
-| [L4](L4-serving.md) | LLM 推理系统 | ✅ |
-| [L5](L5-speculative.md) | 推测解码 | ✅ |
-| [L6](L6-distributed.md) | 集合通信与并行训练 | ✅ |
-| [L7](L7-research.md) | 研究方法与研究项目 | ✅ |
+| 讲 | 主题 |
+|---|---|
+| [L0](L0-tensor-runtime.md) | 张量、内存与 CPU 性能 |
+| [L1](L1-cuda-gemm.md) | GPU 执行模型与 CUDA GEMM |
+| [L2](L2-attention.md) | Attention：从 online softmax 到 FlashAttention |
+| [L3](L3-compilers.md) | 深度学习编译器与超优化 |
+| [L4](L4-serving.md) | LLM 推理系统 |
+| [L5](L5-speculative.md) | 推测解码 |
+| [L6](L6-distributed.md) | 集合通信与并行训练 |
+| [L7](L7-research.md) | 研究方法与研究项目 |
