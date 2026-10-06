@@ -1,3 +1,6 @@
+# Editor settings are personal (e.g. CMake Tools' source directory)
+.vscode/
+
 # Environments, caches, local secrets
 .venv*/
 venv/

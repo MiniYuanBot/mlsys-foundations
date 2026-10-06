@@ -31,6 +31,7 @@ MLSys 自学课程的实验代码。课程大纲、讲义和阅读材料在相�
 | [common](common/README.md)、[tools](tools/README.md) | Python 辅助：运行记录、环境检查、画图 |
 | [tests](tests/README.md) | 仓库自检（结构、链接，确认没有残留答案） |
 | [portfolio](portfolio/README.md) | 结课材料索引 |
+| [solutions](solutions/README.md) | 各 lab 的参考答案（建议做完再看） |
 | `build/`、`results/`、`reports/` | 构建产物、原始数据、你的报告（前两者不进 Git） |
 
 ## 开始
