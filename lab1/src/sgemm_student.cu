@@ -10,7 +10,7 @@
 
 namespace l1 {
 
-static void require_multiple(int value, int of, const char* what) {
+static void require_multiple(int value, int of, const char *what) {
     if (value % of != 0)
         throw std::invalid_argument(std::string(what) + " = " + std::to_string(value) +
                                     " must be a multiple of " + std::to_string(of));
@@ -22,8 +22,8 @@ static void require_multiple(int value, int of, const char* what) {
 // Then the 32 threads of a warp read 32 consecutive floats of a B row (one
 // 128-byte transaction) and all read the same A element (a broadcast).
 // Launch with block (32, 32) and grid (ceil(N/32), ceil(M/32)).
-__global__ void sgemm_coalesced_kernel(int M, int N, int K, const float* A, const float* B,
-                                       float* C) {
+__global__ void sgemm_coalesced_kernel(int M, int N, int K, const float *A, const float *B,
+                                       float *C) {
     (void)M;
     (void)N;
     (void)K;
@@ -32,7 +32,7 @@ __global__ void sgemm_coalesced_kernel(int M, int N, int K, const float* A, cons
     (void)C;
 }
 
-void sgemm_coalesced(int M, int N, int K, const float* A, const float* B, float* C) {
+void sgemm_coalesced(int M, int N, int K, const float *A, const float *B, float *C) {
     constexpr bool implemented = false;
     if (!implemented) throw NotImplemented("TODO B1 sgemm_coalesced");
     const dim3 block(32, 32);
@@ -54,7 +54,7 @@ void sgemm_coalesced(int M, int N, int K, const float* A, const float* B, float*
 // Global traffic per block drops from 2*32*K*32 to 2*32*K floats: 32x reuse.
 constexpr int B2_TILE = 32;
 
-__global__ void sgemm_smem_kernel(int M, int N, int K, const float* A, const float* B, float* C) {
+__global__ void sgemm_smem_kernel(int M, int N, int K, const float *A, const float *B, float *C) {
     __shared__ float As[B2_TILE][B2_TILE];
     __shared__ float Bs[B2_TILE][B2_TILE];
     const int tx = threadIdx.x, ty = threadIdx.y;
@@ -72,7 +72,7 @@ __global__ void sgemm_smem_kernel(int M, int N, int K, const float* A, const flo
     (void)col;
 }
 
-void sgemm_smem(int M, int N, int K, const float* A, const float* B, float* C) {
+void sgemm_smem(int M, int N, int K, const float *A, const float *B, float *C) {
     constexpr bool implemented = false;
     if (!implemented) throw NotImplemented("TODO B2 sgemm_smem");
     const dim3 block(B2_TILE, B2_TILE);
@@ -97,8 +97,8 @@ void sgemm_smem(int M, int N, int K, const float* A, const float* B, float* C) {
 //   sync
 // Why faster: one shared-memory load of b is reused TM times from a register.
 // Requires M % 64 == N % 64 == K % 8 == 0 (no bounds checks needed).
-__global__ void __launch_bounds__(B3_BM* B3_BN / B3_TM)
-    sgemm_blocktile_1d_kernel(int M, int N, int K, const float* A, const float* B, float* C) {
+__global__ void __launch_bounds__(B3_BM *B3_BN / B3_TM)
+    sgemm_blocktile_1d_kernel(int M, int N, int K, const float *A, const float *B, float *C) {
     constexpr int BM = B3_BM, BN = B3_BN, BK = B3_BK, TM = B3_TM;
     __shared__ float As[BM * BK];
     __shared__ float Bs[BK * BN];
@@ -118,7 +118,7 @@ __global__ void __launch_bounds__(B3_BM* B3_BN / B3_TM)
     (void)thread_row;
 }
 
-void sgemm_blocktile_1d(int M, int N, int K, const float* A, const float* B, float* C) {
+void sgemm_blocktile_1d(int M, int N, int K, const float *A, const float *B, float *C) {
     constexpr bool implemented = false;
     if (!implemented) throw NotImplemented("TODO B3 sgemm_blocktile_1d");
     require_multiple(M, B3_BM, "M");
@@ -154,8 +154,8 @@ void sgemm_blocktile_1d(int M, int N, int K, const float* A, const float* B, flo
 // (B3: 8 FMAs for 9 loads). Use reinterpret_cast<const float4*>(ptr)[0] for
 // vector loads; it needs 16-byte alignment, guaranteed by the shape checks.
 // Requires M % 128 == N % 128 == K % 8 == 0.
-__global__ void __launch_bounds__(B4_BM* B4_BN / (B4_TM * B4_TN))
-    sgemm_blocktile_2d_kernel(int M, int N, int K, const float* A, const float* B, float* C) {
+__global__ void __launch_bounds__(B4_BM *B4_BN / (B4_TM * B4_TN))
+    sgemm_blocktile_2d_kernel(int M, int N, int K, const float *A, const float *B, float *C) {
     constexpr int BM = B4_BM, BN = B4_BN, BK = B4_BK, TM = B4_TM, TN = B4_TN;
     __shared__ float As[BK * BM]; // transposed: As[k * BM + m]
     __shared__ float Bs[BK * BN];
@@ -174,7 +174,7 @@ __global__ void __launch_bounds__(B4_BM* B4_BN / (B4_TM * B4_TN))
     (void)thread_row;
 }
 
-void sgemm_blocktile_2d(int M, int N, int K, const float* A, const float* B, float* C) {
+void sgemm_blocktile_2d(int M, int N, int K, const float *A, const float *B, float *C) {
     constexpr bool implemented = false;
     if (!implemented) throw NotImplemented("TODO B4 sgemm_blocktile_2d");
     require_multiple(M, B4_BM, "M");

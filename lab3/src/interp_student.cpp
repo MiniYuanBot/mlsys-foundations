@@ -14,13 +14,13 @@
 
 namespace tc {
 
-[[maybe_unused]] static std::logic_error todo(const char* what) {
+[[maybe_unused]] static std::logic_error todo(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
 // TODO(A1) toposort: depth-first post-order from g.output(), visiting srcs
 // left to right; each node once. (Same algorithm as lab0 C1.)
-std::vector<int> toposort(const Graph& g) {
+std::vector<int> toposort(const Graph &g) {
     (void)g;
     throw todo("A1 toposort");
 }
@@ -36,7 +36,7 @@ std::vector<int> toposort(const Graph& g) {
 //   RowSum   -> out(r, 0) = sum over c;   RowMax -> max over c
 //   MatMul   -> out(i, j) = sum over k of A(i, k) * B(k, j)
 // Return the value of g.output().
-HostTensor evaluate(const Graph& g, const Feeds& feeds) {
+HostTensor evaluate(const Graph &g, const Feeds &feeds) {
     (void)g;
     (void)feeds;
     throw todo("A2 evaluate");

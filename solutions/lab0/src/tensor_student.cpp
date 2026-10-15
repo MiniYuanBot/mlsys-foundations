@@ -17,7 +17,7 @@
 
 namespace mt {
 
-[[maybe_unused]] static std::logic_error not_implemented(const char* what) {
+[[maybe_unused]] static std::logic_error not_implemented(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -28,7 +28,7 @@ namespace mt {
     return dim;
 }
 
-int64_t numel_of(const Shape& shape) {
+int64_t numel_of(const Shape &shape) {
     int64_t n = 1;
     for (auto d : shape) n *= d;
     return n;
@@ -38,7 +38,7 @@ int64_t numel_of(const Shape& shape) {
 // The last dimension moves fastest: stride[-1] = 1,
 // stride[d] = stride[d+1] * shape[d+1].
 // Example: {2,3,4} -> {12,4,1};  {5} -> {1};  {} -> {}.
-Strides contiguous_strides(const Shape& shape) {
+Strides contiguous_strides(const Shape &shape) {
     Strides strides(shape.size());
     int64_t running = 1;
     for (int64_t d = static_cast<int64_t>(shape.size()) - 1; d >= 0; --d) {
@@ -55,7 +55,7 @@ Strides contiguous_strides(const Shape& shape) {
 // 3. Return offset_ + sum(index[d] * strides_[d]).
 // Worked example: shape {2,3}, strides {3,1}, offset 0: (1,2) -> 1*3 + 2*1 = 5.
 // After transpose: shape {3,2}, strides {1,3}: (2,1) -> 2*1 + 1*3 = 5 (same element!).
-int64_t Tensor::offset_of(const Index& index) const {
+int64_t Tensor::offset_of(const Index &index) const {
     if (static_cast<int64_t>(index.size()) != ndim())
         throw std::out_of_range("offset_of: wrong number of indices");
     int64_t pos = offset_;
@@ -88,7 +88,7 @@ bool Tensor::is_contiguous() const {
 // permute(order): new shape[i] = shape[order[i]], new strides[i] = strides[order[i]].
 // order must be a permutation of 0..ndim-1 (else std::invalid_argument).
 // transpose(a, b) is permute with dims a and b swapped; accept negative dims.
-Tensor Tensor::permute(const std::vector<int64_t>& order) const {
+Tensor Tensor::permute(const std::vector<int64_t> &order) const {
     if (static_cast<int64_t>(order.size()) != ndim())
         throw std::invalid_argument("permute: wrong rank");
     std::vector<bool> seen(order.size(), false);
@@ -143,7 +143,7 @@ Tensor Tensor::slice(int64_t dim, int64_t start, int64_t stop, int64_t step) con
 // Align shapes from the RIGHT. For each aligned pair (x, y):
 //   x == y -> x;  x == 1 -> y;  y == 1 -> x;  else incompatible.
 // Missing leading dims count as 1.  {3,1,5} + {4,5} -> {3,4,5}.
-Shape broadcast_shapes(const Shape& a, const Shape& b) {
+Shape broadcast_shapes(const Shape &a, const Shape &b) {
     const size_t n = std::max(a.size(), b.size());
     Shape out(n);
     for (size_t i = 0; i < n; ++i) {
@@ -162,7 +162,7 @@ Shape broadcast_shapes(const Shape& a, const Shape& b) {
 //   (every index along it reads the same storage element).
 // * A dim that already matches keeps its stride.
 // * Anything else -> std::invalid_argument.
-Tensor Tensor::broadcast_to(const Shape& target) const {
+Tensor Tensor::broadcast_to(const Shape &target) const {
     if (target.size() < shape_.size())
         throw std::invalid_argument("broadcast_to: target rank too small");
     const size_t lead = target.size() - shape_.size();
@@ -187,9 +187,9 @@ Tensor Tensor::broadcast_to(const Shape& target) const {
 Tensor Tensor::contiguous() const {
     if (is_contiguous()) return *this;
     Tensor out = Tensor::zeros(shape_);
-    float* dst = out.data();
+    float *dst = out.data();
     int64_t k = 0;
-    for_each_index(shape_, [&](const Index& idx) { dst[k++] = at(idx); });
+    for_each_index(shape_, [&](const Index &idx) { dst[k++] = at(idx); });
     return out;
 }
 
@@ -198,13 +198,13 @@ Tensor Tensor::contiguous() const {
 // 2. view both inputs with broadcast_to(shape)  (no copies!)
 // 3. out = Tensor::zeros(shape); fill out in row-major order with fn(a[idx], b[idx]).
 // Look at map() in tensor_core.cpp for the pattern.
-Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn) {
+Tensor zip(const Tensor &a, const Tensor &b, const BinaryFn &fn) {
     const Shape shape = broadcast_shapes(a.shape(), b.shape());
     const Tensor av = a.broadcast_to(shape), bv = b.broadcast_to(shape);
     Tensor out = Tensor::zeros(shape);
-    float* dst = out.data();
+    float *dst = out.data();
     int64_t k = 0;
-    for_each_index(shape, [&](const Index& idx) { dst[k++] = fn(av.at(idx), bv.at(idx)); });
+    for_each_index(shape, [&](const Index &idx) { dst[k++] = fn(av.at(idx), bv.at(idx)); });
     return out;
 }
 
@@ -214,13 +214,13 @@ Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn) {
 // Hint: compute with keepdim=true first (the output index is the input index
 // with idx[dim] set to 0), then .view() away the dim if keepdim is false.
 // Accumulate in double for accuracy, store as float. dim may be negative.
-Tensor sum(const Tensor& x, int64_t dim, bool keepdim) {
+Tensor sum(const Tensor &x, int64_t dim, bool keepdim) {
     dim = wrap_dim(dim, x.ndim());
     Shape kept = x.shape();
     kept[dim] = 1;
     std::vector<double> acc(numel_of(kept), 0.0);
     const Strides out_strides = contiguous_strides(kept);
-    for_each_index(x.shape(), [&](const Index& idx) {
+    for_each_index(x.shape(), [&](const Index &idx) {
         int64_t pos = 0;
         for (size_t d = 0; d < idx.size(); ++d)
             if (static_cast<int64_t>(d) != dim) pos += idx[d] * out_strides[d];

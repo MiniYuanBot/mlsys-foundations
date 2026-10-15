@@ -17,7 +17,7 @@
 
 namespace mt {
 
-[[maybe_unused]] static std::logic_error not_implemented(const char* what) {
+[[maybe_unused]] static std::logic_error not_implemented(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -28,7 +28,7 @@ namespace mt {
     return dim;
 }
 
-int64_t numel_of(const Shape& shape) {
+int64_t numel_of(const Shape &shape) {
     int64_t n = 1;
     for (auto d : shape) n *= d;
     return n;
@@ -38,7 +38,7 @@ int64_t numel_of(const Shape& shape) {
 // The last dimension moves fastest: stride[-1] = 1,
 // stride[d] = stride[d+1] * shape[d+1].
 // Example: {2,3,4} -> {12,4,1};  {5} -> {1};  {} -> {}.
-Strides contiguous_strides(const Shape& shape) {
+Strides contiguous_strides(const Shape &shape) {
     (void)shape;
     throw not_implemented("A1 contiguous_strides");
 }
@@ -50,7 +50,7 @@ Strides contiguous_strides(const Shape& shape) {
 // 3. Return offset_ + sum(index[d] * strides_[d]).
 // Worked example: shape {2,3}, strides {3,1}, offset 0: (1,2) -> 1*3 + 2*1 = 5.
 // After transpose: shape {3,2}, strides {1,3}: (2,1) -> 2*1 + 1*3 = 5 (same element!).
-int64_t Tensor::offset_of(const Index& index) const {
+int64_t Tensor::offset_of(const Index &index) const {
     (void)index;
     throw not_implemented("A2 offset_of");
 }
@@ -69,7 +69,7 @@ bool Tensor::is_contiguous() const {
 // permute(order): new shape[i] = shape[order[i]], new strides[i] = strides[order[i]].
 // order must be a permutation of 0..ndim-1 (else std::invalid_argument).
 // transpose(a, b) is permute with dims a and b swapped; accept negative dims.
-Tensor Tensor::permute(const std::vector<int64_t>& order) const {
+Tensor Tensor::permute(const std::vector<int64_t> &order) const {
     (void)order;
     throw not_implemented("A4 permute");
 }
@@ -102,7 +102,7 @@ Tensor Tensor::slice(int64_t dim, int64_t start, int64_t stop, int64_t step) con
 // Align shapes from the RIGHT. For each aligned pair (x, y):
 //   x == y -> x;  x == 1 -> y;  y == 1 -> x;  else incompatible.
 // Missing leading dims count as 1.  {3,1,5} + {4,5} -> {3,4,5}.
-Shape broadcast_shapes(const Shape& a, const Shape& b) {
+Shape broadcast_shapes(const Shape &a, const Shape &b) {
     (void)a;
     (void)b;
     throw not_implemented("A6 broadcast_shapes");
@@ -114,7 +114,7 @@ Shape broadcast_shapes(const Shape& a, const Shape& b) {
 //   (every index along it reads the same storage element).
 // * A dim that already matches keeps its stride.
 // * Anything else -> std::invalid_argument.
-Tensor Tensor::broadcast_to(const Shape& target) const {
+Tensor Tensor::broadcast_to(const Shape &target) const {
     (void)target;
     throw not_implemented("A6 broadcast_to");
 }
@@ -133,7 +133,7 @@ Tensor Tensor::contiguous() const {
 // 2. view both inputs with broadcast_to(shape)  (no copies!)
 // 3. out = Tensor::zeros(shape); fill out in row-major order with fn(a[idx], b[idx]).
 // Look at map() in tensor_core.cpp for the pattern.
-Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn) {
+Tensor zip(const Tensor &a, const Tensor &b, const BinaryFn &fn) {
     (void)a;
     (void)b;
     (void)fn;
@@ -146,7 +146,7 @@ Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn) {
 // Hint: compute with keepdim=true first (the output index is the input index
 // with idx[dim] set to 0), then .view() away the dim if keepdim is false.
 // Accumulate in double for accuracy, store as float. dim may be negative.
-Tensor sum(const Tensor& x, int64_t dim, bool keepdim) {
+Tensor sum(const Tensor &x, int64_t dim, bool keepdim) {
     (void)x;
     (void)dim;
     (void)keepdim;

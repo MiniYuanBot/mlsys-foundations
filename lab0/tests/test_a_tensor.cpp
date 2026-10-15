@@ -5,7 +5,7 @@
 
 using namespace mt;
 
-static Tensor iota(const Shape& shape) {
+static Tensor iota(const Shape &shape) {
     std::vector<float> v(numel_of(shape));
     for (size_t i = 0; i < v.size(); ++i) v[i] = static_cast<float>(i);
     return Tensor::from_vector(shape, v);
@@ -197,6 +197,6 @@ TEST(A_capstone_softmax_from_views) {
     CHECK_NEAR(sum(sum(p, -1), 0).at({}), 2.0, 1e-5);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

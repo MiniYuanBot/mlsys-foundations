@@ -14,13 +14,13 @@ namespace tc {
 
 #define TC_CUDA(x) check_rt((x), #x)
 #define TC_CU(x) check_drv((x), #x)
-static void check_rt(cudaError_t e, const char* what) {
+static void check_rt(cudaError_t e, const char *what) {
     if (e != cudaSuccess)
         throw std::runtime_error(std::string(what) + ": " + cudaGetErrorString(e));
 }
-static void check_drv(CUresult e, const char* what) {
+static void check_drv(CUresult e, const char *what) {
     if (e != CUDA_SUCCESS) {
-        const char* msg = nullptr;
+        const char *msg = nullptr;
         cuGetErrorString(e, &msg);
         throw std::runtime_error(std::string(what) + ": " + (msg ? msg : "?"));
     }
@@ -32,7 +32,7 @@ struct Runtime::Impl {
     std::string arch;
     int sms = 0;
 
-    CUfunction compile(const std::string& src) {
+    CUfunction compile(const std::string &src) {
         auto it = cache.find(src);
         if (it != cache.end()) return it->second;
         nvrtcProgram prog;
@@ -40,7 +40,7 @@ struct Runtime::Impl {
             NVRTC_SUCCESS)
             throw std::runtime_error("nvrtcCreateProgram failed");
         const std::string arch_opt = "--gpu-architecture=" + arch;
-        const char* opts[] = {arch_opt.c_str(), "-std=c++17", "-default-device"};
+        const char *opts[] = {arch_opt.c_str(), "-std=c++17", "-default-device"};
         const nvrtcResult rc = nvrtcCompileProgram(prog, 3, opts);
         if (rc != NVRTC_SUCCESS) {
             size_t n = 0;
@@ -83,29 +83,29 @@ int Runtime::compiled_kernels() const {
 
 namespace {
 struct DeviceState {
-    std::unordered_map<int, float*> buf; // node id -> device buffer
+    std::unordered_map<int, float *> buf; // node id -> device buffer
     ~DeviceState() {
-        for (auto& [id, p] : buf) cudaFree(p);
+        for (auto &[id, p] : buf) cudaFree(p);
     }
 };
 
-float* alloc(DeviceState& st, int id, int64_t n) {
-    float* p = nullptr;
+float *alloc(DeviceState &st, int id, int64_t n) {
+    float *p = nullptr;
     TC_CUDA(cudaMalloc(&p, std::max<int64_t>(n, 1) * sizeof(float)));
     st.buf[id] = p;
     return p;
 }
 
-void upload(const Graph& g, const Feeds& feeds, DeviceState& st) {
+void upload(const Graph &g, const Feeds &feeds, DeviceState &st) {
     for (int id : g.inputs()) {
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         auto it = feeds.find(n.name);
         if (it == feeds.end())
             throw std::invalid_argument("missing feed for input '" + n.name + "'");
         if (it->second.shape != n.shape)
             throw std::invalid_argument("feed '" + n.name + "' has the wrong shape");
         std::vector<float> host(it->second.data.begin(), it->second.data.end());
-        float* p = alloc(st, id, n.shape.numel());
+        float *p = alloc(st, id, n.shape.numel());
         TC_CUDA(cudaMemcpy(p, host.data(), host.size() * sizeof(float), cudaMemcpyHostToDevice));
     }
 }
@@ -113,14 +113,14 @@ void upload(const Graph& g, const Feeds& feeds, DeviceState& st) {
 struct Launch {
     CUfunction fn;
     unsigned grid_x, grid_y, block;
-    std::vector<float*> ptrs; // ins..., out
-    int64_t d0, d1, d2;       // dims
+    std::vector<float *> ptrs; // ins..., out
+    int64_t d0, d1, d2;        // dims
     int ndims;
 };
 
-std::vector<Launch> prepare(Runtime::Impl& rt, const Graph& g, const Plan& plan, DeviceState& st) {
+std::vector<Launch> prepare(Runtime::Impl &rt, const Graph &g, const Plan &plan, DeviceState &st) {
     std::vector<Launch> out;
-    for (const Kernel& k : plan.kernels) {
+    for (const Kernel &k : plan.kernels) {
         Launch L{};
         L.fn = rt.compile(codegen(g, k));
         for (int r : k.reads) L.ptrs.push_back(st.buf.at(r));
@@ -136,7 +136,7 @@ std::vector<Launch> prepare(Runtime::Impl& rt, const Graph& g, const Plan& plan,
             // The row width is the column count of the widest node in the kernel.
             int64_t width = 1, rows = os.rows;
             for (int id : k.nodes) {
-                const Node& n = g.node(id);
+                const Node &n = g.node(id);
                 for (int s : n.srcs) width = std::max(width, g.node(s).shape.cols);
                 width = std::max(width, n.shape.cols);
                 rows = std::max(rows, n.shape.rows);
@@ -146,7 +146,7 @@ std::vector<Launch> prepare(Runtime::Impl& rt, const Graph& g, const Plan& plan,
             L.grid_y = 1;
             L.d0 = rows, L.d1 = width, L.ndims = 2;
         } else {
-            const Node* mm = nullptr;
+            const Node *mm = nullptr;
             for (int id : k.nodes)
                 if (g.node(id).op == Op::MatMul) mm = &g.node(id);
             const int64_t M = mm->shape.rows, N = mm->shape.cols,
@@ -161,10 +161,10 @@ std::vector<Launch> prepare(Runtime::Impl& rt, const Graph& g, const Plan& plan,
     return out;
 }
 
-void launch_all(std::vector<Launch>& ls) {
-    for (Launch& L : ls) {
-        std::vector<void*> args;
-        for (float*& p : L.ptrs) args.push_back(&p);
+void launch_all(std::vector<Launch> &ls) {
+    for (Launch &L : ls) {
+        std::vector<void *> args;
+        for (float *&p : L.ptrs) args.push_back(&p);
         args.push_back(&L.d0);
         args.push_back(&L.d1);
         if (L.ndims == 3) args.push_back(&L.d2);
@@ -174,7 +174,7 @@ void launch_all(std::vector<Launch>& ls) {
 }
 } // namespace
 
-HostTensor Runtime::run(const Graph& g, const Plan& plan, const Feeds& feeds) {
+HostTensor Runtime::run(const Graph &g, const Plan &plan, const Feeds &feeds) {
     DeviceState st;
     upload(g, feeds, st);
     auto ls = prepare(*impl_, g, plan, st);
@@ -187,7 +187,7 @@ HostTensor Runtime::run(const Graph& g, const Plan& plan, const Feeds& feeds) {
     return HostTensor{s, std::vector<double>(host.begin(), host.end())};
 }
 
-double Runtime::time_ms(const Graph& g, const Plan& plan, const Feeds& feeds, int repeats) {
+double Runtime::time_ms(const Graph &g, const Plan &plan, const Feeds &feeds, int repeats) {
     DeviceState st;
     upload(g, feeds, st);
     auto ls = prepare(*impl_, g, plan, st);

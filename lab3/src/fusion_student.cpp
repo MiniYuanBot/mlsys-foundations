@@ -23,7 +23,7 @@
 
 namespace tc {
 
-[[maybe_unused]] static std::logic_error todo(const char* what) {
+[[maybe_unused]] static std::logic_error todo(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -62,9 +62,9 @@ struct Group {
 //    otherwise -> no (Row kernels cannot contain a GEMM; one GEMM per kernel)
 //
 // `cons` = consumers of n (each edge once per use).
-[[maybe_unused]] bool can_absorb(const Graph& g, const Group& K, int n,
-                                 const std::vector<int>& cons, bool* to_prologue) {
-    const Node& node = g.node(n);
+[[maybe_unused]] bool can_absorb(const Graph &g, const Group &K, int n,
+                                 const std::vector<int> &cons, bool *to_prologue) {
+    const Node &node = g.node(n);
     *to_prologue = false;
     (void)node;
     (void)K;
@@ -90,7 +90,7 @@ struct Group {
 //      so emit them in REVERSE creation order. Each Kernel's nodes = its set,
 //      sorted by position in `order`.
 //   4. finalize_plan(g, plan) fills `reads` and validates; return the plan.
-Plan plan_fused(const Graph& g) {
+Plan plan_fused(const Graph &g) {
     (void)g;
     throw todo("B1b plan_fused");
 }

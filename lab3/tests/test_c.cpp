@@ -7,9 +7,9 @@
 using namespace tc;
 using namespace tc::test;
 
-static bool contains(const std::vector<Graph>& gs, const std::string& canon) {
+static bool contains(const std::vector<Graph> &gs, const std::string &canon) {
     return std::any_of(gs.begin(), gs.end(),
-                       [&](const Graph& g) { return g.canonical() == canon; });
+                       [&](const Graph &g) { return g.canonical() == canon; });
 }
 
 TEST(C0_canonical_distinguishes_sharing_from_copies) {
@@ -49,7 +49,7 @@ TEST(C1_R2_recompute_instead_of_share) {
     g.set_output(g.add(g.row_sum(e), g.row_max(e)));
     const auto cands = rewrite_once(g);
     CHECK_EQ(cands.size(), 2u); // one per consumer edge of e
-    for (const Graph& c : cands) {
+    for (const Graph &c : cands) {
         int exps = 0;
         for (int id : toposort(c)) exps += c.node(id).op == Op::Exp;
         CHECK_EQ(exps, 2); // e now exists twice
@@ -70,7 +70,7 @@ TEST(C2_accepts_valid_rewrites) {
     Graph g = models::softmax_matmul(12, 9, 5);
     const auto cands = rewrite_once(g);
     CHECK(!cands.empty());
-    for (const Graph& c : cands) CHECK(probably_equivalent(g, c));
+    for (const Graph &c : cands) CHECK(probably_equivalent(g, c));
     CHECK(probably_equivalent(g, g));
 }
 
@@ -114,11 +114,11 @@ TEST(C3b_search_rediscovers_recompute) {
     const auto cands = search(g, dev, 3);
     CHECK(cands.size() >= 3);
     for (size_t i = 1; i < cands.size(); ++i) CHECK(cands[i - 1].cost.ms <= cands[i].cost.ms);
-    const Candidate& best = cands.front();
+    const Candidate &best = cands.front();
     // The winner never writes an [M, K] tensor; x is read three times instead.
-    for (const auto& k : best.plan.kernels) CHECK(best.graph.node(k.output).shape.numel() < M * K);
+    for (const auto &k : best.plan.kernels) CHECK(best.graph.node(k.output).shape.numel() < M * K);
     CHECK(best.cost.bytes < 4.0 * 3.1 * M * K);
-    for (const auto& c : cands) CHECK(probably_equivalent(g, c.graph));
+    for (const auto &c : cands) CHECK(probably_equivalent(g, c.graph));
 }
 
 TEST(C_best_candidate_runs_on_gpu) {
@@ -128,6 +128,6 @@ TEST(C_best_candidate_runs_on_gpu) {
     expect_plan_matches(rt, best.graph, best.plan, "best candidate", 1e-4);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

@@ -21,7 +21,7 @@ bool is_reduction(Op op) {
     return op == Op::RowSum || op == Op::RowMax;
 }
 
-const char* op_name(Op op) {
+const char *op_name(Op op) {
     switch (op) {
     case Op::Input:
         return "Input";
@@ -67,7 +67,7 @@ Shape broadcast(Shape a, Shape b) {
     return {dim(a.rows, b.rows), dim(a.cols, b.cols)};
 }
 
-int Graph::input(const std::string& name, Shape shape) {
+int Graph::input(const std::string &name, Shape shape) {
     Node n{Op::Input, {}, shape, name, 0};
     nodes_.push_back(n);
     return size() - 1;
@@ -82,7 +82,7 @@ int Graph::matmul(int a, int b) {
     return add_node(Op::MatMul, {a, b});
 }
 
-int Graph::add_node(Op op, std::vector<int> srcs, double value, const std::string& name) {
+int Graph::add_node(Op op, std::vector<int> srcs, double value, const std::string &name) {
     for (int s : srcs)
         if (s < 0 || s >= size()) throw std::out_of_range("add_node: bad operand id");
     Shape shape;
@@ -124,7 +124,7 @@ std::vector<std::vector<int>> Graph::consumers() const {
 std::string Graph::to_string() const {
     std::ostringstream os;
     for (int i = 0; i < size(); ++i) {
-        const Node& n = nodes_[i];
+        const Node &n = nodes_[i];
         os << "n" << i << " = " << op_name(n.op) << "(";
         if (n.op == Op::Input) os << n.name;
         if (n.op == Op::Const) os << n.value;
@@ -144,7 +144,7 @@ std::string Graph::canonical() const {
     std::function<std::string(int)> go = [&](int id) -> std::string {
         auto it = label.find(id);
         if (it != label.end()) return "#" + std::to_string(it->second);
-        const Node& n = nodes_[id];
+        const Node &n = nodes_[id];
         std::string s;
         if (n.op == Op::Input)
             s = n.name;

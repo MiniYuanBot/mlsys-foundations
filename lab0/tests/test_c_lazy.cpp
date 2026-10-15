@@ -8,19 +8,19 @@ using namespace mt;
 using namespace mt::lazy;
 
 namespace {
-Tensor random(const Shape& s, unsigned seed) {
+Tensor random(const Shape &s, unsigned seed) {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> u(-2, 2);
     std::vector<float> v(numel_of(s));
-    for (auto& x : v) x = u(rng);
+    for (auto &x : v) x = u(rng);
     return Tensor::from_vector(s, v);
 }
-void expect_close(const Tensor& got, const Tensor& want, double tol = 1e-5) {
+void expect_close(const Tensor &got, const Tensor &want, double tol = 1e-5) {
     CHECK_EQ(got.shape(), want.shape());
     const auto g = got.to_vector(), w = want.to_vector();
     for (size_t i = 0; i < g.size(); ++i) CHECK_NEAR(g[i], w[i], tol * (1 + std::fabs(w[i])));
 }
-int position(const std::vector<NodePtr>& order, const NodePtr& n) {
+int position(const std::vector<NodePtr> &order, const NodePtr &n) {
     for (size_t i = 0; i < order.size(); ++i)
         if (order[i] == n) return static_cast<int>(i);
     return -1;
@@ -124,7 +124,7 @@ TEST(C3_compile_reuses_buffer_and_inlines_const) {
     Program p = compile(schedule_fused(y.node())[0]);
     CHECK_EQ(p.buffers.size(), 1u);
     int consts = 0;
-    for (auto& ins : p.code) consts += ins.kind == InstrKind::Const;
+    for (auto &ins : p.code) consts += ins.kind == InstrKind::Const;
     CHECK_EQ(consts, 1);
 }
 
@@ -172,6 +172,6 @@ TEST(C4_tiled_matches_scalar) {
     expect_close(realize_fused(s, Interp::Tiled), realize_fused(s, Interp::Scalar), 1e-5);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

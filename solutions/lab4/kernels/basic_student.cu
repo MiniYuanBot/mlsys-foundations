@@ -23,7 +23,7 @@ __device__ __forceinline__ bf16 to_b(float x) {
 }
 
 // Provided: sum over the block, every thread gets the result. `smem` holds 32 floats.
-__device__ float block_sum(float v, float* smem) {
+__device__ float block_sum(float v, float *smem) {
     for (int o = 16; o > 0; o >>= 1) v += __shfl_xor_sync(0xffffffffu, v, o);
     const int lane = threadIdx.x % 32, warp = threadIdx.x / 32, nwarps = (blockDim.x + 31) / 32;
     if (lane == 0) smem[warp] = v;
@@ -37,8 +37,8 @@ __device__ float block_sum(float v, float* smem) {
 // ------------------------------------------------------------------ A1a ----
 // TODO(A1a) embedding lookup: out[t, :] = table[tokens[t], :]
 // grid (T), block 256; threads stride over the hidden dim.
-extern "C" __global__ void embedding(const bf16* __restrict__ table, const int* __restrict__ tokens,
-                                     bf16* __restrict__ out, int T, int hidden) {
+extern "C" __global__ void embedding(const bf16 *__restrict__ table, const int *__restrict__ tokens,
+                                     bf16 *__restrict__ out, int T, int hidden) {
     const int t = blockIdx.x;
     if (t >= T) return;
     const long src = (long)tokens[t] * hidden, dst = (long)t * hidden;
@@ -52,12 +52,12 @@ extern "C" __global__ void embedding(const bf16* __restrict__ table, const int* 
 //   ss = block_sum(sum of x^2 over this thread's columns)    (fp32)
 //   r  = rsqrtf(ss / dim + eps)
 //   y  = to_b( to_f(to_b(x * r)) * to_f(w) )    <- HF casts to bf16 BEFORE the weight multiply
-extern "C" __global__ void rmsnorm(const bf16* __restrict__ x, const bf16* __restrict__ w,
-                                   bf16* __restrict__ out, int rows, int dim, float eps) {
+extern "C" __global__ void rmsnorm(const bf16 *__restrict__ x, const bf16 *__restrict__ w,
+                                   bf16 *__restrict__ out, int rows, int dim, float eps) {
     __shared__ float smem[32];
     const int r = blockIdx.x;
     if (r >= rows) return;
-    const bf16* xr = x + (long)r * dim;
+    const bf16 *xr = x + (long)r * dim;
     float ss = 0.f;
     for (int c = threadIdx.x; c < dim; c += blockDim.x) {
         const float v = to_f(xr[c]);
@@ -74,14 +74,14 @@ extern "C" __global__ void rmsnorm(const bf16* __restrict__ x, const bf16* __res
 //   x        = rmsnorm(residual) * w       (same rounding as A1b)
 // One read of x and residual, one write of each, instead of three kernels.
 // Read the row into registers/locals once; the row is at most 1024 x 2 B per block.
-extern "C" __global__ void fused_add_rmsnorm(bf16* __restrict__ x, bf16* __restrict__ residual,
-                                             const bf16* __restrict__ w, int rows, int dim,
+extern "C" __global__ void fused_add_rmsnorm(bf16 *__restrict__ x, bf16 *__restrict__ residual,
+                                             const bf16 *__restrict__ w, int rows, int dim,
                                              float eps) {
     __shared__ float smem[32];
     const int r = blockIdx.x;
     if (r >= rows) return;
-    bf16* xr = x + (long)r * dim;
-    bf16* rr = residual + (long)r * dim;
+    bf16 *xr = x + (long)r * dim;
+    bf16 *rr = residual + (long)r * dim;
     float ss = 0.f;
     for (int c = threadIdx.x; c < dim; c += blockDim.x) {
         const bf16 s = to_b(to_f(xr[c]) + to_f(rr[c]));
@@ -105,19 +105,19 @@ extern "C" __global__ void fused_add_rmsnorm(bf16* __restrict__ x, bf16* __restr
 //   x[i + 64] = to_b( to_f(to_b(x2 * c)) + to_f(to_b(x1 * s)) )
 // (HF does q*cos + rotate_half(q)*sin in bf16: each product rounds, then the sum.)
 // grid (T), block 256: threads stride over (head, i) pairs of q, then of k.
-extern "C" __global__ void rope(bf16* __restrict__ q, bf16* __restrict__ k,
-                                const int* __restrict__ positions, int T, int num_heads,
+extern "C" __global__ void rope(bf16 *__restrict__ q, bf16 *__restrict__ k,
+                                const int *__restrict__ positions, int T, int num_heads,
                                 int num_kv_heads, float theta) {
     const int t = blockIdx.x;
     if (t >= T) return;
     const float p = (float)positions[t];
     const int half_d = 64;
-    auto rotate = [&](bf16* base, int heads) {
+    auto rotate = [&](bf16 *base, int heads) {
         for (int e = threadIdx.x; e < heads * half_d; e += blockDim.x) {
             const int h = e / half_d, i = e % half_d;
             const float inv_freq = 1.f / powf(theta, (2.f * i) / 128.f);
             const float c = to_f(to_b(cosf(p * inv_freq))), s = to_f(to_b(sinf(p * inv_freq)));
-            bf16* xv = base + (long)h * 128;
+            bf16 *xv = base + (long)h * 128;
             const float x1 = to_f(xv[i]), x2 = to_f(xv[i + half_d]);
             xv[i] = to_b(to_f(to_b(x1 * c)) - to_f(to_b(x2 * s)));
             xv[i + half_d] = to_b(to_f(to_b(x2 * c)) + to_f(to_b(x1 * s)));
@@ -131,8 +131,8 @@ extern "C" __global__ void rope(bf16* __restrict__ q, bf16* __restrict__ k,
 // TODO(A1e) SwiGLU activation:  out = silu(gate) * up,  silu(g) = g / (1 + exp(-g))
 // HF computes act_fn(gate) as a bf16 tensor, then multiplies:  to_b( to_f(to_b(silu(g))) * u ).
 // Grid-stride loop over n elements.
-extern "C" __global__ void silu_mul(const bf16* __restrict__ gate, const bf16* __restrict__ up,
-                                    bf16* __restrict__ out, long n) {
+extern "C" __global__ void silu_mul(const bf16 *__restrict__ gate, const bf16 *__restrict__ up,
+                                    bf16 *__restrict__ out, long n) {
     for (long i = blockIdx.x * (long)blockDim.x + threadIdx.x; i < n;
          i += (long)gridDim.x * blockDim.x) {
         const float g = to_f(gate[i]);
@@ -146,13 +146,13 @@ extern "C" __global__ void silu_mul(const bf16* __restrict__ gate, const bf16* _
 // Each thread scans a strided subset keeping (best value, best index), then
 // reduce across the block. Hint: reduce with shared memory of 1024 (value,
 // index) pairs, or with __shfl_xor_sync on both fields.
-extern "C" __global__ void argmax_rows(const bf16* __restrict__ logits, int* __restrict__ out,
+extern "C" __global__ void argmax_rows(const bf16 *__restrict__ logits, int *__restrict__ out,
                                        int rows, int cols) {
     __shared__ float sv[32];
     __shared__ int si[32];
     const int r = blockIdx.x;
     if (r >= rows) return;
-    const bf16* x = logits + (long)r * cols;
+    const bf16 *x = logits + (long)r * cols;
     float bv = -INFINITY;
     int bi = 0x7fffffff;
     for (int c = threadIdx.x; c < cols; c += blockDim.x) {

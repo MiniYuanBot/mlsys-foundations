@@ -12,8 +12,8 @@ namespace l1test {
 using l1::DeviceBuffer;
 
 // CPU reference C = A @ B in double precision.
-inline std::vector<double> gemm_ref(int M, int N, int K, const std::vector<float>& A,
-                                    const std::vector<float>& B) {
+inline std::vector<double> gemm_ref(int M, int N, int K, const std::vector<float> &A,
+                                    const std::vector<float> &B) {
     std::vector<double> C(static_cast<size_t>(M) * N, 0.0);
     for (int i = 0; i < M; ++i)
         for (int k = 0; k < K; ++k) {
@@ -26,8 +26,8 @@ inline std::vector<double> gemm_ref(int M, int N, int K, const std::vector<float
 
 // Every element finite and within tolerance; reports the first mismatch.
 template <class Ref>
-void expect_matrix_close(const char* what, int M, int N, const std::vector<float>& got,
-                         const Ref& want, double atol, double rtol) {
+void expect_matrix_close(const char *what, int M, int N, const std::vector<float> &got,
+                         const Ref &want, double atol, double rtol) {
     for (int i = 0; i < M; ++i)
         for (int j = 0; j < N; ++j) {
             const size_t idx = static_cast<size_t>(i) * N + j;
@@ -42,10 +42,10 @@ void expect_matrix_close(const char* what, int M, int N, const std::vector<float
         }
 }
 
-using SgemmFn = void (*)(int, int, int, const float*, const float*, float*);
-using HgemmFn = void (*)(int, int, int, const __half*, const __half*, float*);
+using SgemmFn = void (*)(int, int, int, const float *, const float *, float *);
+using HgemmFn = void (*)(int, int, int, const __half *, const __half *, float *);
 
-inline void run_sgemm_case(const char* name, SgemmFn fn, int M, int N, int K, unsigned seed) {
+inline void run_sgemm_case(const char *name, SgemmFn fn, int M, int N, int K, unsigned seed) {
     const auto A = l1::make_input(static_cast<size_t>(M) * K, seed);
     const auto B = l1::make_input(static_cast<size_t>(K) * N, seed + 1000);
     DeviceBuffer<float> dA(A.size()), dB(B.size()), dC(static_cast<size_t>(M) * N);
@@ -60,7 +60,7 @@ inline void run_sgemm_case(const char* name, SgemmFn fn, int M, int N, int K, un
     CHECK(dB.download() == B);
 }
 
-inline void run_hgemm_case(const char* name, HgemmFn fn, int M, int N, int K, unsigned seed) {
+inline void run_hgemm_case(const char *name, HgemmFn fn, int M, int N, int K, unsigned seed) {
     const auto Af = l1::make_input(static_cast<size_t>(M) * K, seed);
     const auto Bf = l1::make_input(static_cast<size_t>(K) * N, seed + 1000);
     DeviceBuffer<__half> dA(Af.size()), dB(Bf.size());
@@ -76,7 +76,7 @@ inline void run_hgemm_case(const char* name, HgemmFn fn, int M, int N, int K, un
 }
 
 // Large shapes: compare against cuBLAS instead of the (slow) CPU reference.
-inline void compare_with(const char* name, SgemmFn fn, SgemmFn ref, int n) {
+inline void compare_with(const char *name, SgemmFn fn, SgemmFn ref, int n) {
     const auto A = l1::make_input(static_cast<size_t>(n) * n, 7),
                B = l1::make_input(static_cast<size_t>(n) * n, 8);
     DeviceBuffer<float> dA(A.size()), dB(B.size()), dC(A.size()), dR(A.size());
@@ -89,7 +89,7 @@ inline void compare_with(const char* name, SgemmFn fn, SgemmFn ref, int n) {
     expect_matrix_close(name, n, n, dC.download(), dR.download(), 1e-3 * std::sqrt(n), 1e-4);
 }
 
-inline void compare_with(const char* name, HgemmFn fn, HgemmFn ref, int n) {
+inline void compare_with(const char *name, HgemmFn fn, HgemmFn ref, int n) {
     const auto A = l1::to_half(l1::make_input(static_cast<size_t>(n) * n, 7));
     const auto B = l1::to_half(l1::make_input(static_cast<size_t>(n) * n, 8));
     DeviceBuffer<__half> dA(A.size()), dB(B.size());

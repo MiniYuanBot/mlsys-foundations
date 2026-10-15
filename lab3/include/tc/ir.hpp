@@ -21,8 +21,8 @@ namespace tc {
 
 struct Shape {
     int64_t rows = 1, cols = 1;
-    bool operator==(const Shape& o) const { return rows == o.rows && cols == o.cols; }
-    bool operator!=(const Shape& o) const { return !(*this == o); }
+    bool operator==(const Shape &o) const { return rows == o.rows && cols == o.cols; }
+    bool operator!=(const Shape &o) const { return !(*this == o); }
     int64_t numel() const { return rows * cols; }
 };
 
@@ -48,7 +48,7 @@ bool is_unary(Op op);
 bool is_binary(Op op);
 bool is_elementwise(Op op); // unary or binary
 bool is_reduction(Op op);
-const char* op_name(Op op);
+const char *op_name(Op op);
 
 struct Node {
     Op op;
@@ -60,7 +60,7 @@ struct Node {
 
 class Graph {
 public:
-    int input(const std::string& name, Shape shape);
+    int input(const std::string &name, Shape shape);
     int constant(double value);
     int neg(int a) { return unary(Op::Neg, a); }
     int exp(int a) { return unary(Op::Exp, a); }
@@ -76,11 +76,11 @@ public:
     int row_max(int a) { return reduce(Op::RowMax, a); }
     int matmul(int a, int b);
     // Generic constructor used by rewrites: checks and infers the shape.
-    int add_node(Op op, std::vector<int> srcs, double value = 0, const std::string& name = "");
+    int add_node(Op op, std::vector<int> srcs, double value = 0, const std::string &name = "");
 
     void set_output(int id) { output_ = id; }
     int output() const { return output_; }
-    const Node& node(int id) const { return nodes_.at(id); }
+    const Node &node(int id) const { return nodes_.at(id); }
     int size() const { return static_cast<int>(nodes_.size()); }
     std::vector<int> inputs() const; // ids of Input nodes, in creation order
 

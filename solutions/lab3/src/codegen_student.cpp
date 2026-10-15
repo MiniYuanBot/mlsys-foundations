@@ -15,7 +15,7 @@
 
 namespace tc {
 
-[[maybe_unused]] static std::logic_error todo(const char* what) {
+[[maybe_unused]] static std::logic_error todo(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -23,7 +23,7 @@ namespace tc {
 // parentheses so they compose safely:
 //   Neg (-a)  Exp expf(a)  Tanh tanhf(a)  Relu fmaxf(a, 0.0f)  Rsqrt rsqrtf(a)
 //   Add (a + b)  Sub (a - b)  Mul (a * b)  Div (a / b)  Max fmaxf(a, b)
-std::string emit_op(Op op, const std::vector<std::string>& a) {
+std::string emit_op(Op op, const std::vector<std::string> &a) {
     switch (op) {
     case Op::Neg:
         return "(-" + a[0] + ")";
@@ -55,7 +55,7 @@ std::string emit_op(Op op, const std::vector<std::string>& a) {
 // 1 is broadcast (index 0):
 //   [R, C] -> "buf[i * C + j]"     (C written as a number, e.g. "in0[i * 64 + j]")
 //   [1, C] -> "buf[j]"     [R, 1] -> "buf[i]"     [1, 1] -> "buf[0]"
-std::string emit_load(const std::string& buf, Shape s) {
+std::string emit_load(const std::string &buf, Shape s) {
     const bool r = s.rows != 1, c = s.cols != 1;
     if (r && c) return buf + "[i * " + std::to_string(s.cols) + " + j]";
     if (r) return buf + "[i]";
@@ -67,14 +67,14 @@ namespace detail {
 
 // A node is "full" if it varies along the row (cols > 1): it must be computed
 // inside a column loop. Otherwise it is a per-row scalar (shape [R,1] or [1,1]).
-[[maybe_unused]] static bool is_full(const Ctx& c, int id) {
+[[maybe_unused]] static bool is_full(const Ctx &c, int id) {
     return c.g.node(id).shape.cols > 1;
 }
 
 // Provided: the full nodes of this kernel that `target` needs, in topological
 // order (stops at per-row scalars, which are already in registers, and at
 // materialised operands).
-[[maybe_unused]] static std::vector<int> full_closure(const Ctx& c, int target) {
+[[maybe_unused]] static std::vector<int> full_closure(const Ctx &c, int target) {
     std::vector<int> out;
     std::set<int> seen;
     std::function<void(int)> go = [&](int id) {
@@ -113,14 +113,14 @@ namespace detail {
 // Full values are RECOMPUTED in every loop that needs them: softmax's x - m
 // is evaluated twice. That costs a few FLOPs but saves writing [R, C]
 // temporaries to memory, the whole point of fusion.
-std::string codegen_row(const Ctx& c) {
+std::string codegen_row(const Ctx &c) {
     std::ostringstream os;
     os << kPrelude << signature(c, "long R, long C") << " {\n"
        << "  const long i = blockIdx.x;\n  __shared__ float tc_smem[32];\n";
     std::set<int> emitted;
     auto emit_ready_scalars = [&]() {
         for (int id : c.k.nodes) {
-            const Node& n = c.g.node(id);
+            const Node &n = c.g.node(id);
             if (emitted.count(id) || is_full(c, id) || is_reduction(n.op)) continue;
             bool ready = true;
             for (int s : n.srcs) ready &= !c.inside.count(s) || emitted.count(s);
@@ -131,7 +131,7 @@ std::string codegen_row(const Ctx& c) {
     };
     emit_ready_scalars();
     for (int id : c.k.nodes) {
-        const Node& n = c.g.node(id);
+        const Node &n = c.g.node(id);
         if (!is_reduction(n.op)) continue;
         const bool sum = n.op == Op::RowSum;
         const int src = n.srcs[0];
@@ -172,7 +172,7 @@ std::string codegen_row(const Ctx& c) {
 //             "const float v<mm> = acc;" then emit_ssa(epilogue nodes) then
 //             "return v<output>;"
 // Bodies are plain statement lists; indent with two spaces.
-MatmulHooks matmul_hooks(const Ctx& c) {
+MatmulHooks matmul_hooks(const Ctx &c) {
     int mm = -1;
     for (int id : c.k.nodes)
         if (c.g.node(id).op == Op::MatMul) mm = id;

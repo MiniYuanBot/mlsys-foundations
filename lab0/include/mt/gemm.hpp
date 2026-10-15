@@ -17,21 +17,21 @@ enum class GemmKernel {
     Best,      // alias used by mt::matmul; points at Parallel
 };
 
-const char* kernel_name(GemmKernel kernel);
+const char *kernel_name(GemmKernel kernel);
 
-void gemm(GemmKernel kernel, int M, int N, int K, const float* A, int lda, const float* B, int ldb,
-          float* C, int ldc);
+void gemm(GemmKernel kernel, int M, int N, int K, const float *A, int lda, const float *B, int ldb,
+          float *C, int ldc);
 
-void gemm_naive(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_naive(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                 int ldc);
-void gemm_reordered(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_reordered(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                     int ldc);
-void gemm_blocked(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_blocked(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                   int ldc);
-void gemm_packed(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_packed(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                  int ldc);
 // threads <= 0 means std::thread::hardware_concurrency().
-void gemm_parallel(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_parallel(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                    int ldc, int threads = 0);
 
 // ---- tuning knobs (you may change them; re-run tests and benchmarks) ----
@@ -53,16 +53,16 @@ namespace detail {
 // stored k-major:   Ap[p*kc*MR + k*MR + r] = A(p*MR + r, k).
 // Rows past mc are zero-filled so the micro-kernel never needs a bounds check.
 // Ap must hold ceil(mc/MR)*MR*kc floats.
-void pack_A(int mc, int kc, const float* A, int lda, float* Ap);
+void pack_A(int mc, int kc, const float *A, int lda, float *Ap);
 
 // Pack the kc x nc block of B into column panels of width NR, stored k-major:
 //   Bp[q*kc*NR + k*NR + c] = B(k, q*NR + c),  columns past nc zero-filled.
 // Bp must hold ceil(nc/NR)*NR*kc floats.
-void pack_B(int kc, int nc, const float* B, int ldb, float* Bp);
+void pack_B(int kc, int nc, const float *B, int ldb, float *Bp);
 
 // C(0..mr-1, 0..nr-1) += Ap_panel (MR x kc) @ Bp_panel (kc x NR),
 // where only the top-left mr x nr part (mr <= MR, nr <= NR) is written back.
-void micro_kernel(int kc, const float* Ap, const float* Bp, float* C, int ldc, int mr, int nr);
+void micro_kernel(int kc, const float *Ap, const float *Bp, float *C, int ldc, int mr, int nr);
 } // namespace detail
 
 } // namespace mt

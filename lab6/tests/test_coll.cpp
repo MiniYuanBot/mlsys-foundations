@@ -102,7 +102,7 @@ TEST(B2_allreduce_recursive_doubling) {
         bool threw = false;
         try {
             allreduce_rd(buf.data(), 4, c);
-        } catch (const std::invalid_argument&) {
+        } catch (const std::invalid_argument &) {
             threw = true;
         }
         CHECK(threw);
@@ -124,7 +124,7 @@ TEST(B_all_ranks_get_identical_bits) {
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
     const int rc = run_mpi_tests(argc, argv);
     MPI_Finalize();

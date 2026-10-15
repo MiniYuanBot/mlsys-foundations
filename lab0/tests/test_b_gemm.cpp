@@ -22,12 +22,12 @@ Problem make(int M, int N, int K, int pad, unsigned seed) {
     Problem p{M, N, K, K + pad, N + pad, N + pad, {}, {}};
     p.A.resize(static_cast<size_t>(M) * p.lda);
     p.B.resize(static_cast<size_t>(K) * p.ldb);
-    for (auto& x : p.A) x = u(rng);
-    for (auto& x : p.B) x = u(rng);
+    for (auto &x : p.A) x = u(rng);
+    for (auto &x : p.B) x = u(rng);
     return p;
 }
 
-std::vector<double> reference(const Problem& p) {
+std::vector<double> reference(const Problem &p) {
     std::vector<double> c(static_cast<size_t>(p.M) * p.N, 0.0);
     for (int i = 0; i < p.M; ++i)
         for (int k = 0; k < p.K; ++k)
@@ -37,7 +37,7 @@ std::vector<double> reference(const Problem& p) {
 }
 
 // Runs one kernel; C starts as NaN so any element that is not overwritten fails.
-void expect_correct(GemmKernel kernel, const Problem& p) {
+void expect_correct(GemmKernel kernel, const Problem &p) {
     const float nan = std::numeric_limits<float>::quiet_NaN();
     std::vector<float> C(static_cast<size_t>(std::max(p.M, 1)) * p.ldc, nan);
     const auto A0 = p.A, B0 = p.B;
@@ -161,6 +161,6 @@ TEST(B_capstone_tensor_matmul_on_views) {
     CHECK_EQ(c.to_vector(), (std::vector<float>{5, 14, 14, 50}));
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

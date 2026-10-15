@@ -6,8 +6,8 @@
 typedef __nv_bfloat16 bf16;
 
 // tmp: [n, row] where row = num_kv_heads * 128.  grid (n), block 128.
-extern "C" __global__ void gather_slots(const bf16* __restrict__ cache,
-                                        const int* __restrict__ slots, bf16* __restrict__ tmp,
+extern "C" __global__ void gather_slots(const bf16 *__restrict__ cache,
+                                        const int *__restrict__ slots, bf16 *__restrict__ tmp,
                                         int n, int row) {
     const int i = blockIdx.x;
     if (i >= n) return;
@@ -15,8 +15,8 @@ extern "C" __global__ void gather_slots(const bf16* __restrict__ cache,
         tmp[(long)i * row + c] = cache[(long)slots[i] * row + c];
 }
 
-extern "C" __global__ void scatter_slots(const bf16* __restrict__ tmp,
-                                         const int* __restrict__ slots, bf16* __restrict__ cache,
+extern "C" __global__ void scatter_slots(const bf16 *__restrict__ tmp,
+                                         const int *__restrict__ slots, bf16 *__restrict__ cache,
                                          int n, int row) {
     const int i = blockIdx.x;
     if (i >= n) return;

@@ -28,10 +28,10 @@
 typedef __nv_bfloat16 bf16;
 constexpr int HEAD_DIM = 128;
 
-__device__ __forceinline__ void load4(const bf16* p, float (&v)[4]) {
-    const uint2 raw = *reinterpret_cast<const uint2*>(p);
-    const float2 a = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.x));
-    const float2 b = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.y));
+__device__ __forceinline__ void load4(const bf16 *p, float (&v)[4]) {
+    const uint2 raw = *reinterpret_cast<const uint2 *>(p);
+    const float2 a = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162 *>(&raw.x));
+    const float2 b = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162 *>(&raw.y));
     v[0] = a.x;
     v[1] = a.y;
     v[2] = b.x;
@@ -39,10 +39,10 @@ __device__ __forceinline__ void load4(const bf16* p, float (&v)[4]) {
 }
 
 extern "C" __global__ void
-tree_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
-               const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
-               const unsigned long long* __restrict__ tree_mask, int prefix_len,
-               bf16* __restrict__ out, int T, int num_heads, int num_kv_heads, int max_blocks,
+tree_attention(const bf16 *__restrict__ q, const bf16 *__restrict__ k_cache,
+               const bf16 *__restrict__ v_cache, const int *__restrict__ block_tables,
+               const unsigned long long *__restrict__ tree_mask, int prefix_len,
+               bf16 *__restrict__ out, int T, int num_heads, int num_kv_heads, int max_blocks,
                int block_size, float scale) {
     const int warp_global = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
     const int lane = threadIdx.x % 32;
@@ -76,7 +76,7 @@ tree_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
     __nv_bfloat162 o01 = __floats2bfloat162_rn(acc[0] * inv, acc[1] * inv);
     __nv_bfloat162 o23 = __floats2bfloat162_rn(acc[2] * inv, acc[3] * inv);
     uint2 packed;
-    packed.x = *reinterpret_cast<unsigned*>(&o01);
-    packed.y = *reinterpret_cast<unsigned*>(&o23);
-    *reinterpret_cast<uint2*>(out + ((long)t * num_heads + h) * HEAD_DIM + d0) = packed;
+    packed.x = *reinterpret_cast<unsigned *>(&o01);
+    packed.y = *reinterpret_cast<unsigned *>(&o23);
+    *reinterpret_cast<uint2 *>(out + ((long)t * num_heads + h) * HEAD_DIM + d0) = packed;
 }

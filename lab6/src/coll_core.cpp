@@ -17,7 +17,7 @@ std::pair<size_t, size_t> chunk_range(size_t n, int P, int i) {
     return {begin, begin + base + (static_cast<size_t>(i) < extra ? 1 : 0)};
 }
 
-void allreduce_mpi(float* buf, size_t n, const Comm& c) {
+void allreduce_mpi(float *buf, size_t n, const Comm &c) {
     MPI_Allreduce(MPI_IN_PLACE, buf, static_cast<int>(n), MPI_FLOAT, MPI_SUM, c.comm);
 }
 

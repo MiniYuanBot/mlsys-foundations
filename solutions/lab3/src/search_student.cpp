@@ -25,7 +25,7 @@
 
 namespace tc {
 
-[[maybe_unused]] static std::logic_error todo(const char* what) {
+[[maybe_unused]] static std::logic_error todo(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -34,12 +34,12 @@ namespace tc {
 // covers every node `target` depends on; it returns the id of the replacement.
 // Nodes downstream of target are rebuilt on top of the replacement. Nodes no
 // longer reachable from the output are simply left behind (harmless).
-static Graph rebuild(const Graph& g, int target,
-                     const std::function<int(Graph&, const std::vector<int>&)>& make) {
+static Graph rebuild(const Graph &g, int target,
+                     const std::function<int(Graph &, const std::vector<int> &)> &make) {
     Graph ng;
     std::vector<int> m(g.size(), -1);
     for (int id : toposort(g)) {
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         if (id == target) {
             m[id] = make(ng, m);
             continue;
@@ -61,12 +61,12 @@ static Graph rebuild(const Graph& g, int target,
 // Provided: copy `g`, but give consumer node `c` its OWN copy of operand
 // number `k` (a fresh node with the same op and operands). This undoes common
 // subexpression elimination for one edge: the value will be recomputed.
-static Graph clone_operand(const Graph& g, int c, int k) {
+static Graph clone_operand(const Graph &g, int c, int k) {
     const int victim = g.node(c).srcs.at(k);
     Graph ng;
     std::vector<int> m(g.size(), -1);
     for (int id : toposort(g)) {
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         if (n.op == Op::Input)
             m[id] = ng.input(n.name, n.shape);
         else if (n.op == Op::Const)
@@ -102,14 +102,14 @@ static Graph clone_operand(const Graph& g, int c, int k) {
 //       MatMul(Mul(a, s), B) -> Mul(MatMul(a, B), s)  for s of shape [1, K], only when K == N
 //     It is WRONG; a real superoptimizer's generator also proposes bad
 //     candidates and relies on the verifier (C2) to reject them.
-std::vector<Graph> rewrite_once(const Graph& g) {
+std::vector<Graph> rewrite_once(const Graph &g) {
     std::vector<Graph> out;
     const auto cons = g.consumers();
     for (int t : toposort(g)) {
-        const Node& n = g.node(t);
+        const Node &n = g.node(t);
         if (n.op == Op::MatMul) {
             const int lhs = n.srcs[0], B = n.srcs[1];
-            const Node& L = g.node(lhs);
+            const Node &L = g.node(lhs);
             if (L.op != Op::Mul && L.op != Op::Div) continue;
             for (int side = 0; side < 2; ++side) {
                 if (L.op == Op::Div && side == 1) break; // only a / r
@@ -120,7 +120,7 @@ std::vector<Graph> rewrite_once(const Graph& g) {
                                        as.cols > 1 && as.cols == n.shape.cols;
                 if (!row_scale && !col_scale) continue; // R1 or R3
                 const Op op = L.op;
-                out.push_back(rebuild(g, t, [&](Graph& ng, const std::vector<int>& m) {
+                out.push_back(rebuild(g, t, [&](Graph &ng, const std::vector<int> &m) {
                     return ng.add_node(op, {ng.matmul(m[a], m[B]), m[s]});
                 }));
             }
@@ -146,8 +146,8 @@ std::vector<Graph> rewrite_once(const Graph& g) {
 // two different polynomials of degree d agree on a random point with
 // probability <= d / |field| (Schwartz-Zippel); Mirage uses exactly this,
 // over a finite field so that there is no rounding at all.
-bool probably_equivalent(const Graph& a, const Graph& b, int trials, unsigned seed) {
-    auto sig = [](const Graph& g) {
+bool probably_equivalent(const Graph &a, const Graph &b, int trials, unsigned seed) {
+    auto sig = [](const Graph &g) {
         std::vector<std::pair<std::string, std::pair<int64_t, int64_t>>> s;
         for (int id : g.inputs())
             s.push_back({g.node(id).name, {g.node(id).shape.rows, g.node(id).shape.cols}});
@@ -161,10 +161,10 @@ bool probably_equivalent(const Graph& a, const Graph& b, int trials, unsigned se
         std::uniform_real_distribution<double> u(-1.0, 1.0);
         Feeds feeds;
         for (int id : a.inputs()) {
-            const Node& n = a.node(id);
+            const Node &n = a.node(id);
             if (feeds.count(n.name)) continue;
             HostTensor h{n.shape, std::vector<double>(n.shape.numel())};
-            for (auto& x : h.data) x = u(rng);
+            for (auto &x : h.data) x = u(rng);
             feeds[n.name] = h;
         }
         const HostTensor x = evaluate(a, feeds), y = evaluate(b, feeds);
@@ -186,14 +186,14 @@ bool probably_equivalent(const Graph& a, const Graph& b, int trials, unsigned se
 // This ignores re-reads inside a kernel (a GEMM reads A once per N-tile; a Row
 // kernel re-reads its row once per reduction) and caching. The bench compares
 // the model with reality: notice where it is right and where it is wrong.
-Cost estimate(const Graph& g, const Plan& plan, const Device& dev) {
+Cost estimate(const Graph &g, const Plan &plan, const Device &dev) {
     Cost c;
-    for (const Kernel& k : plan.kernels) {
+    for (const Kernel &k : plan.kernels) {
         double bytes = 4.0 * g.node(k.output).shape.numel(), flops = 0;
         for (int r : k.reads) bytes += 4.0 * g.node(r).shape.numel();
         for (int id : k.nodes)
             if (g.node(id).op == Op::MatMul) {
-                const Node& n = g.node(id);
+                const Node &n = g.node(id);
                 flops += 2.0 * n.shape.rows * n.shape.cols * g.node(n.srcs[0]).shape.cols;
             }
         const double ms =
@@ -211,13 +211,13 @@ Cost estimate(const Graph& g, const Plan& plan, const Device& dev) {
 //       skip if c.canonical() was seen; mark it seen;
 //       keep it (and put it in the next frontier) only if probably_equivalent(g, c)
 //   For every kept graph build plan_fused + estimate, return sorted by cost.ms.
-std::vector<Candidate> search(const Graph& g, const Device& dev, int depth) {
+std::vector<Candidate> search(const Graph &g, const Device &dev, int depth) {
     std::vector<Graph> keep{g}, frontier{g};
     std::set<std::string> seen{g.canonical()};
     for (int d = 0; d < depth; ++d) {
         std::vector<Graph> next;
-        for (const Graph& f : frontier)
-            for (Graph& c : rewrite_once(f)) {
+        for (const Graph &f : frontier)
+            for (Graph &c : rewrite_once(f)) {
                 if (!seen.insert(c.canonical()).second) continue;
                 if (!probably_equivalent(g, c)) continue;
                 next.push_back(c);
@@ -226,13 +226,13 @@ std::vector<Candidate> search(const Graph& g, const Device& dev, int depth) {
         frontier = std::move(next);
     }
     std::vector<Candidate> out;
-    for (Graph& k : keep) {
+    for (Graph &k : keep) {
         Plan p = plan_fused(k);
         Cost cost = estimate(k, p, dev);
         out.push_back({std::move(k), std::move(p), cost});
     }
     std::stable_sort(out.begin(), out.end(),
-                     [](const Candidate& a, const Candidate& b) { return a.cost.ms < b.cost.ms; });
+                     [](const Candidate &a, const Candidate &b) { return a.cost.ms < b.cost.ms; });
     return out;
 }
 

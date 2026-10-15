@@ -14,7 +14,7 @@
 
 namespace l1 {
 
-static void require_multiple_c(int value, int of, const char* what) {
+static void require_multiple_c(int value, int of, const char *what) {
     if (value % of != 0)
         throw std::invalid_argument(std::string(what) + " = " + std::to_string(value) +
                                     " must be a multiple of " + std::to_string(of));
@@ -35,7 +35,7 @@ static void require_multiple_c(int value, int of, const char* what) {
 using namespace nvcuda;
 
 __global__ void __launch_bounds__(128)
-    hgemm_wmma_kernel(int M, int N, int K, const __half* A, const __half* B, float* C) {
+    hgemm_wmma_kernel(int M, int N, int K, const __half *A, const __half *B, float *C) {
     const int warp = threadIdx.x / 32;
     const int row0 = blockIdx.y * C1_BM + (warp / 2) * 32;
     const int col0 = blockIdx.x * C1_BN + (warp % 2) * 32;
@@ -55,7 +55,7 @@ __global__ void __launch_bounds__(128)
     (void)acc;
 }
 
-void hgemm_wmma(int M, int N, int K, const __half* A, const __half* B, float* C) {
+void hgemm_wmma(int M, int N, int K, const __half *A, const __half *B, float *C) {
     constexpr bool implemented = false;
     if (!implemented) throw NotImplemented("TODO C1 hgemm_wmma");
     require_multiple_c(M, C1_BM, "M");
@@ -94,8 +94,8 @@ constexpr size_t C2_SMEM_BYTES = size_t(C2_STAGES) * (C2_A_STAGE + C2_B_STAGE) *
 //   B tile 32 x 128 = 512 chunks; chunk c:
 //       row = c / 16, col = (c % 16) * 8
 //       smem &Bs[row * C2_BPAD + col]  <-  gmem &B[(k0 + row) * N + n0 + col]
-__device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __half* A,
-                                             const __half* B, int N, int K, int m0, int n0,
+__device__ __forceinline__ void c2_load_tile(__half *As, __half *Bs, const __half *A,
+                                             const __half *B, int N, int K, int m0, int n0,
                                              int k0) {
     (void)As;
     (void)Bs;
@@ -117,7 +117,7 @@ __device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __hal
 //   then acc[i][j] += a[i] * b[j] for all 4 x 4 (i, j) with mma_16816.
 // wm / wn are the warp's row / column offsets inside the block tile.
 // Lecture L1 section 4.3 derives these addresses from the fragment layout.
-__device__ __forceinline__ void c2_compute_stage(const __half* As, const __half* Bs,
+__device__ __forceinline__ void c2_compute_stage(const __half *As, const __half *Bs,
                                                  float (&acc)[4][4][4], int wm, int wn) {
     const int lane = threadIdx.x % 32;
     (void)As;
@@ -146,10 +146,10 @@ __device__ __forceinline__ void c2_compute_stage(const __half* As, const __half*
 //   m0 + wm + i*16 + g  (d[0], d[1])  and  m0 + wm + i*16 + g + 8  (d[2], d[3])
 // at columns n0 + wn + j*8 + 2t, +1, with g = lane / 4, t = lane % 4.
 __global__ void __launch_bounds__(C2_THREADS)
-    hgemm_mma_kernel(int M, int N, int K, const __half* A, const __half* B, float* C) {
+    hgemm_mma_kernel(int M, int N, int K, const __half *A, const __half *B, float *C) {
     extern __shared__ __align__(16) unsigned char c2_smem[];
-    __half* As = reinterpret_cast<__half*>(c2_smem);
-    __half* Bs = As + C2_STAGES * C2_A_STAGE;
+    __half *As = reinterpret_cast<__half *>(c2_smem);
+    __half *Bs = As + C2_STAGES * C2_A_STAGE;
     const int warp = threadIdx.x / 32, lane = threadIdx.x % 32;
     const int wm = (warp / 4) * 64; // 2 warps along m
     const int wn = (warp % 4) * 32; // 4 warps along n
@@ -169,14 +169,15 @@ __global__ void __launch_bounds__(C2_THREADS)
 #pragma unroll
         for (int j = 0; j < 4; ++j) {
             const int row = m0 + wm + i * 16 + g, col = n0 + wn + j * 8 + 2 * t;
-            *reinterpret_cast<float2*>(&C[row * N + col]) = make_float2(acc[i][j][0], acc[i][j][1]);
-            *reinterpret_cast<float2*>(&C[(row + 8) * N + col]) =
+            *reinterpret_cast<float2 *>(&C[row * N + col]) =
+                make_float2(acc[i][j][0], acc[i][j][1]);
+            *reinterpret_cast<float2 *>(&C[(row + 8) * N + col]) =
                 make_float2(acc[i][j][2], acc[i][j][3]);
         }
     (void)M;
 }
 
-void hgemm_mma(int M, int N, int K, const __half* A, const __half* B, float* C) {
+void hgemm_mma(int M, int N, int K, const __half *A, const __half *B, float *C) {
     constexpr bool implemented = false;
     if (!implemented) throw NotImplemented("TODO C2 hgemm_mma");
     require_multiple_c(M, C2_BM, "M");

@@ -21,15 +21,15 @@ struct Failure : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 struct Case {
-    const char* name;
+    const char *name;
     std::function<void()> fn;
 };
-inline std::vector<Case>& registry() {
+inline std::vector<Case> &registry() {
     static std::vector<Case> c;
     return c;
 }
 struct Register {
-    Register(const char* n, std::function<void()> f) { registry().push_back({n, std::move(f)}); }
+    Register(const char *n, std::function<void()> f) { registry().push_back({n, std::move(f)}); }
 };
 inline int rank() {
     int r;
@@ -69,17 +69,17 @@ inline int size() {
         }                                                                                          \
     } while (0)
 
-inline int run_mpi_tests(int argc, char** argv) {
+inline int run_mpi_tests(int argc, char **argv) {
     const std::string filter = argc > 1 ? argv[1] : "";
     const int r = mpitest::rank(), P = mpitest::size();
     int passed = 0, failed = 0;
-    for (const auto& c : mpitest::registry()) {
+    for (const auto &c : mpitest::registry()) {
         if (!filter.empty() && std::string(c.name).find(filter) == std::string::npos) continue;
         int ok = 1;
         std::string msg;
         try {
             c.fn();
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             ok = 0;
             msg = e.what();
         }

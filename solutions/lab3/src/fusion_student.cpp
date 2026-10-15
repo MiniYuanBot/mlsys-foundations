@@ -23,7 +23,7 @@
 
 namespace tc {
 
-[[maybe_unused]] static std::logic_error todo(const char* what) {
+[[maybe_unused]] static std::logic_error todo(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -62,9 +62,9 @@ struct Group {
 //    otherwise -> no (Row kernels cannot contain a GEMM; one GEMM per kernel)
 //
 // `cons` = consumers of n (each edge once per use).
-[[maybe_unused]] bool can_absorb(const Graph& g, const Group& K, int n,
-                                 const std::vector<int>& cons, bool* to_prologue) {
-    const Node& node = g.node(n);
+[[maybe_unused]] bool can_absorb(const Graph &g, const Group &K, int n,
+                                 const std::vector<int> &cons, bool *to_prologue) {
+    const Node &node = g.node(n);
     *to_prologue = false;
     if (is_elementwise(node.op)) {
         if (K.kind != KernelKind::MatMul) return true;
@@ -110,7 +110,7 @@ struct Group {
 //      so emit them in REVERSE creation order. Each Kernel's nodes = its set,
 //      sorted by position in `order`.
 //   4. finalize_plan(g, plan) fills `reads` and validates; return the plan.
-Plan plan_fused(const Graph& g) {
+Plan plan_fused(const Graph &g) {
     const std::vector<int> order = toposort(g);
     const auto cons = g.consumers();
     std::vector<int> pos(g.size(), -1), kernel_of(g.size(), -1);
@@ -118,7 +118,7 @@ Plan plan_fused(const Graph& g) {
     std::vector<Group> groups;
     for (auto it = order.rbegin(); it != order.rend(); ++it) {
         const int id = *it;
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         if (n.op == Op::Input || n.op == Op::Const) continue;
         int k = -1;
         bool same = id != g.output() && !cons[id].empty();
@@ -128,7 +128,7 @@ Plan plan_fused(const Graph& g) {
         }
         bool pro = false;
         if (same && can_absorb(g, groups[k], id, cons[id], &pro)) {
-            Group& G = groups[k];
+            Group &G = groups[k];
             G.nodes.insert(id);
             if (pro) G.prologue.insert(id);
             if (is_reduction(n.op)) {

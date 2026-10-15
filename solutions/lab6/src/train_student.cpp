@@ -12,7 +12,7 @@
 
 namespace coll {
 
-[[maybe_unused]] static NotImplemented todo(const char* what) {
+[[maybe_unused]] static NotImplemented todo(const char *what) {
     return NotImplemented(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -30,7 +30,7 @@ namespace coll {
 // and reset start_, pending_, expect_ for the next step.
 // With a tiny cap every layer is its own bucket; with a huge cap there is one
 // bucket, submitted only after backward is done (= no overlap at all).
-Bucketer::Bucketer(MLP& model, size_t bucket_bytes, CommThread& comm, int world_size)
+Bucketer::Bucketer(MLP &model, size_t bucket_bytes, CommThread &comm, int world_size)
     : m_(model), cap_floats_(std::max<size_t>(1, bucket_bytes / sizeof(float))), comm_(comm),
       P_(world_size), expect_(model.num_layers() - 1) {}
 
@@ -54,7 +54,7 @@ void Bucketer::finish() {
     }
     comm_.wait_all();
     const float inv = 1.f / static_cast<float>(P_);
-    for (float& g : m_.grads) g *= inv;
+    for (float &g : m_.grads) g *= inv;
     start_ = pending_ = 0;
     expect_ = m_.num_layers() - 1;
 }
@@ -70,13 +70,13 @@ void Bucketer::finish() {
 //     4. allgather_ring(params): every rank gets every updated chunk
 // Communication volume equals a plain allreduce (RS + AG), but optimizer
 // state per rank drops from 2N to 2N/P floats.
-Zero1Adam::Zero1Adam(size_t num_params, const Comm& c, Adam h) : c_(c), h_(h) {
+Zero1Adam::Zero1Adam(size_t num_params, const Comm &c, Adam h) : c_(c), h_(h) {
     std::tie(begin_, end_) = chunk_range(num_params, c.size, c.rank);
     m_.assign(end_ - begin_, 0.f);
     v_.assign(end_ - begin_, 0.f);
 }
 
-void Zero1Adam::step(std::vector<float>& params, std::vector<float>& grads) {
+void Zero1Adam::step(std::vector<float> &params, std::vector<float> &grads) {
     reduce_scatter_ring(grads.data(), grads.size(), c_);
     const float inv = 1.f / static_cast<float>(c_.size);
     for (size_t i = begin_; i < end_; ++i) grads[i] *= inv;

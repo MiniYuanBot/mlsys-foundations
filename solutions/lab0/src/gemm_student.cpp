@@ -15,7 +15,7 @@
 
 namespace mt {
 
-[[maybe_unused]] static std::logic_error not_implemented(const char* what) {
+[[maybe_unused]] static std::logic_error not_implemented(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -23,14 +23,14 @@ namespace mt {
 // for i: (zero row i of C)  for k: a = A(i,k);  for j: C(i,j) += a * B(k,j)
 // Now the innermost loop walks a ROW of B and a ROW of C: unit stride, so the
 // compiler can vectorise it and every cache line is fully used.
-void gemm_reordered(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_reordered(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                     int ldc) {
     for (int i = 0; i < M; ++i) {
-        float* c = C + i * ldc;
+        float *c = C + i * ldc;
         std::fill(c, c + N, 0.0f);
         for (int k = 0; k < K; ++k) {
             const float a = A[i * lda + k];
-            const float* b = B + k * ldb;
+            const float *b = B + k * ldb;
             for (int j = 0; j < N; ++j) c[j] += a * b[j];
         }
     }
@@ -46,7 +46,7 @@ void gemm_reordered(int M, int N, int K, const float* A, int lda, const float* B
 //     (accumulate with +=, because each C block receives K/KC partial sums)
 // Why: the KC x NC panel of B is reused for every row block of A while it is
 // still in cache, instead of being streamed from DRAM once per row of C.
-void gemm_blocked(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_blocked(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                   int ldc) {
     for (int i = 0; i < M; ++i) std::fill(C + i * ldc, C + i * ldc + N, 0.0f);
     for (int jc = 0; jc < N; jc += NC) {
@@ -56,10 +56,10 @@ void gemm_blocked(int M, int N, int K, const float* A, int lda, const float* B, 
             for (int ic = 0; ic < M; ic += MC) {
                 const int ie = std::min(ic + MC, M);
                 for (int i = ic; i < ie; ++i) {
-                    float* c = C + i * ldc;
+                    float *c = C + i * ldc;
                     for (int k = pc; k < pe; ++k) {
                         const float a = A[i * lda + k];
-                        const float* b = B + k * ldb;
+                        const float *b = B + k * ldb;
                         for (int j = jc; j < je; ++j) c[j] += a * b[j];
                     }
                 }
@@ -72,9 +72,9 @@ namespace detail {
 
 // TODO(B3a) pack_A. Layout is documented in gemm.hpp. Do not forget the
 // zero padding of the last panel when mc is not a multiple of MR.
-void pack_A(int mc, int kc, const float* A, int lda, float* Ap) {
+void pack_A(int mc, int kc, const float *A, int lda, float *Ap) {
     for (int p = 0; p * MR < mc; ++p) {
-        float* dst = Ap + p * kc * MR;
+        float *dst = Ap + p * kc * MR;
         for (int k = 0; k < kc; ++k)
             for (int r = 0; r < MR; ++r) {
                 const int row = p * MR + r;
@@ -84,9 +84,9 @@ void pack_A(int mc, int kc, const float* A, int lda, float* Ap) {
 }
 
 // TODO(B3b) pack_B. Same idea, column panels of width NR.
-void pack_B(int kc, int nc, const float* B, int ldb, float* Bp) {
+void pack_B(int kc, int nc, const float *B, int ldb, float *Bp) {
     for (int q = 0; q * NR < nc; ++q) {
-        float* dst = Bp + q * kc * NR;
+        float *dst = Bp + q * kc * NR;
         for (int k = 0; k < kc; ++k)
             for (int c = 0; c < NR; ++c) {
                 const int col = q * NR + c;
@@ -110,14 +110,14 @@ void pack_B(int kc, int nc, const float* B, int ldb, float* Bp) {
 // Always check bench_gemm (or the assembly, see the README) after a change.
 // Stretch B3d: rewrite this with AVX2 (_mm256_fmadd_ps) or NEON (vfmaq_f32)
 // intrinsics, which is what BLIS/OpenBLAS do, and compare.
-void micro_kernel(int kc, const float* Ap, const float* Bp, float* C, int ldc, int mr, int nr) {
+void micro_kernel(int kc, const float *Ap, const float *Bp, float *C, int ldc, int mr, int nr) {
     alignas(64) float acc[MR * NR] = {};
     for (int k = 0; k < kc; ++k) {
-        const float* __restrict a = Ap + k * MR;
-        const float* __restrict b = Bp + k * NR;
+        const float *__restrict a = Ap + k * MR;
+        const float *__restrict b = Bp + k * NR;
         for (int r = 0; r < MR; ++r) {
             const float ar = a[r];
-            float* __restrict row = acc + r * NR;
+            float *__restrict row = acc + r * NR;
 #pragma omp simd
             for (int c = 0; c < NR; ++c) row[c] += ar * b[c];
         }
@@ -135,7 +135,7 @@ void micro_kernel(int kc, const float* Ap, const float* Bp, float* C, int ldc, i
 //   loop 3  ic : MC-tall row block of A  -> pack A(ic:ic+MC, pc:pc+KC) into Ap
 //   loop 2  jr : NR-wide sliver of Bp
 //   loop 1  ir : MR-tall sliver of Ap    -> micro_kernel on an MR x NR tile of C
-void gemm_packed(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_packed(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                  int ldc) {
     for (int i = 0; i < M; ++i) std::fill(C + i * ldc, C + i * ldc + N, 0.0f);
     if (K == 0) return;
@@ -165,7 +165,7 @@ void gemm_packed(int M, int N, int K, const float* A, int lda, const float* B, i
 // micro-tiles) and run gemm_packed on each slab in its own std::thread.
 // Each thread only reads A rows / writes C rows of its own slab, so no locks
 // are needed. Remember to join() every thread. With M small, use fewer threads.
-void gemm_parallel(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_parallel(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                    int ldc, int threads) {
     if (threads <= 0) threads = static_cast<int>(std::max(1u, std::thread::hardware_concurrency()));
     const int tiles = (M + MR - 1) / MR;
@@ -178,7 +178,7 @@ void gemm_parallel(int M, int N, int K, const float* A, int lda, const float* B,
         pool.emplace_back(gemm_packed, rows, N, K, A + start * lda, lda, B, ldb, C + start * ldc,
                           ldc);
     }
-    for (auto& t : pool) t.join();
+    for (auto &t : pool) t.join();
 }
 
 } // namespace mt

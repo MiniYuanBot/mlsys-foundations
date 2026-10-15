@@ -12,7 +12,7 @@
 
 using namespace tc;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     const std::string name = argc > 1 ? argv[1] : "softmax";
     const bool do_search = argc > 2 && std::string(argv[2]) == "--search";
     Graph g;
@@ -43,12 +43,12 @@ int main(int argc, char** argv) {
             std::cout << "\n=== kernel " << i << " source\n" << codegen(g, p.kernels[i]);
         if (do_search) {
             std::cout << "\n=== search (cost model, cheapest first)\n";
-            for (const auto& c : search(g, Device{}, 3)) {
+            for (const auto &c : search(g, Device{}, 3)) {
                 std::cout << "--- " << c.cost.ms << " ms est, " << c.cost.bytes / 1e6 << " MB, "
                           << c.plan.kernels.size() << " kernels: " << c.graph.canonical() << "\n";
             }
         }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << "error: " << e.what() << "\n";
         return 1;
     }

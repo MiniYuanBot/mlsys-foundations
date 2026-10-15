@@ -93,10 +93,10 @@ TEST(A3_unfused_plans_run_on_gpu) {
     t = g.div(g.sub(g.tanh(t), g.neg(row)), g.add(g.relu(col), g.constant(2.0)));
     g.set_output(g.max(t, g.rsqrt(g.add(g.mul(x, x), g.constant(1.0)))));
     Plan p = plan_unfused(g);
-    for (auto& k : p.kernels) CHECK(k.kind == KernelKind::Elementwise);
+    for (auto &k : p.kernels) CHECK(k.kind == KernelKind::Elementwise);
     expect_plan_matches(rt, g, p, "elementwise ops");
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

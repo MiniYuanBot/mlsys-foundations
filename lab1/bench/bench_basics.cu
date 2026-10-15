@@ -12,7 +12,7 @@
 
 using namespace l1;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     int n = 1 << 26, side = 8192;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
 
     std::printf("op,variant,size,bytes,ms,GBps,pct_of_memcpy\n");
     double memcpy_gbps = 0;
-    auto report = [&](const char* op, const char* variant, long long size, double bytes,
-                      const std::function<void()>& fn) {
+    auto report = [&](const char *op, const char *variant, long long size, double bytes,
+                      const std::function<void()> &fn) {
         float ms;
         try {
             ms = time_ms(fn);
-        } catch (const NotImplemented& e) {
+        } catch (const NotImplemented &e) {
             std::fprintf(stderr, "# skip %s/%s: %s\n", op, variant, e.what());
             return;
         }

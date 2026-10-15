@@ -18,7 +18,7 @@
 
 using namespace coll;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     int provided = 0;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     const Comm c = Comm::world();
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
             m.backward();
             t1 = MPI_Wtime();
             fn(m.grads.data(), m.num_params(), c);
-            for (float& g : m.grads) g /= c.size;
+            for (float &g : m.grads) g /= c.size;
             t2 = MPI_Wtime();
             adam_update(m.params.data(), m.grads.data(), mm.data(), vv.data(), m.num_params(),
                         s + 1, Adam{});

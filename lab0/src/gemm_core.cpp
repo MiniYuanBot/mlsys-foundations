@@ -5,7 +5,7 @@
 
 namespace mt {
 
-const char* kernel_name(GemmKernel kernel) {
+const char *kernel_name(GemmKernel kernel) {
     switch (kernel) {
     case GemmKernel::Naive:
         return "naive";
@@ -26,7 +26,7 @@ const char* kernel_name(GemmKernel kernel) {
 // The textbook loop. For each C(i,j), walk a row of A and a COLUMN of B.
 // Walking a column of a row-major B jumps ldb floats per step, so almost every
 // B access is a cache miss once N is large. That is what B1 fixes.
-void gemm_naive(int M, int N, int K, const float* A, int lda, const float* B, int ldb, float* C,
+void gemm_naive(int M, int N, int K, const float *A, int lda, const float *B, int ldb, float *C,
                 int ldc) {
     for (int i = 0; i < M; ++i)
         for (int j = 0; j < N; ++j) {
@@ -36,8 +36,8 @@ void gemm_naive(int M, int N, int K, const float* A, int lda, const float* B, in
         }
 }
 
-void gemm(GemmKernel kernel, int M, int N, int K, const float* A, int lda, const float* B, int ldb,
-          float* C, int ldc) {
+void gemm(GemmKernel kernel, int M, int N, int K, const float *A, int lda, const float *B, int ldb,
+          float *C, int ldc) {
     if (M < 0 || N < 0 || K < 0) throw std::invalid_argument("gemm: negative size");
     if (lda < K || ldb < N || ldc < N)
         throw std::invalid_argument("gemm: leading dimension too small");

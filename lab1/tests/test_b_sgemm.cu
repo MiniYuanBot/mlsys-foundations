@@ -5,11 +5,11 @@ using namespace l1;
 using namespace l1test;
 
 // Any shape, including 1 x 1 and edges that are not multiples of 32.
-static void sweep_any_shape(const char* name, SgemmFn fn) {
+static void sweep_any_shape(const char *name, SgemmFn fn) {
     unsigned seed = 1;
     const int shapes[][3] = {{1, 1, 1},    {7, 11, 5},   {32, 32, 32},
                              {33, 31, 65}, {64, 65, 33}, {129, 17, 200}};
-    for (const auto& s : shapes) run_sgemm_case(name, fn, s[0], s[1], s[2], seed++);
+    for (const auto &s : shapes) run_sgemm_case(name, fn, s[0], s[1], s[2], seed++);
 }
 
 TEST(B0_naive_reference) {
@@ -61,6 +61,6 @@ TEST(B4_blocktile_2d_rejects_bad_shape) {
                  std::invalid_argument);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

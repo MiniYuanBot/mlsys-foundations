@@ -25,7 +25,7 @@
 
 namespace tc {
 
-[[maybe_unused]] static std::logic_error todo(const char* what) {
+[[maybe_unused]] static std::logic_error todo(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -34,12 +34,12 @@ namespace tc {
 // covers every node `target` depends on; it returns the id of the replacement.
 // Nodes downstream of target are rebuilt on top of the replacement. Nodes no
 // longer reachable from the output are simply left behind (harmless).
-static Graph rebuild(const Graph& g, int target,
-                     const std::function<int(Graph&, const std::vector<int>&)>& make) {
+static Graph rebuild(const Graph &g, int target,
+                     const std::function<int(Graph &, const std::vector<int> &)> &make) {
     Graph ng;
     std::vector<int> m(g.size(), -1);
     for (int id : toposort(g)) {
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         if (id == target) {
             m[id] = make(ng, m);
             continue;
@@ -61,12 +61,12 @@ static Graph rebuild(const Graph& g, int target,
 // Provided: copy `g`, but give consumer node `c` its OWN copy of operand
 // number `k` (a fresh node with the same op and operands). This undoes common
 // subexpression elimination for one edge: the value will be recomputed.
-static Graph clone_operand(const Graph& g, int c, int k) {
+static Graph clone_operand(const Graph &g, int c, int k) {
     const int victim = g.node(c).srcs.at(k);
     Graph ng;
     std::vector<int> m(g.size(), -1);
     for (int id : toposort(g)) {
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         if (n.op == Op::Input)
             m[id] = ng.input(n.name, n.shape);
         else if (n.op == Op::Const)
@@ -102,7 +102,7 @@ static Graph clone_operand(const Graph& g, int c, int k) {
 //       MatMul(Mul(a, s), B) -> Mul(MatMul(a, B), s)  for s of shape [1, K], only when K == N
 //     It is WRONG; a real superoptimizer's generator also proposes bad
 //     candidates and relies on the verifier (C2) to reject them.
-std::vector<Graph> rewrite_once(const Graph& g) {
+std::vector<Graph> rewrite_once(const Graph &g) {
     (void)g;
     (void)rebuild;
     (void)clone_operand;
@@ -119,7 +119,7 @@ std::vector<Graph> rewrite_once(const Graph& g) {
 // two different polynomials of degree d agree on a random point with
 // probability <= d / |field| (Schwartz-Zippel); Mirage uses exactly this,
 // over a finite field so that there is no rounding at all.
-bool probably_equivalent(const Graph& a, const Graph& b, int trials, unsigned seed) {
+bool probably_equivalent(const Graph &a, const Graph &b, int trials, unsigned seed) {
     (void)a;
     (void)b;
     (void)trials;
@@ -136,7 +136,7 @@ bool probably_equivalent(const Graph& a, const Graph& b, int trials, unsigned se
 // This ignores re-reads inside a kernel (a GEMM reads A once per N-tile; a Row
 // kernel re-reads its row once per reduction) and caching. The bench compares
 // the model with reality: notice where it is right and where it is wrong.
-Cost estimate(const Graph& g, const Plan& plan, const Device& dev) {
+Cost estimate(const Graph &g, const Plan &plan, const Device &dev) {
     (void)g;
     (void)plan;
     (void)dev;
@@ -149,7 +149,7 @@ Cost estimate(const Graph& g, const Plan& plan, const Device& dev) {
 //       skip if c.canonical() was seen; mark it seen;
 //       keep it (and put it in the next frontier) only if probably_equivalent(g, c)
 //   For every kept graph build plan_fused + estimate, return sorted by cost.ms.
-std::vector<Candidate> search(const Graph& g, const Device& dev, int depth) {
+std::vector<Candidate> search(const Graph &g, const Device &dev, int depth) {
     (void)g;
     (void)dev;
     (void)depth;

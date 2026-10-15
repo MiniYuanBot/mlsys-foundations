@@ -8,7 +8,7 @@
 
 namespace tc {
 
-const char* kind_name(KernelKind k) {
+const char *kind_name(KernelKind k) {
     switch (k) {
     case KernelKind::Elementwise:
         return "Elementwise";
@@ -26,7 +26,7 @@ static KernelKind kind_of_single(Op op) {
     return KernelKind::Elementwise;
 }
 
-Plan plan_unfused(const Graph& g) {
+Plan plan_unfused(const Graph &g) {
     Plan p;
     for (int id : toposort(g)) {
         const Op op = g.node(id).op;
@@ -37,17 +37,17 @@ Plan plan_unfused(const Graph& g) {
     return p;
 }
 
-void finalize_plan(const Graph& g, Plan& plan) {
+void finalize_plan(const Graph &g, Plan &plan) {
     std::set<int> materialised;
     for (int id : g.inputs()) materialised.insert(id);
-    for (auto& k : plan.kernels) {
+    for (auto &k : plan.kernels) {
         if (k.nodes.empty() || k.nodes.back() != k.output)
             throw std::logic_error("plan: kernel nodes must end with its output");
         const std::set<int> inside(k.nodes.begin(), k.nodes.end());
         int reductions = 0, matmuls = 0;
         k.reads.clear();
         for (int id : k.nodes) {
-            const Node& n = g.node(id);
+            const Node &n = g.node(id);
             if (n.op == Op::Input || n.op == Op::Const)
                 throw std::logic_error("plan: leaves are not computed in kernels");
             reductions += is_reduction(n.op);
@@ -76,10 +76,10 @@ void finalize_plan(const Graph& g, Plan& plan) {
         throw std::logic_error("plan: last kernel must produce the graph output");
 }
 
-std::string Plan::to_string(const Graph& g) const {
+std::string Plan::to_string(const Graph &g) const {
     std::ostringstream os;
     for (size_t i = 0; i < kernels.size(); ++i) {
-        const auto& k = kernels[i];
+        const auto &k = kernels[i];
         os << "kernel " << i << " " << kind_name(k.kind) << " -> n" << k.output << " ["
            << g.node(k.output).shape.rows << "x" << g.node(k.output).shape.cols << "]  nodes:";
         for (int id : k.nodes) os << " n" << id << ":" << op_name(g.node(id).op);

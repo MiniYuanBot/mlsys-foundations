@@ -14,13 +14,13 @@
 
 namespace tc {
 
-[[maybe_unused]] static std::logic_error todo(const char* what) {
+[[maybe_unused]] static std::logic_error todo(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
 // TODO(A1) toposort: depth-first post-order from g.output(), visiting srcs
 // left to right; each node once. (Same algorithm as lab0 C1.)
-std::vector<int> toposort(const Graph& g) {
+std::vector<int> toposort(const Graph &g) {
     std::vector<int> order;
     std::unordered_set<int> seen;
     std::function<void(int)> visit = [&](int id) {
@@ -44,13 +44,13 @@ std::vector<int> toposort(const Graph& g) {
 //   RowSum   -> out(r, 0) = sum over c;   RowMax -> max over c
 //   MatMul   -> out(i, j) = sum over k of A(i, k) * B(k, j)
 // Return the value of g.output().
-HostTensor evaluate(const Graph& g, const Feeds& feeds) {
+HostTensor evaluate(const Graph &g, const Feeds &feeds) {
     std::vector<HostTensor> val(g.size());
     for (int id : toposort(g)) {
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         HostTensor out{n.shape, std::vector<double>(n.shape.numel(), 0.0)};
         auto bget = [&](int src, int64_t r, int64_t c) {
-            const HostTensor& t = val[src];
+            const HostTensor &t = val[src];
             return t.at(t.shape.rows == 1 ? 0 : r, t.shape.cols == 1 ? 0 : c);
         };
         if (n.op == Op::Input) {
@@ -62,7 +62,7 @@ HostTensor evaluate(const Graph& g, const Feeds& feeds) {
         } else if (n.op == Op::Const) {
             out.data[0] = n.value;
         } else if (is_unary(n.op)) {
-            const auto& a = val[n.srcs[0]].data;
+            const auto &a = val[n.srcs[0]].data;
             for (size_t i = 0; i < a.size(); ++i) {
                 const double x = a[i];
                 switch (n.op) {
@@ -112,7 +112,7 @@ HostTensor evaluate(const Graph& g, const Feeds& feeds) {
                     out.data[r * n.shape.cols + c] = z;
                 }
         } else if (is_reduction(n.op)) {
-            const HostTensor& a = val[n.srcs[0]];
+            const HostTensor &a = val[n.srcs[0]];
             for (int64_t r = 0; r < a.shape.rows; ++r) {
                 double acc = n.op == Op::RowSum ? 0.0 : -INFINITY;
                 for (int64_t c = 0; c < a.shape.cols; ++c)

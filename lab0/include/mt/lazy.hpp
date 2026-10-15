@@ -28,7 +28,7 @@ bool is_leaf(Op op);        // Input, Const
 bool is_unary(Op op);       // Neg, Exp, Tanh, Relu
 bool is_binary(Op op);      // Add, Sub, Mul, Div
 bool is_elementwise(Op op); // unary or binary
-const char* op_name(Op op);
+const char *op_name(Op op);
 float apply_unary(Op op, float x);
 float apply_binary(Op op, float a, float b);
 
@@ -45,11 +45,11 @@ using NodePtr = std::shared_ptr<Node>;
 class LazyTensor {
 public:
     explicit LazyTensor(NodePtr node) : node_(std::move(node)) {}
-    static LazyTensor input(const Tensor& t);
+    static LazyTensor input(const Tensor &t);
     static LazyTensor constant(float value);
 
-    const NodePtr& node() const { return node_; }
-    const Shape& shape() const { return node_->shape; }
+    const NodePtr &node() const { return node_; }
+    const Shape &shape() const { return node_->shape; }
 
     LazyTensor neg() const;
     LazyTensor exp() const;
@@ -57,24 +57,24 @@ public:
     LazyTensor relu() const;
     LazyTensor sum_last() const;
 
-    friend LazyTensor operator+(const LazyTensor& a, const LazyTensor& b);
-    friend LazyTensor operator-(const LazyTensor& a, const LazyTensor& b);
-    friend LazyTensor operator*(const LazyTensor& a, const LazyTensor& b);
-    friend LazyTensor operator/(const LazyTensor& a, const LazyTensor& b);
+    friend LazyTensor operator+(const LazyTensor &a, const LazyTensor &b);
+    friend LazyTensor operator-(const LazyTensor &a, const LazyTensor &b);
+    friend LazyTensor operator*(const LazyTensor &a, const LazyTensor &b);
+    friend LazyTensor operator/(const LazyTensor &a, const LazyTensor &b);
 
 private:
     NodePtr node_;
 };
-LazyTensor operator+(const LazyTensor& a, const LazyTensor& b);
-LazyTensor operator-(const LazyTensor& a, const LazyTensor& b);
-LazyTensor operator*(const LazyTensor& a, const LazyTensor& b);
-LazyTensor operator/(const LazyTensor& a, const LazyTensor& b);
-LazyTensor operator*(float s, const LazyTensor& a);
-LazyTensor operator+(float s, const LazyTensor& a);
-LazyTensor operator+(const LazyTensor& a, float s);
-LazyTensor operator-(const LazyTensor& a, float s);
-LazyTensor operator*(const LazyTensor& a, float s);
-LazyTensor operator/(const LazyTensor& a, float s);
+LazyTensor operator+(const LazyTensor &a, const LazyTensor &b);
+LazyTensor operator-(const LazyTensor &a, const LazyTensor &b);
+LazyTensor operator*(const LazyTensor &a, const LazyTensor &b);
+LazyTensor operator/(const LazyTensor &a, const LazyTensor &b);
+LazyTensor operator*(float s, const LazyTensor &a);
+LazyTensor operator+(float s, const LazyTensor &a);
+LazyTensor operator+(const LazyTensor &a, float s);
+LazyTensor operator-(const LazyTensor &a, float s);
+LazyTensor operator*(const LazyTensor &a, float s);
+LazyTensor operator/(const LazyTensor &a, float s);
 
 // ---- scheduling ----
 // A Kernel computes exactly one materialised node (`output`) into a buffer.
@@ -89,10 +89,10 @@ struct Kernel {
 // C1: all nodes reachable from root, every node after all of its srcs,
 // each node exactly once. Visit srcs left-to-right (depth-first post-order)
 // so the order is deterministic.
-std::vector<NodePtr> toposort(const NodePtr& root);
+std::vector<NodePtr> toposort(const NodePtr &root);
 
 // Provided: one kernel per non-leaf node (what eager PyTorch does).
-std::vector<Kernel> schedule_unfused(const NodePtr& root);
+std::vector<Kernel> schedule_unfused(const NodePtr &root);
 
 // C2: fused schedule. A non-leaf node is MATERIALISED (gets its own buffer and
 // is the output of a kernel) iff
@@ -102,7 +102,7 @@ std::vector<Kernel> schedule_unfused(const NodePtr& root);
 //       (count each edge: x*x gives x two uses).
 // Every other non-leaf node is inlined into the kernel of its single consumer.
 // Kernels appear in the topological order of their output nodes.
-std::vector<Kernel> schedule_fused(const NodePtr& root);
+std::vector<Kernel> schedule_fused(const NodePtr &root);
 
 // ---- code generation: a postfix (stack machine) program per kernel ----
 enum class InstrKind { Load, Const, Unary, Binary };
@@ -125,16 +125,16 @@ struct Program {
 //   - a Const leaf                  -> Const
 //   - anything else (Input or a node materialised by another kernel) -> Load
 // Reuse the same buffer index if the same node is loaded twice.
-Program compile(const Kernel& kernel);
+Program compile(const Kernel &kernel);
 
 // Provided interpreters. `inputs[b]` points at the data of Program::buffers[b].
 // Scalar: evaluate the program for element i, one float at a time.
-float eval_scalar(const Program& p, const std::vector<const float*>& inputs, int64_t i);
+float eval_scalar(const Program &p, const std::vector<const float *> &inputs, int64_t i);
 // C4: tiled interpreter. Evaluate elements [begin, begin+n) (n <= kTile)
 // instruction by instruction on whole tiles, writing the results to out[0..n).
 constexpr int kTile = 512;
-void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n,
-               float* out);
+void eval_tile(const Program &p, const std::vector<const float *> &inputs, int64_t begin, int n,
+               float *out);
 
 struct ExecStats {
     int kernels = 0;
@@ -143,21 +143,21 @@ struct ExecStats {
     int64_t intermediate_bytes = 0; // buffers allocated for non-root kernel outputs
 };
 // Provided: memory-traffic accounting of a schedule (no execution needed).
-ExecStats analyze(const std::vector<Kernel>& kernels, const NodePtr& root);
+ExecStats analyze(const std::vector<Kernel> &kernels, const NodePtr &root);
 
 enum class Interp { Scalar, Tiled };
 
 // Provided: run the kernels in order and return the root's value.
-Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root,
-               Interp interp = Interp::Scalar, ExecStats* stats = nullptr);
+Tensor execute(const std::vector<Kernel> &kernels, const NodePtr &root,
+               Interp interp = Interp::Scalar, ExecStats *stats = nullptr);
 
 // Convenience wrappers.
-Tensor realize_unfused(const LazyTensor& t, ExecStats* stats = nullptr);
-Tensor realize_fused(const LazyTensor& t, Interp interp = Interp::Scalar,
-                     ExecStats* stats = nullptr);
+Tensor realize_unfused(const LazyTensor &t, ExecStats *stats = nullptr);
+Tensor realize_fused(const LazyTensor &t, Interp interp = Interp::Scalar,
+                     ExecStats *stats = nullptr);
 
 // Pretty-print a schedule, e.g.
 //   kernel 0 -> n4 Relu [1024]  nodes: n2 Mul, n3 Add, n4 Relu  reads: n0 n1 n5
-std::string describe(const std::vector<Kernel>& kernels);
+std::string describe(const std::vector<Kernel> &kernels);
 
 } // namespace mt::lazy

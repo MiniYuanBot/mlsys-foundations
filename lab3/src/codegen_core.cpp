@@ -7,7 +7,7 @@
 
 namespace tc::detail {
 
-Ctx make_ctx(const Graph& g, const Kernel& k) {
+Ctx make_ctx(const Graph &g, const Kernel &k) {
     Ctx c{g, k, {}, {}};
     for (size_t i = 0; i < k.reads.size(); ++i) c.buf[k.reads[i]] = "in" + std::to_string(i);
     c.inside.insert(k.nodes.begin(), k.nodes.end());
@@ -22,9 +22,9 @@ std::string literal(double v) {
     return s[0] == '-' ? "(" + s + ")" : s;
 }
 
-std::string operand(const Ctx& c, int id) {
+std::string operand(const Ctx &c, int id) {
     if (c.inside.count(id)) return "v" + std::to_string(id);
-    const Node& n = c.g.node(id);
+    const Node &n = c.g.node(id);
     if (n.op == Op::Const) return literal(n.value);
     auto it = c.buf.find(id);
     if (it == c.buf.end())
@@ -32,10 +32,10 @@ std::string operand(const Ctx& c, int id) {
     return emit_load(it->second, n.shape);
 }
 
-void emit_ssa(const Ctx& c, const std::vector<int>& nodes, std::ostringstream& os,
-              const std::string& indent) {
+void emit_ssa(const Ctx &c, const std::vector<int> &nodes, std::ostringstream &os,
+              const std::string &indent) {
     for (int id : nodes) {
-        const Node& n = c.g.node(id);
+        const Node &n = c.g.node(id);
         if (!is_elementwise(n.op))
             throw std::logic_error(std::string("emit_ssa: not elementwise: ") + op_name(n.op));
         std::vector<std::string> args;
@@ -44,7 +44,7 @@ void emit_ssa(const Ctx& c, const std::vector<int>& nodes, std::ostringstream& o
     }
 }
 
-std::string signature(const Ctx& c, const std::string& dims) {
+std::string signature(const Ctx &c, const std::string &dims) {
     std::ostringstream os;
     os << "extern \"C\" __global__ void tc_kernel(";
     for (size_t i = 0; i < c.k.reads.size(); ++i) os << "const float* __restrict__ in" << i << ", ";
@@ -53,19 +53,19 @@ std::string signature(const Ctx& c, const std::string& dims) {
 }
 
 // Parameter list / argument list of the inputs, for the GEMM helper functions.
-static std::string in_params(const Ctx& c) {
+static std::string in_params(const Ctx &c) {
     std::string s;
     for (size_t i = 0; i < c.k.reads.size(); ++i)
         s += "const float* __restrict__ in" + std::to_string(i) + ", ";
     return s;
 }
-static std::string in_args(const Ctx& c) {
+static std::string in_args(const Ctx &c) {
     std::string s;
     for (size_t i = 0; i < c.k.reads.size(); ++i) s += "in" + std::to_string(i) + ", ";
     return s;
 }
 
-const char* kPrelude = R"(
+const char *kPrelude = R"(
 #ifndef INFINITY
 #define INFINITY __int_as_float(0x7f800000)
 #endif
@@ -102,7 +102,7 @@ __device__ float tc_block_max(float v, float* smem) {
 )";
 
 // Elementwise: one thread per output element of the [R, C] grid, grid-stride.
-std::string codegen_elementwise(const Ctx& c) {
+std::string codegen_elementwise(const Ctx &c) {
     std::ostringstream os;
     os << kPrelude << signature(c, "long R, long C") << " {\n"
        << "  for (long t = blockIdx.x * (long)blockDim.x + threadIdx.x; t < R * C; t += "
@@ -116,7 +116,7 @@ std::string codegen_elementwise(const Ctx& c) {
 // GEMM template: 64 x 64 output tile per block, 256 threads, 4 x 4 outputs
 // per thread, BK = 16. Bounds-checked, any M, N, K. Your hooks decide what
 // "loading A", "loading B" and "storing C" mean.
-std::string codegen_matmul(const Ctx& c) {
+std::string codegen_matmul(const Ctx &c) {
     const MatmulHooks h = matmul_hooks(c);
     const std::string P = in_params(c), A = in_args(c);
     std::ostringstream os;
@@ -178,7 +178,7 @@ std::string codegen_matmul(const Ctx& c) {
 
 namespace tc {
 
-std::string codegen(const Graph& g, const Kernel& k) {
+std::string codegen(const Graph &g, const Kernel &k) {
     const detail::Ctx c = detail::make_ctx(g, k);
     switch (k.kind) {
     case KernelKind::Elementwise:

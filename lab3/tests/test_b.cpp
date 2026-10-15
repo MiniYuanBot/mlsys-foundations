@@ -17,7 +17,7 @@ TEST(B1_elementwise_chain_is_one_kernel) {
 }
 
 TEST(B1_softmax_layernorm_rmsnorm_are_one_row_kernel) {
-    for (const Graph& g :
+    for (const Graph &g :
          {models::softmax(8, 100), models::layernorm(8, 100), models::rmsnorm(8, 100)}) {
         const Plan p = plan_fused(g);
         CHECK_EQ(p.kernels.size(), 1u);
@@ -97,7 +97,7 @@ TEST(B3_matmul_epilogue_on_gpu) {
     Runtime rt;
     const std::tuple<int64_t, int64_t, int64_t> shapes[] = {
         {64, 32, 64}, {1, 5, 3}, {100, 70, 130}, {256, 512, 192}};
-    for (const auto& [M, K, N] : shapes) {
+    for (const auto &[M, K, N] : shapes) {
         Graph g = models::matmul_bias_gelu(M, K, N);
         expect_plan_matches(rt, g, plan_fused(g), "matmul_bias_gelu", 1e-4);
     }
@@ -121,6 +121,6 @@ TEST(B_fused_equals_unfused_on_rmsnorm_matmul) {
     expect_plan_matches(rt, g, plan_fused(g), "fused");
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

@@ -15,7 +15,7 @@
 
 namespace coll {
 
-[[maybe_unused]] static NotImplemented todo(const char* what) {
+[[maybe_unused]] static NotImplemented todo(const char *what) {
     return NotImplemented(std::string("TODO ") + what + " is not implemented yet");
 }
 
@@ -23,7 +23,7 @@ namespace coll {
 [[maybe_unused]] static constexpr int TAG = 600;
 
 // ------------------------------------------------------------------- A1 ----
-void ring_shift(const float* send, float* recv, size_t n, const Comm& c) {
+void ring_shift(const float *send, float *recv, size_t n, const Comm &c) {
     if (c.size == 1) {
         std::copy(send, send + n, recv);
         return;
@@ -37,7 +37,7 @@ void ring_shift(const float* send, float* recv, size_t n, const Comm& c) {
 // temporary), add them into buf, then MPI_Send buf to every r. Others:
 // MPI_Send buf to 0, then MPI_Recv the result into buf.
 // Cost: rank 0 moves 2(P-1)n floats by itself -- the bottleneck the ring removes.
-void allreduce_star(float* buf, size_t n, const Comm& c) {
+void allreduce_star(float *buf, size_t n, const Comm &c) {
     const int N = static_cast<int>(n);
     if (c.rank == 0) {
         std::vector<float> tmp(n);
@@ -60,7 +60,7 @@ void allreduce_star(float* buf, size_t n, const Comm& c) {
 // After the last step, chunk r of rank r has been added up by every rank.
 // (Check with P = 2: rank 0 sends chunk 1, receives chunk 0 -> owns chunk 0.)
 // Chunks can have different sizes (chunk_range): size each message by its chunk.
-void reduce_scatter_ring(float* buf, size_t n, const Comm& c) {
+void reduce_scatter_ring(float *buf, size_t n, const Comm &c) {
     const int P = c.size;
     if (P == 1) return;
     std::vector<float> tmp(chunk_range(n, P, 0).second); // chunk 0 is the largest
@@ -78,7 +78,7 @@ void reduce_scatter_ring(float* buf, size_t n, const Comm& c) {
 // TODO(B1b) ring all-gather. P - 1 steps; at step s rank r
 //   sends    chunk (r - s) mod P       to the right,
 //   receives chunk (r - s - 1) mod P   from the left, straight into buf (no add).
-void allgather_ring(float* buf, size_t n, const Comm& c) {
+void allgather_ring(float *buf, size_t n, const Comm &c) {
     const int P = c.size;
     if (P == 1) return;
     for (int s = 0; s < P - 1; ++s) {
@@ -92,7 +92,7 @@ void allgather_ring(float* buf, size_t n, const Comm& c) {
 }
 
 // TODO(B1c) two lines.
-void allreduce_ring(float* buf, size_t n, const Comm& c) {
+void allreduce_ring(float *buf, size_t n, const Comm &c) {
     reduce_scatter_ring(buf, n, c);
     allgather_ring(buf, n, c);
 }
@@ -105,7 +105,7 @@ void allreduce_ring(float* buf, size_t n, const Comm& c) {
 // if P is not a power of two (check: P & (P - 1)).
 // Latency log2(P) * alpha instead of the ring's 2(P-1) * alpha, but every step
 // moves the whole buffer: log2(P) * n floats instead of the ring's ~2n.
-void allreduce_rd(float* buf, size_t n, const Comm& c) {
+void allreduce_rd(float *buf, size_t n, const Comm &c) {
     if (c.size & (c.size - 1))
         throw std::invalid_argument("allreduce_rd: P must be a power of two");
     std::vector<float> tmp(n);

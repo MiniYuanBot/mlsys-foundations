@@ -33,25 +33,25 @@ constexpr float LN2 = 0.6931471805599453f;
 // Provided: copy a [64 x 64] fp16 tile (rows row0.., all 64 columns) from a
 // [S x 64] row-major matrix into padded shared memory. 512 16-byte chunks,
 // 4 per thread.
-__device__ __forceinline__ void load_tile(__half* smem, const __half* g, int row0) {
+__device__ __forceinline__ void load_tile(__half *smem, const __half *g, int row0) {
 #pragma unroll
     for (int i = 0; i < 4; ++i) {
         const int c = threadIdx.x + i * THREADS;
         const int r = c / 8, col = (c % 8) * 8;
-        *reinterpret_cast<uint4*>(&smem[r * PITCH + col]) =
-            *reinterpret_cast<const uint4*>(&g[(row0 + r) * D + col]);
+        *reinterpret_cast<uint4 *>(&smem[r * PITCH + col]) =
+            *reinterpret_cast<const uint4 *>(&g[(row0 + r) * D + col]);
     }
 }
 
 __device__ __forceinline__ uint32_t pack_half2(float lo, float hi) {
     __half2 h = __floats2half2_rn(lo, hi);
-    return *reinterpret_cast<uint32_t*>(&h);
+    return *reinterpret_cast<uint32_t *>(&h);
 }
 
 template <bool CAUSAL>
 __global__ void __launch_bounds__(THREADS)
-    flash_mma_kernel(const __half* __restrict__ Q, const __half* __restrict__ K,
-                     const __half* __restrict__ V, __half* __restrict__ O, float* __restrict__ L,
+    flash_mma_kernel(const __half *__restrict__ Q, const __half *__restrict__ K,
+                     const __half *__restrict__ V, __half *__restrict__ O, float *__restrict__ L,
                      int S, float qk_scale) {
     __shared__ __align__(16) __half Qs[BM * PITCH];
     __shared__ __align__(16) __half Ks[BN * PITCH];
@@ -146,7 +146,7 @@ __global__ void __launch_bounds__(THREADS)
         const int row = q_row0 + g + 8 * r;
 #pragma unroll
         for (int j = 0; j < D / 8; ++j)
-            *reinterpret_cast<__half2*>(&O[row * D + j * 8 + 2 * t]) =
+            *reinterpret_cast<__half2 *>(&O[row * D + j * 8 + 2 * t]) =
                 __floats2half2_rn(o[j][2 * r] * inv, o[j][2 * r + 1] * inv);
         if (t == 0) L[row] = (m_row[r] + log2f(l_row[r])) * LN2;
     }
@@ -160,7 +160,7 @@ static std::string last_error;
 
 // C ABI for the ctypes bridge in attn/cuda.py. Returns 0 on success,
 // 1 if not implemented, 2 on a CUDA or argument error (see flash_mma_error()).
-extern "C" int flash_mma_forward(const void* q, const void* k, const void* v, void* o, void* lse,
+extern "C" int flash_mma_forward(const void *q, const void *k, const void *v, void *o, void *lse,
                                  int BH, int S, int causal, float sm_scale) {
     using namespace l2;
     if (!C1_DONE) {
@@ -173,10 +173,10 @@ extern "C" int flash_mma_forward(const void* q, const void* k, const void* v, vo
     }
     const dim3 grid(S / BM, BH);
     const float qk_scale = sm_scale * LOG2E;
-    auto Qp = static_cast<const __half*>(q), Kp = static_cast<const __half*>(k),
-         Vp = static_cast<const __half*>(v);
-    auto Op = static_cast<__half*>(o);
-    auto Lp = static_cast<float*>(lse);
+    auto Qp = static_cast<const __half *>(q), Kp = static_cast<const __half *>(k),
+         Vp = static_cast<const __half *>(v);
+    auto Op = static_cast<__half *>(o);
+    auto Lp = static_cast<float *>(lse);
     if (causal)
         flash_mma_kernel<true><<<grid, THREADS>>>(Qp, Kp, Vp, Op, Lp, S, qk_scale);
     else
@@ -189,6 +189,6 @@ extern "C" int flash_mma_forward(const void* q, const void* k, const void* v, vo
     return 0;
 }
 
-extern "C" const char* flash_mma_error() {
+extern "C" const char *flash_mma_error() {
     return l2::last_error.c_str();
 }

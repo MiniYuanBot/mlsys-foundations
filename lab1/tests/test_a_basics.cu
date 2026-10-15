@@ -69,7 +69,7 @@ TEST(A2_reduce_sum_all_ones_exact) {
     CHECK_EQ(out.download()[0], static_cast<float>(n));
 }
 
-static void check_transpose(void (*fn)(const float*, float*, int, int), int M, int N) {
+static void check_transpose(void (*fn)(const float *, float *, int, int), int M, int N) {
     const auto in = make_input(static_cast<size_t>(M) * N, 4);
     DeviceBuffer<float> din(in.size()), dout(in.size());
     din.upload(in);
@@ -88,17 +88,17 @@ static void check_transpose(void (*fn)(const float*, float*, int, int), int M, i
 
 TEST(A3_transpose_naive_reference) {
     const int shapes[][2] = {{1, 1}, {33, 31}, {1000, 777}};
-    for (const auto& s : shapes) check_transpose(transpose_naive, s[0], s[1]);
+    for (const auto &s : shapes) check_transpose(transpose_naive, s[0], s[1]);
 }
 TEST(A3a_transpose_tiled) {
     const int shapes[][2] = {{1, 1}, {32, 32}, {33, 31}, {1000, 777}, {2048, 64}};
-    for (const auto& s : shapes) check_transpose(transpose_tiled, s[0], s[1]);
+    for (const auto &s : shapes) check_transpose(transpose_tiled, s[0], s[1]);
 }
 TEST(A3b_transpose_padded) {
     const int shapes[][2] = {{1, 1}, {32, 32}, {33, 31}, {1000, 777}, {64, 2048}};
-    for (const auto& s : shapes) check_transpose(transpose_padded, s[0], s[1]);
+    for (const auto &s : shapes) check_transpose(transpose_padded, s[0], s[1]);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

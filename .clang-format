@@ -10,8 +10,8 @@ BreakBeforeBraces: Attach
 NamespaceIndentation: None
 AccessModifierOffset: -4
 DerivePointerAlignment: false
-PointerAlignment: Left
-ReferenceAlignment: Left
+PointerAlignment: Right
+ReferenceAlignment: Right
 IncludeBlocks: Preserve
 SortIncludes: CaseSensitive
 AllowShortFunctionsOnASingleLine: Inline

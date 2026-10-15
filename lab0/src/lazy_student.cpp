@@ -15,14 +15,14 @@
 
 namespace mt::lazy {
 
-[[maybe_unused]] static std::logic_error not_implemented(const char* what) {
+[[maybe_unused]] static std::logic_error not_implemented(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
 // TODO(C1) toposort: depth-first post-order from root.
 //   visit(n): if n already visited, return; mark it; visit each src in order; append n.
 // A recursive lambda (std::function) is fine for this lab's graph sizes.
-std::vector<NodePtr> toposort(const NodePtr& root) {
+std::vector<NodePtr> toposort(const NodePtr &root) {
     (void)root;
     throw not_implemented("C1 toposort");
 }
@@ -36,7 +36,7 @@ std::vector<NodePtr> toposort(const NodePtr& root) {
 //               through srcs WITHOUT passing through another materialised node,
 //       listed in topological order (filter `order`, or do a post-order walk).
 // Check yourself against the schedules drawn in lecture L0 section 4.
-std::vector<Kernel> schedule_fused(const NodePtr& root) {
+std::vector<Kernel> schedule_fused(const NodePtr &root) {
     (void)root;
     throw not_implemented("C2 schedule_fused");
 }
@@ -53,7 +53,7 @@ std::vector<Kernel> schedule_fused(const NodePtr& root) {
 //                                        in p.buffers, appending it on first use}
 // Tip: put kernel.nodes into an unordered_set<const Node*> for the inside test.
 // Example: relu(x*w + b) fused -> Load0 Load1 Mul Load2 Add Relu, buffers [x, w, b].
-Program compile(const Kernel& kernel) {
+Program compile(const Kernel &kernel) {
     (void)kernel;
     throw not_implemented("C3 compile");
 }
@@ -69,8 +69,8 @@ Program compile(const Kernel& kernel) {
 // Finally copy the single remaining tile into out[0..n).
 // Write the inner loops so the compiler can vectorise them: switch on the
 // op OUTSIDE the element loop, e.g. case Op::Add: for (t..) a[t] += b[t];
-void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n,
-               float* out) {
+void eval_tile(const Program &p, const std::vector<const float *> &inputs, int64_t begin, int n,
+               float *out) {
     (void)p;
     (void)inputs;
     (void)begin;

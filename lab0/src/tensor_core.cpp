@@ -20,16 +20,16 @@ Tensor::Tensor(std::shared_ptr<std::vector<float>> storage, Shape shape, Strides
         if (d < 0) throw std::invalid_argument("negative dimension");
 }
 
-Tensor Tensor::zeros(const Shape& shape) {
+Tensor Tensor::zeros(const Shape &shape) {
     return full(shape, 0.0f);
 }
 
-Tensor Tensor::full(const Shape& shape, float value) {
+Tensor Tensor::full(const Shape &shape, float value) {
     auto storage = std::make_shared<std::vector<float>>(numel_of(shape), value);
     return Tensor(storage, shape, contiguous_strides(shape), 0);
 }
 
-Tensor Tensor::from_vector(const Shape& shape, std::vector<float> values) {
+Tensor Tensor::from_vector(const Shape &shape, std::vector<float> values) {
     if (static_cast<int64_t>(values.size()) != numel_of(shape))
         throw std::invalid_argument("from_vector: value count does not match shape");
     auto storage = std::make_shared<std::vector<float>>(std::move(values));
@@ -48,7 +48,7 @@ int64_t Tensor::size(int64_t dim) const {
     return shape_[dim];
 }
 
-Tensor Tensor::view(const Shape& new_shape) const {
+Tensor Tensor::view(const Shape &new_shape) const {
     if (numel_of(new_shape) != numel()) throw std::invalid_argument("view: element count changes");
     if (!is_contiguous())
         throw std::invalid_argument(
@@ -56,18 +56,18 @@ Tensor Tensor::view(const Shape& new_shape) const {
     return Tensor(storage_, new_shape, contiguous_strides(new_shape), offset_);
 }
 
-Tensor Tensor::reshape(const Shape& new_shape) const {
+Tensor Tensor::reshape(const Shape &new_shape) const {
     return is_contiguous() ? view(new_shape) : contiguous().view(new_shape);
 }
 
 std::vector<float> Tensor::to_vector() const {
     std::vector<float> out;
     out.reserve(numel());
-    for_each_index(shape_, [&](const Index& idx) { out.push_back(at(idx)); });
+    for_each_index(shape_, [&](const Index &idx) { out.push_back(at(idx)); });
     return out;
 }
 
-static std::string join(const std::vector<int64_t>& v) {
+static std::string join(const std::vector<int64_t> &v) {
     std::ostringstream os;
     os << "[";
     for (size_t i = 0; i < v.size(); ++i) os << (i ? ", " : "") << v[i];
@@ -87,7 +87,7 @@ std::string Tensor::describe() const {
     os << "shape=" << join(shape_) << " strides=" << join(strides_) << " offset=" << offset_
        << " contiguous=" << (is_contiguous() ? "yes" : "no") << "\n";
     std::vector<bool> reached(storage_->size(), false);
-    for_each_index(shape_, [&](const Index& idx) { reached[offset_of(idx)] = true; });
+    for_each_index(shape_, [&](const Index &idx) { reached[offset_of(idx)] = true; });
     if (ndim() == 2) {
         os << "logical -> storage index\n";
         for (int64_t i = 0; i < shape_[0]; ++i) {
@@ -105,7 +105,7 @@ std::string Tensor::describe() const {
     return os.str();
 }
 
-void for_each_index(const Shape& shape, const std::function<void(const Index&)>& fn) {
+void for_each_index(const Shape &shape, const std::function<void(const Index &)> &fn) {
     if (numel_of(shape) == 0) return;
     Index idx(shape.size(), 0);
     while (true) {
@@ -120,15 +120,15 @@ void for_each_index(const Shape& shape, const std::function<void(const Index&)>&
     }
 }
 
-Tensor map(const Tensor& x, const UnaryFn& fn) {
+Tensor map(const Tensor &x, const UnaryFn &fn) {
     Tensor out = Tensor::zeros(x.shape());
-    float* dst = out.data();
+    float *dst = out.data();
     int64_t k = 0;
-    for_each_index(x.shape(), [&](const Index& idx) { dst[k++] = fn(x.at(idx)); });
+    for_each_index(x.shape(), [&](const Index &idx) { dst[k++] = fn(x.at(idx)); });
     return out;
 }
 
-Tensor matmul(const Tensor& a, const Tensor& b) {
+Tensor matmul(const Tensor &a, const Tensor &b) {
     if (a.ndim() != 2 || b.ndim() != 2 || a.size(1) != b.size(0))
         throw std::invalid_argument("matmul: expected [M,K] @ [K,N]");
     // GEMM kernels want row-major operands with unit column stride.

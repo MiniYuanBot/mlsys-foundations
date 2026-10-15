@@ -23,7 +23,7 @@ bool is_elementwise(Op op) {
     return is_unary(op) || is_binary(op);
 }
 
-const char* op_name(Op op) {
+const char *op_name(Op op) {
     switch (op) {
     case Op::Input:
         return "Input";
@@ -93,7 +93,7 @@ static NodePtr make(Op op, std::vector<NodePtr> srcs, Shape shape) {
     return n;
 }
 
-LazyTensor LazyTensor::input(const Tensor& t) {
+LazyTensor LazyTensor::input(const Tensor &t) {
     auto n = make(Op::Input, {}, t.shape());
     n->value = t.contiguous();
     return LazyTensor(n);
@@ -105,11 +105,11 @@ LazyTensor LazyTensor::constant(float value) {
     return LazyTensor(n);
 }
 
-static LazyTensor unary(Op op, const LazyTensor& x) {
+static LazyTensor unary(Op op, const LazyTensor &x) {
     return LazyTensor(make(op, {x.node()}, x.shape()));
 }
 
-static LazyTensor binary(Op op, const LazyTensor& a, const LazyTensor& b) {
+static LazyTensor binary(Op op, const LazyTensor &a, const LazyTensor &b) {
     const bool ac = a.node()->op == Op::Const, bc = b.node()->op == Op::Const;
     Shape shape;
     if (ac)
@@ -140,57 +140,57 @@ LazyTensor LazyTensor::sum_last() const {
     Shape s(shape().begin(), shape().end() - 1);
     return LazyTensor(make(Op::SumLast, {node_}, s));
 }
-LazyTensor operator+(const LazyTensor& a, const LazyTensor& b) {
+LazyTensor operator+(const LazyTensor &a, const LazyTensor &b) {
     return binary(Op::Add, a, b);
 }
-LazyTensor operator-(const LazyTensor& a, const LazyTensor& b) {
+LazyTensor operator-(const LazyTensor &a, const LazyTensor &b) {
     return binary(Op::Sub, a, b);
 }
-LazyTensor operator*(const LazyTensor& a, const LazyTensor& b) {
+LazyTensor operator*(const LazyTensor &a, const LazyTensor &b) {
     return binary(Op::Mul, a, b);
 }
-LazyTensor operator/(const LazyTensor& a, const LazyTensor& b) {
+LazyTensor operator/(const LazyTensor &a, const LazyTensor &b) {
     return binary(Op::Div, a, b);
 }
-LazyTensor operator*(float s, const LazyTensor& a) {
+LazyTensor operator*(float s, const LazyTensor &a) {
     return LazyTensor::constant(s) * a;
 }
-LazyTensor operator+(float s, const LazyTensor& a) {
+LazyTensor operator+(float s, const LazyTensor &a) {
     return LazyTensor::constant(s) + a;
 }
-LazyTensor operator+(const LazyTensor& a, float s) {
+LazyTensor operator+(const LazyTensor &a, float s) {
     return a + LazyTensor::constant(s);
 }
-LazyTensor operator-(const LazyTensor& a, float s) {
+LazyTensor operator-(const LazyTensor &a, float s) {
     return a - LazyTensor::constant(s);
 }
-LazyTensor operator*(const LazyTensor& a, float s) {
+LazyTensor operator*(const LazyTensor &a, float s) {
     return a * LazyTensor::constant(s);
 }
-LazyTensor operator/(const LazyTensor& a, float s) {
+LazyTensor operator/(const LazyTensor &a, float s) {
     return a / LazyTensor::constant(s);
 }
 
 // ----------------------------------------------------------- scheduling ----
-std::vector<Kernel> schedule_unfused(const NodePtr& root) {
+std::vector<Kernel> schedule_unfused(const NodePtr &root) {
     std::vector<Kernel> kernels;
-    for (const auto& n : toposort(root))
+    for (const auto &n : toposort(root))
         if (!is_leaf(n->op)) kernels.push_back(Kernel{n, {n}});
     return kernels;
 }
 
-static int64_t bytes_of(const Shape& s) {
+static int64_t bytes_of(const Shape &s) {
     return numel_of(s) * static_cast<int64_t>(sizeof(float));
 }
 
-ExecStats analyze(const std::vector<Kernel>& kernels, const NodePtr& root) {
+ExecStats analyze(const std::vector<Kernel> &kernels, const NodePtr &root) {
     ExecStats st;
     st.kernels = static_cast<int>(kernels.size());
-    for (const auto& k : kernels) {
-        std::set<const Node*> inside, reads;
-        for (const auto& n : k.nodes) inside.insert(n.get());
-        for (const auto& n : k.nodes)
-            for (const auto& s : n->srcs)
+    for (const auto &k : kernels) {
+        std::set<const Node *> inside, reads;
+        for (const auto &n : k.nodes) inside.insert(n.get());
+        for (const auto &n : k.nodes)
+            for (const auto &s : n->srcs)
                 if (!inside.count(s.get()) && s->op != Op::Const && reads.insert(s.get()).second)
                     st.bytes_read += bytes_of(s->shape);
         st.bytes_written += bytes_of(k.output->shape);
@@ -199,23 +199,23 @@ ExecStats analyze(const std::vector<Kernel>& kernels, const NodePtr& root) {
     return st;
 }
 
-std::string describe(const std::vector<Kernel>& kernels) {
+std::string describe(const std::vector<Kernel> &kernels) {
     std::ostringstream os;
     for (size_t i = 0; i < kernels.size(); ++i) {
-        const auto& k = kernels[i];
+        const auto &k = kernels[i];
         os << "kernel " << i << " -> n" << k.output->id << " " << op_name(k.output->op) << " [";
         for (size_t d = 0; d < k.output->shape.size(); ++d)
             os << (d ? "," : "") << k.output->shape[d];
         os << "]  nodes:";
-        std::set<const Node*> inside;
-        for (const auto& n : k.nodes) {
+        std::set<const Node *> inside;
+        for (const auto &n : k.nodes) {
             os << " n" << n->id << " " << op_name(n->op);
             inside.insert(n.get());
         }
         os << "  reads:";
         std::set<int> reads;
-        for (const auto& n : k.nodes)
-            for (const auto& s : n->srcs)
+        for (const auto &n : k.nodes)
+            for (const auto &s : n->srcs)
                 if (!inside.count(s.get()) && s->op != Op::Const) reads.insert(s->id);
         for (int id : reads) os << " n" << id;
         os << "\n";
@@ -224,10 +224,10 @@ std::string describe(const std::vector<Kernel>& kernels) {
 }
 
 // --------------------------------------------------------- interpreters ----
-float eval_scalar(const Program& p, const std::vector<const float*>& inputs, int64_t i) {
+float eval_scalar(const Program &p, const std::vector<const float *> &inputs, int64_t i) {
     float stack[64];
     int sp = 0;
-    for (const auto& ins : p.code) {
+    for (const auto &ins : p.code) {
         switch (ins.kind) {
         case InstrKind::Load:
             stack[sp++] = inputs[ins.buffer][i];
@@ -251,17 +251,17 @@ float eval_scalar(const Program& p, const std::vector<const float*>& inputs, int
 }
 
 // ------------------------------------------------------------ execution ----
-Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root, Interp interp,
-               ExecStats* stats) {
-    std::unordered_map<const Node*, Tensor> buffers;
-    for (const auto& n : toposort(root))
+Tensor execute(const std::vector<Kernel> &kernels, const NodePtr &root, Interp interp,
+               ExecStats *stats) {
+    std::unordered_map<const Node *, Tensor> buffers;
+    for (const auto &n : toposort(root))
         if (n->op == Op::Input) buffers[n.get()] = n->value;
 
     std::vector<float> tile(kTile);
-    for (const auto& k : kernels) {
+    for (const auto &k : kernels) {
         const Program p = compile(k);
-        std::vector<const float*> inputs;
-        for (const auto& b : p.buffers) {
+        std::vector<const float *> inputs;
+        for (const auto &b : p.buffers) {
             auto it = buffers.find(b.get());
             if (it == buffers.end())
                 throw std::logic_error("execute: kernel reads n" + std::to_string(b->id) +
@@ -269,7 +269,7 @@ Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root, Interp i
             inputs.push_back(it->second.data());
         }
         Tensor out = Tensor::zeros(k.output->shape);
-        float* dst = out.data();
+        float *dst = out.data();
         const int64_t n_out = out.numel();
         if (!p.reduce) {
             if (interp == Interp::Scalar) {
@@ -304,11 +304,11 @@ Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root, Interp i
     return buffers.at(root.get());
 }
 
-Tensor realize_unfused(const LazyTensor& t, ExecStats* stats) {
+Tensor realize_unfused(const LazyTensor &t, ExecStats *stats) {
     return execute(schedule_unfused(t.node()), t.node(), Interp::Scalar, stats);
 }
 
-Tensor realize_fused(const LazyTensor& t, Interp interp, ExecStats* stats) {
+Tensor realize_fused(const LazyTensor &t, Interp interp, ExecStats *stats) {
     return execute(schedule_fused(t.node()), t.node(), interp, stats);
 }
 

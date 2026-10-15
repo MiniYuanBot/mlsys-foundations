@@ -15,7 +15,7 @@
 
 using namespace l1;
 
-static std::vector<int> parse_list(const std::string& s) {
+static std::vector<int> parse_list(const std::string &s) {
     std::vector<int> out;
     std::stringstream ss(s);
     std::string item;
@@ -24,7 +24,7 @@ static std::vector<int> parse_list(const std::string& s) {
 }
 
 template <class T, class Fn>
-static void run_family(const char* dtype, const std::vector<std::pair<const char*, Fn>>& kernels,
+static void run_family(const char *dtype, const std::vector<std::pair<const char *, Fn>> &kernels,
                        Fn ref, int n, int repeats, int naive_max) {
     const auto Af = make_input(static_cast<size_t>(n) * n, 1),
                Bf = make_input(static_cast<size_t>(n) * n, 2);
@@ -41,7 +41,7 @@ static void run_family(const char* dtype, const std::vector<std::pair<const char
     const auto want = R.download();
     float ref_ms = time_ms([&] { ref(n, n, n, A.get(), B.get(), R.get()); });
 
-    auto emit = [&](const char* name, int r, float ms) {
+    auto emit = [&](const char *name, int r, float ms) {
         const double tflops = 2.0 * n * n * n / (ms * 1e9);
         std::printf("%s,%s,%d,%d,%.4f,%.2f,%.1f\n", name, dtype, n, r, ms, tflops,
                     100.0 * ref_ms / ms);
@@ -51,15 +51,15 @@ static void run_family(const char* dtype, const std::vector<std::pair<const char
         if (r > 1) ref_ms = time_ms([&] { ref(n, n, n, A.get(), B.get(), R.get()); });
         emit("cublas", r, ref_ms);
     }
-    for (const auto& entry : kernels) {
-        const char* name = entry.first;
+    for (const auto &entry : kernels) {
+        const char *name = entry.first;
         const Fn fn = entry.second;
         if (std::string(name) == "naive" && n > naive_max) continue;
         C.poison();
         try {
             fn(n, n, n, A.get(), B.get(), C.get());
             CUDA_CHECK(cudaDeviceSynchronize());
-        } catch (const NotImplemented& e) {
+        } catch (const NotImplemented &e) {
             std::fprintf(stderr, "# skip %s: %s\n", name, e.what());
             continue;
         }
@@ -79,7 +79,7 @@ static void run_family(const char* dtype, const std::vector<std::pair<const char
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     std::vector<int> sizes{1024, 2048, 4096};
     std::string only;
     int repeats = 3, naive_max = 2048;
@@ -109,14 +109,14 @@ int main(int argc, char** argv) {
                  p.multiProcessorCount);
     std::printf("kernel,dtype,n,repeat,ms,tflops,pct_of_cublas\n");
 
-    using S = void (*)(int, int, int, const float*, const float*, float*);
-    using H = void (*)(int, int, int, const __half*, const __half*, float*);
-    const std::vector<std::pair<const char*, S>> sgemms{{"naive", sgemm_naive},
-                                                        {"coalesced", sgemm_coalesced},
-                                                        {"smem", sgemm_smem},
-                                                        {"blocktile_1d", sgemm_blocktile_1d},
-                                                        {"blocktile_2d", sgemm_blocktile_2d}};
-    const std::vector<std::pair<const char*, H>> hgemms{{"wmma", hgemm_wmma}, {"mma", hgemm_mma}};
+    using S = void (*)(int, int, int, const float *, const float *, float *);
+    using H = void (*)(int, int, int, const __half *, const __half *, float *);
+    const std::vector<std::pair<const char *, S>> sgemms{{"naive", sgemm_naive},
+                                                         {"coalesced", sgemm_coalesced},
+                                                         {"smem", sgemm_smem},
+                                                         {"blocktile_1d", sgemm_blocktile_1d},
+                                                         {"blocktile_2d", sgemm_blocktile_2d}};
+    const std::vector<std::pair<const char *, H>> hgemms{{"wmma", hgemm_wmma}, {"mma", hgemm_mma}};
     for (int n : sizes) {
         if (only.empty() || only == "sgemm")
             run_family<float, S>("fp32", sgemms, sgemm_cublas, n, repeats, naive_max);

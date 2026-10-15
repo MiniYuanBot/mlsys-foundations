@@ -43,6 +43,6 @@ TEST(C2_mma_rejects_bad_shape) {
     CHECK_THROWS(hgemm_mma(128, 128, 16, h.get(), h.get(), f.get()), std::invalid_argument);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     return run_tests(argc, argv);
 }

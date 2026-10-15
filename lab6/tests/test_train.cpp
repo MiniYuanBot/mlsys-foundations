@@ -27,12 +27,12 @@ static std::vector<float> reference(int P, bool adam) {
     return m.params;
 }
 
-static void local_batch(const Comm& c, int s, std::vector<float>& x, std::vector<float>& y) {
+static void local_batch(const Comm &c, int s, std::vector<float> &x, std::vector<float> &y) {
     make_batch(DIMS.front(), DIMS.back(),
                static_cast<size_t>(s) * B * c.size + static_cast<size_t>(c.rank) * B, B, x, y);
 }
 
-static double max_rel_diff(const std::vector<float>& a, const std::vector<float>& b) {
+static double max_rel_diff(const std::vector<float> &a, const std::vector<float> &b) {
     double worst = 0;
     for (size_t i = 0; i < a.size(); ++i)
         worst = std::max(worst, std::fabs(double(a[i]) - b[i]) / (1e-3 + std::fabs(b[i])));
@@ -48,7 +48,7 @@ TEST(C0_sync_ddp_equals_big_batch_provided) {
         m.forward(x.data(), y.data(), B);
         m.backward();
         allreduce_mpi(m.grads.data(), m.num_params(), c);
-        for (float& g : m.grads) g /= c.size;
+        for (float &g : m.grads) g /= c.size;
         sgd_update(m.params.data(), m.grads.data(), m.num_params(), 0.05f);
     }
     CHECK(max_rel_diff(m.params, reference(c.size, false)) < 1e-4);
@@ -92,9 +92,9 @@ TEST(C1_bucketer_rejects_out_of_order_layers) {
     bool threw = false;
     try {
         bk.on_layer_ready(0); // layer 2 must come first
-    } catch (const NotImplemented&) {
+    } catch (const NotImplemented &) {
         throw; // "not implemented" is not the error we are looking for
-    } catch (const std::logic_error&) {
+    } catch (const std::logic_error &) {
         threw = true;
     }
     CHECK(threw);
@@ -121,7 +121,7 @@ TEST(C2_zero1_equals_ddp_adam) {
     CHECK(root == m.params);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     int provided = 0;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     if (provided < MPI_THREAD_MULTIPLE && mpitest::rank() == 0)

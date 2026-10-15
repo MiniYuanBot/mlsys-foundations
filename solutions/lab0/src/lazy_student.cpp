@@ -15,19 +15,19 @@
 
 namespace mt::lazy {
 
-[[maybe_unused]] static std::logic_error not_implemented(const char* what) {
+[[maybe_unused]] static std::logic_error not_implemented(const char *what) {
     return std::logic_error(std::string("TODO ") + what + " is not implemented yet");
 }
 
 // TODO(C1) toposort: depth-first post-order from root.
 //   visit(n): if n already visited, return; mark it; visit each src in order; append n.
 // A recursive lambda (std::function) is fine for this lab's graph sizes.
-std::vector<NodePtr> toposort(const NodePtr& root) {
+std::vector<NodePtr> toposort(const NodePtr &root) {
     std::vector<NodePtr> order;
-    std::unordered_set<const Node*> seen;
-    std::function<void(const NodePtr&)> visit = [&](const NodePtr& n) {
+    std::unordered_set<const Node *> seen;
+    std::function<void(const NodePtr &)> visit = [&](const NodePtr &n) {
         if (!seen.insert(n.get()).second) return;
-        for (const auto& s : n->srcs) visit(s);
+        for (const auto &s : n->srcs) visit(s);
         order.push_back(n);
     };
     visit(root);
@@ -43,20 +43,20 @@ std::vector<NodePtr> toposort(const NodePtr& root) {
 //               through srcs WITHOUT passing through another materialised node,
 //       listed in topological order (filter `order`, or do a post-order walk).
 // Check yourself against the schedules drawn in lecture L0 section 4.
-std::vector<Kernel> schedule_fused(const NodePtr& root) {
+std::vector<Kernel> schedule_fused(const NodePtr &root) {
     const auto order = toposort(root);
-    std::unordered_map<const Node*, int> uses;
-    for (const auto& n : order)
-        for (const auto& s : n->srcs) ++uses[s.get()];
-    auto materialised = [&](const NodePtr& n) {
+    std::unordered_map<const Node *, int> uses;
+    for (const auto &n : order)
+        for (const auto &s : n->srcs) ++uses[s.get()];
+    auto materialised = [&](const NodePtr &n) {
         return !is_leaf(n->op) && (n == root || n->op == Op::SumLast || uses[n.get()] >= 2);
     };
     std::vector<Kernel> kernels;
-    for (const auto& m : order) {
+    for (const auto &m : order) {
         if (!materialised(m)) continue;
         Kernel k{m, {}};
-        std::function<void(const NodePtr&)> collect = [&](const NodePtr& n) {
-            for (const auto& s : n->srcs)
+        std::function<void(const NodePtr &)> collect = [&](const NodePtr &n) {
+            for (const auto &s : n->srcs)
                 if (!is_leaf(s->op) && !materialised(s)) collect(s);
             k.nodes.push_back(n);
         };
@@ -78,16 +78,16 @@ std::vector<Kernel> schedule_fused(const NodePtr& root) {
 //                                        in p.buffers, appending it on first use}
 // Tip: put kernel.nodes into an unordered_set<const Node*> for the inside test.
 // Example: relu(x*w + b) fused -> Load0 Load1 Mul Load2 Add Relu, buffers [x, w, b].
-Program compile(const Kernel& kernel) {
+Program compile(const Kernel &kernel) {
     Program p;
-    std::unordered_set<const Node*> inside;
-    for (const auto& n : kernel.nodes) inside.insert(n.get());
-    std::unordered_map<const Node*, int> slot;
-    std::function<void(const NodePtr&)> emit = [&](const NodePtr& n) {
+    std::unordered_set<const Node *> inside;
+    for (const auto &n : kernel.nodes) inside.insert(n.get());
+    std::unordered_map<const Node *, int> slot;
+    std::function<void(const NodePtr &)> emit = [&](const NodePtr &n) {
         if (n->op == Op::Const) {
             p.code.push_back(Instr{InstrKind::Const, Op::Const, -1, n->scalar});
         } else if (inside.count(n.get()) && n->op != Op::SumLast) {
-            for (const auto& s : n->srcs) emit(s);
+            for (const auto &s : n->srcs) emit(s);
             p.code.push_back(
                 Instr{is_unary(n->op) ? InstrKind::Unary : InstrKind::Binary, n->op, -1, 0.f});
         } else {
@@ -120,25 +120,25 @@ Program compile(const Kernel& kernel) {
 // Finally copy the single remaining tile into out[0..n).
 // Write the inner loops so the compiler can vectorise them: switch on the
 // op OUTSIDE the element loop, e.g. case Op::Add: for (t..) a[t] += b[t];
-void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n,
-               float* out) {
+void eval_tile(const Program &p, const std::vector<const float *> &inputs, int64_t begin, int n,
+               float *out) {
     static thread_local float regs[16][kTile];
     int sp = 0;
-    for (const auto& ins : p.code) {
+    for (const auto &ins : p.code) {
         switch (ins.kind) {
         case InstrKind::Load: {
-            const float* src = inputs[ins.buffer] + begin;
-            float* dst = regs[sp++];
+            const float *src = inputs[ins.buffer] + begin;
+            float *dst = regs[sp++];
             for (int t = 0; t < n; ++t) dst[t] = src[t];
             break;
         }
         case InstrKind::Const: {
-            float* dst = regs[sp++];
+            float *dst = regs[sp++];
             for (int t = 0; t < n; ++t) dst[t] = ins.value;
             break;
         }
         case InstrKind::Unary: {
-            float* a = regs[sp - 1];
+            float *a = regs[sp - 1];
             switch (ins.op) {
             case Op::Neg:
                 for (int t = 0; t < n; ++t) a[t] = -a[t];
@@ -153,8 +153,8 @@ void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_
             break;
         }
         case InstrKind::Binary: {
-            float* a = regs[sp - 2];
-            const float* b = regs[sp - 1];
+            float *a = regs[sp - 2];
+            const float *b = regs[sp - 1];
             switch (ins.op) {
             case Op::Add:
                 for (int t = 0; t < n; ++t) a[t] += b[t];

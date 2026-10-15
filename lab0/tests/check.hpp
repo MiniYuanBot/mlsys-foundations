@@ -19,19 +19,19 @@ struct Failure : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 struct Case {
-    const char* name;
+    const char *name;
     std::function<void()> fn;
 };
-inline std::vector<Case>& registry() {
+inline std::vector<Case> &registry() {
     static std::vector<Case> cases;
     return cases;
 }
 struct Register {
-    Register(const char* name, std::function<void()> fn) {
+    Register(const char *name, std::function<void()> fn) {
         registry().push_back({name, std::move(fn)});
     }
 };
-inline std::string where(const char* file, int line) {
+inline std::string where(const char *file, int line) {
     std::ostringstream os;
     os << file << ":" << line << ": ";
     return os.str();
@@ -74,7 +74,7 @@ inline std::string where(const char* file, int line) {
         bool thrown_ = false;                                                                      \
         try {                                                                                      \
             (void)(expr);                                                                          \
-        } catch (const Type&) {                                                                    \
+        } catch (const Type &) {                                                                   \
             thrown_ = true;                                                                        \
         }                                                                                          \
         if (!thrown_)                                                                              \
@@ -82,16 +82,16 @@ inline std::string where(const char* file, int line) {
                                  " did not throw " #Type);                                         \
     } while (0)
 
-inline int run_tests(int argc, char** argv) {
+inline int run_tests(int argc, char **argv) {
     const std::string filter = argc > 1 ? argv[1] : "";
     int passed = 0, failed = 0;
-    for (const auto& c : check::registry()) {
+    for (const auto &c : check::registry()) {
         if (!filter.empty() && std::string(c.name).find(filter) == std::string::npos) continue;
         try {
             c.fn();
             std::printf("[ PASS ] %s\n", c.name);
             ++passed;
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::printf("[ FAIL ] %s\n         %s\n", c.name, e.what());
             ++failed;
         }

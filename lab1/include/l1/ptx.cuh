@@ -9,7 +9,7 @@
 
 namespace l1::ptx {
 
-__device__ __forceinline__ uint32_t smem_addr(const void* p) {
+__device__ __forceinline__ uint32_t smem_addr(const void *p) {
     return static_cast<uint32_t>(__cvta_generic_to_shared(p));
 }
 
@@ -17,7 +17,7 @@ __device__ __forceinline__ uint32_t smem_addr(const void* p) {
 // Copies 16 bytes (8 halves) without going through registers. Both addresses
 // must be 16-byte aligned. Copies are grouped: commit() closes the current
 // group; wait<N>() blocks until at most N groups are still in flight.
-__device__ __forceinline__ void cp_async_16(void* smem, const void* gmem) {
+__device__ __forceinline__ void cp_async_16(void *smem, const void *gmem) {
     asm volatile("cp.async.cg.shared.global [%0], [%1], 16;\n" ::"r"(smem_addr(smem)), "l"(gmem));
 }
 __device__ __forceinline__ void cp_async_commit() {
@@ -36,12 +36,12 @@ template <int N> __device__ __forceinline__ void cp_async_wait() {
 //   lanes 24-31-> rows of matrix 3 -> r[3]
 // Afterwards lane i holds, in r[m], elements (row i/4, cols 2*(i%4), 2*(i%4)+1)
 // of matrix m. The .trans variant transposes each 8x8 matrix on the way.
-__device__ __forceinline__ void ldmatrix_x4(uint32_t (&r)[4], const void* smem) {
+__device__ __forceinline__ void ldmatrix_x4(uint32_t (&r)[4], const void *smem) {
     asm volatile("ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%0,%1,%2,%3}, [%4];\n"
                  : "=r"(r[0]), "=r"(r[1]), "=r"(r[2]), "=r"(r[3])
                  : "r"(smem_addr(smem)));
 }
-__device__ __forceinline__ void ldmatrix_x4_trans(uint32_t (&r)[4], const void* smem) {
+__device__ __forceinline__ void ldmatrix_x4_trans(uint32_t (&r)[4], const void *smem) {
     asm volatile("ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%0,%1,%2,%3}, [%4];\n"
                  : "=r"(r[0]), "=r"(r[1]), "=r"(r[2]), "=r"(r[3])
                  : "r"(smem_addr(smem)));

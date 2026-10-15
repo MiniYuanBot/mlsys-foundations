@@ -23,7 +23,7 @@
 using namespace mt;
 using Clock = std::chrono::steady_clock;
 
-static std::vector<int> parse_list(const std::string& s) {
+static std::vector<int> parse_list(const std::string &s) {
     std::vector<int> out;
     std::stringstream ss(s);
     std::string item;
@@ -31,7 +31,7 @@ static std::vector<int> parse_list(const std::string& s) {
     return out;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     std::vector<int> sizes{128, 256, 512, 1024};
     int repeats = 3, threads = 0, naive_max = 1024;
     for (int i = 1; i < argc; ++i) {
@@ -68,12 +68,12 @@ int main(int argc, char** argv) {
 
     for (int n : sizes) {
         std::vector<float> A(static_cast<size_t>(n) * n), B(A.size()), C(A.size()), ref(A.size());
-        for (auto& x : A) x = u(rng);
-        for (auto& x : B) x = u(rng);
+        for (auto &x : A) x = u(rng);
+        for (auto &x : B) x = u(rng);
         // Oracle: your B1 kernel if it works (fast), otherwise the naive one.
         try {
             gemm_reordered(n, n, n, A.data(), n, B.data(), n, ref.data(), n);
-        } catch (const std::logic_error&) {
+        } catch (const std::logic_error &) {
             gemm_naive(n, n, n, A.data(), n, B.data(), n, ref.data(), n);
         }
         for (GemmKernel k : kernels) {
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
             };
             try {
                 run(); // warm-up + correctness
-            } catch (const std::logic_error& e) {
+            } catch (const std::logic_error &e) {
                 std::fprintf(stderr, "# skip %s: %s\n", kernel_name(k), e.what());
                 continue;
             }

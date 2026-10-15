@@ -16,7 +16,7 @@
 
 using namespace tc;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     const int64_t M = argc > 3 ? std::atoll(argv[1]) : 8192,
                   K = argc > 3 ? std::atoll(argv[2]) : 8192,
                   N = argc > 3 ? std::atoll(argv[3]) : 64;
@@ -26,9 +26,9 @@ int main(int argc, char** argv) {
     std::uniform_real_distribution<double> u(-1, 1);
     Feeds f;
     for (int id : g.inputs()) {
-        const Node& n = g.node(id);
+        const Node &n = g.node(id);
         HostTensor h{n.shape, std::vector<double>(n.shape.numel())};
-        for (auto& x : h.data) x = u(rng);
+        for (auto &x : h.data) x = u(rng);
         f[n.name] = h;
     }
     Runtime rt;
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     std::vector<Candidate> cands;
     try {
         cands = search(g, dev, 3);
-    } catch (const std::logic_error& e) {
+    } catch (const std::logic_error &e) {
         std::fprintf(stderr, "# %s\n", e.what());
         return 1;
     }
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
         std::string canon;
     };
     std::vector<Row> rows;
-    for (const auto& c : cands)
+    for (const auto &c : cands)
         rows.push_back({c.cost.ms, rt.time_ms(c.graph, c.plan, f, 20), c.plan.kernels.size(),
                         c.cost.bytes / 1e6, c.graph.canonical()});
     const double unfused_ms = rt.time_ms(g, plan_unfused(g), f, 20);

@@ -16,7 +16,7 @@
 
 using namespace coll;
 
-static double median_time(const std::function<void()>& fn, const Comm& c, int reps) {
+static double median_time(const std::function<void()> &fn, const Comm &c, int reps) {
     std::vector<double> t;
     fn(); // warm-up
     for (int r = 0; r < reps; ++r) {
@@ -31,7 +31,7 @@ static double median_time(const std::function<void()>& fn, const Comm& c, int re
     return t[t.size() / 2];
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
     const Comm c = Comm::world();
     const bool pingpong = argc > 1 && std::string(argv[1]) == "--pingpong";
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
         return 0;
     }
     struct Algo {
-        const char* name;
+        const char *name;
         AllreduceFn fn;
     };
     std::vector<Algo> algos = {
@@ -74,11 +74,11 @@ int main(int argc, char** argv) {
     for (size_t bytes = 4; bytes <= (size_t(64) << 20); bytes *= 4) {
         const size_t n = bytes / 4;
         std::vector<float> buf(n, 1.f);
-        for (const auto& a : algos) {
+        for (const auto &a : algos) {
             double t;
             try {
                 t = median_time([&] { a.fn(buf.data(), n, c); }, c, bytes > (4 << 20) ? 10 : 50);
-            } catch (const NotImplemented& e) {
+            } catch (const NotImplemented &e) {
                 if (c.rank == 0 && bytes == 4)
                     std::fprintf(stderr, "# skip %s: %s\n", a.name, e.what());
                 continue;
