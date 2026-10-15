@@ -42,7 +42,7 @@ report() {
 # version_of <tool>: runs "<tool> --version" and prints the last word of the first line,
 # leading "v" removed. Empty if the tool is missing. "|| true" keeps set -e quiet.
 version_of() {
-    "$1" --version 2>/dev/null | awk 'NR == 1 { print $NF; exit }' | sed 's/^v//' || true
+    "$1" --version 2> /dev/null | awk 'NR == 1 { print $NF; exit }' | sed 's/^v//' || true
 }
 
 find_python() {
@@ -66,12 +66,18 @@ install_shfmt() {
     case "$(uname -s)" in
         Linux) os=linux ;;
         Darwin) os=darwin ;;
-        *) echo "unsupported OS for automatic shfmt install: $(uname -s)" >&2; return 1 ;;
+        *)
+            echo "unsupported OS for automatic shfmt install: $(uname -s)" >&2
+            return 1
+            ;;
     esac
     case "$(uname -m)" in
         x86_64 | amd64) arch=amd64 ;;
         arm64 | aarch64) arch=arm64 ;;
-        *) echo "unsupported CPU for automatic shfmt install: $(uname -m)" >&2; return 1 ;;
+        *)
+            echo "unsupported CPU for automatic shfmt install: $(uname -m)" >&2
+            return 1
+            ;;
     esac
     local url="https://github.com/mvdan/sh/releases/download/v${SHFMT}/shfmt_v${SHFMT}_${os}_${arch}"
     curl --proto '=https' --tlsv1.2 -fsSL -o "$VENV/bin/shfmt.tmp" "$url"
@@ -122,7 +128,7 @@ fi
 report shfmt "$SHFMT" "$got"
 
 step "4/4 rustfmt (rustup)"
-got=$(rustc --version 2>/dev/null | awk '{ print $2 }' || true)
+got=$(rustc --version 2> /dev/null | awk '{ print $2 }' || true)
 report rustc "$RUST" "$got"
 if command -v rustfmt > /dev/null 2>&1; then
     echo "  [ OK ]  rustfmt       $(rustfmt --version)"
