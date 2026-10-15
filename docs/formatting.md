@@ -16,40 +16,46 @@ Markdown 保留段落换行、行尾双空格和代码块内容。这里只配�
 | Markdown / JSON / YAML      | Prettier 3.9.10                      | `.prettierrc.json`、`.prettierignore`   |
 | Rust                        | rustfmt（Rust 1.99.0，edition 2021） | 默认规则：4 空格、100 列                |
 
+版本号只在 `tools/formatter-versions.env` 中修改，上表与该文件保持一致。
+
 ## 安装
 
-依赖 Python 3.10+、Node.js LTS（含 npm）。建议使用上表版本，让编辑器与命令行输出一致。
-格式化工具可独立于实验环境安装；无需 CUDA。Rust 源码另使用 Rust 工具链自带的 rustfmt，已有 rustup 时执行 `rustup component add rustfmt` 即可。
+依赖 Python 3.10+、Node.js LTS（含 npm），以及 rustup（仅 Rust 源码需要）。格式化工具无需 CUDA，可独立于实验环境安装。
 
-WSL / Linux / macOS，在仓库根目录执行（Debian/Ubuntu 如缺少 venv，先安装 `python3-venv`）：
+WSL / Linux / macOS，在仓库根目录执行：
 
 ```bash
-python3 -m venv .venv-format
-source .venv-format/bin/activate
-python -m pip install clang-format==20.1.8 gersemi==0.29.2 ruff==0.17.0
-npm install --global prettier@3.9.10
+bash tools/setup-format.sh
 ```
 
-Windows PowerShell：
+Windows PowerShell，在仓库根目录执行：
 
 ```powershell
-py -3 -m venv .venv-format
-.\.venv-format\Scripts\Activate.ps1
-python -m pip install clang-format==20.1.8 gersemi==0.29.2 ruff==0.17.0
-npm.cmd install --global prettier@3.9.10
+powershell -ExecutionPolicy Bypass -File tools\setup-format.ps1
 ```
 
-shfmt：macOS 可用 `brew install shfmt`；Windows、WSL、Linux 可从
-[shfmt v3.12.0 Releases](https://github.com/mvdan/sh/releases/tag/v3.12.0)
-下载对应系统和 CPU 架构的可执行文件，重命名为 `shfmt`（Windows 为 `shfmt.exe`）后加入 PATH；
-WSL/Linux/macOS 还需执行 `chmod +x /path/to/shfmt`。已有 shfmt 须至少为 3.8，以支持忽略规则。
-安装后的对应命令应都能在当前环境中运行；WSL / SSH 远程开发时，工具和扩展均安装在远端。
+脚本会在 `.venv-format` 中安装 clang-format、gersemi、ruff 和 shfmt，用 npm 全局安装 prettier，并通过 rustup 添加 rustfmt。
+可以重复执行，版本已经正确的工具会跳过。只检查、不修改：`bash tools/setup-format.sh --check`（Windows 下加 `-Check`）。
+
+- Debian/Ubuntu 若报 venv 相关错误，先执行 `sudo apt install python3-venv`。
+- macOS 可执行 `brew install python@3.12` 获得 Python 3.10+。
+- 脚本不会用 sudo，也不会修改实验环境。
+
+安装后执行检查：
+
+```bash
+python3 tools/format_check.py
+```
+
+它只读取 Git 跟踪的文件，不修改任何内容；全部通过时退出码为 0，并列出未格式化的文件。
+Windows 下把 `python3` 换成 `python`。
 
 ## VS Code
 
 打开仓库根目录或现有 `mlsys-research.code-workspace`，在扩展面板安装本仓库推荐的扩展。
-先激活格式化工具环境，再从同一终端执行 `code .` 或 `code mlsys-research.code-workspace`；
-已运行的 VS Code 若找不到命令，完全退出后重开，使扩展宿主继承正确的 PATH。
+`.vscode/settings.json` 直接指向 `${workspaceFolder}/.venv-format/bin/` 下的 clang-format 和 shfmt，
+不需要激活 venv，也不依赖终端的 PATH，因此从图形界面启动 VS Code 同样可用。
+原生 Windows 上这些文件位于 `.venv-format\Scripts\`，需要在个人用户设置中覆盖 `C_Cpp.clang_format_path` 和 `shfmt.executablePath`；WSL 中无需处理。
 Prettier 扩展会查找全局安装的版本，无需添加 npm 项目或 Prettier 插件。
 
 保存支持的语言文件会调用对应 Formatter，也可执行 **Format Document**。
@@ -60,7 +66,8 @@ Ruff 的 lint、修复和 import 整理均已关闭；多根工作区文件也�
 
 ## 手动格式化
 
-在仓库根目录、已激活工具环境的终端中，按需执行相应命令，仅传入本次编辑的文件：
+在仓库根目录、已激活 `.venv-format` 的终端中，按需执行相应命令，仅传入本次编辑的文件。
+未激活时，把命令换成 `.venv-format/bin/<工具>`（Windows 为 `.venv-format\Scripts\<工具>.exe`）：
 
 ```text
 clang-format -i lab0/src/tensor_student.cpp lab1/src/basics_student.cu
@@ -72,8 +79,7 @@ prettier --write README.md lab7/examples/bucket_overlap.prereg.json
 ```
 
 同样可给 gersemi 传入手写的 `*.cmake`，或给 Prettier 传入 `*.yaml` / `*.yml`。
-Windows 若阻止 npm 的 PowerShell 启动脚本，使用 `prettier.cmd`；
-如不能激活 venv，可直接调用 `.venv-format\Scripts\` 下的工具。
+Windows 若阻止 npm 的 PowerShell 启动脚本，使用 `prettier.cmd`。
 
 构建目录（`build*`、`cmake-build-*`、`target`、`out` 等）、生成文件、实验产物、
 第三方依赖和虚拟环境已加入忽略配置。gersemi 的目录扫描遵循 `.gitignore`；
