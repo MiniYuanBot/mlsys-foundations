@@ -32,7 +32,12 @@ pub struct RoundStats {
 //      the rest is not: target.truncate(n + a)   -> num_computed == new len - 1
 // Empty proposal = a normal decode step (feed just [last]).
 pub fn greedy_round(gpu: &Gpu, target: &mut Session, proposal: &[u32]) -> Result<RoundStats> {
-    let _ = (gpu, target, proposal, greedy_accept as fn(&[u32], &[u32]) -> (usize, u32));
+    let _ = (
+        gpu,
+        target,
+        proposal,
+        greedy_accept as fn(&[u32], &[u32]) -> (usize, u32),
+    );
     todo!("A3 greedy_round")
 }
 
@@ -57,7 +62,12 @@ pub fn draft_greedy(gpu: &Gpu, draft: &mut Session, k: usize) -> Result<Vec<u32>
 /// The draft cache holds [committed prefix, its own proposals...]; only the
 /// part that matches the committed tokens stays valid.
 pub fn sync_draft(draft: &mut Session, target: &Session) {
-    let valid = draft.tokens.iter().zip(&target.tokens).take_while(|(a, b)| a == b).count();
+    let valid = draft
+        .tokens
+        .iter()
+        .zip(&target.tokens)
+        .take_while(|(a, b)| a == b)
+        .count();
     draft.tokens.clone_from(&target.tokens);
     draft.truncate(valid.min(target.tokens.len() - 1));
 }
@@ -72,7 +82,22 @@ pub fn sync_draft(draft: &mut Session, target: &Session) {
 //   2. target: feed [last, d_0, ..., d_{k-1}] once, p = probs(gpu, temp) (k + 1 rows)
 //   3. emitted = speculative_sample(d, q, p, rng); a = emitted.len() - 1 accepted
 //   4. tokens += emitted; target.truncate(n + a); sync_draft(draft, target)
-pub fn sampling_round(gpu: &Gpu, target: &mut Session, draft: &mut Session, k: usize, temp: f32, rng: &mut Rng) -> Result<RoundStats> {
-    let _ = (gpu, target, draft, k, temp, rng, speculative_sample as fn(&[u32], &[Vec<f32>], &[Vec<f32>], &mut Rng) -> Vec<u32>);
+pub fn sampling_round(
+    gpu: &Gpu,
+    target: &mut Session,
+    draft: &mut Session,
+    k: usize,
+    temp: f32,
+    rng: &mut Rng,
+) -> Result<RoundStats> {
+    let _ = (
+        gpu,
+        target,
+        draft,
+        k,
+        temp,
+        rng,
+        speculative_sample as fn(&[u32], &[Vec<f32>], &[Vec<f32>], &mut Rng) -> Vec<u32>,
+    );
     todo!("B2 sampling_round")
 }

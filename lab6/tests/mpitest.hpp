@@ -41,31 +41,32 @@ inline int size() {
     MPI_Comm_size(MPI_COMM_WORLD, &s);
     return s;
 }
-}  // namespace mpitest
+} // namespace mpitest
 
-#define TEST(name)                                                        \
-    static void test_##name();                                            \
-    static mpitest::Register register_##name(#name, test_##name);         \
+#define TEST(name)                                                                                 \
+    static void test_##name();                                                                     \
+    static mpitest::Register register_##name(#name, test_##name);                                  \
     static void test_##name()
 
-#define CHECK(cond)                                                                                        \
-    do {                                                                                                   \
-        if (!(cond)) {                                                                                     \
-            std::ostringstream os_;                                                                        \
-            os_ << __FILE__ << ":" << __LINE__ << ": CHECK(" #cond ") failed on rank " << mpitest::rank(); \
-            throw mpitest::Failure(os_.str());                                                             \
-        }                                                                                                  \
+#define CHECK(cond)                                                                                \
+    do {                                                                                           \
+        if (!(cond)) {                                                                             \
+            std::ostringstream os_;                                                                \
+            os_ << __FILE__ << ":" << __LINE__ << ": CHECK(" #cond ") failed on rank "             \
+                << mpitest::rank();                                                                \
+            throw mpitest::Failure(os_.str());                                                     \
+        }                                                                                          \
     } while (0)
 
-#define CHECK_NEAR(a, b, tol)                                                                                \
-    do {                                                                                                     \
-        const double va_ = (a), vb_ = (b);                                                                   \
-        if (!(std::fabs(va_ - vb_) <= (tol))) {                                                              \
-            std::ostringstream os_;                                                                          \
-            os_ << __FILE__ << ":" << __LINE__ << ": " #a " = " << va_ << ", " #b " = " << vb_ << " on rank " \
-                << mpitest::rank();                                                                          \
-            throw mpitest::Failure(os_.str());                                                               \
-        }                                                                                                    \
+#define CHECK_NEAR(a, b, tol)                                                                      \
+    do {                                                                                           \
+        const double va_ = (a), vb_ = (b);                                                         \
+        if (!(std::fabs(va_ - vb_) <= (tol))) {                                                    \
+            std::ostringstream os_;                                                                \
+            os_ << __FILE__ << ":" << __LINE__ << ": " #a " = " << va_ << ", " #b " = " << vb_     \
+                << " on rank " << mpitest::rank();                                                 \
+            throw mpitest::Failure(os_.str());                                                     \
+        }                                                                                          \
     } while (0)
 
 inline int run_mpi_tests(int argc, char** argv) {

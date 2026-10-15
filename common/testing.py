@@ -14,4 +14,3 @@ def require_torch(cuda=False, triton=False):
         except ImportError as exc:
             raise unittest.SkipTest("ENV: Triton not installed") from exc
     return torch
-

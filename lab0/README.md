@@ -7,11 +7,11 @@ PyTorch 的 `Tensor` 背后其实只有一块平坦的内存，再加上 shape�
 
 这个 lab 让你用 C++ 依次亲手实现这三件事：
 
-| 部分 | 你要写什么 | 难度梯度 | 对应的真实系统 |
-|---|---|---|---|
-| **A** 张量核心 | stride/offset 寻址、transpose/slice/broadcast 视图、contiguous、广播逐元素运算、归约 | ① 代码填空（每个函数 5–20 行） | `torch.Tensor`、NumPy `ndarray`、[CMU Needle NDArray](https://dlsyscourse.org/) |
-| **B** GEMM 优化阶梯 | 从 1 GFLOP/s 的三重循环，一步步做到接近 BLAS | ② 核心代码实现 + 性能目标 | OpenBLAS、BLIS、Intel MKL |
-| **C** Lazy 计算图与算子融合 | 拓扑排序、融合调度、表达式编译、分块解释器 | ③ 论文/系统设计的精简复现 | [tinygrad](https://github.com/tinygrad/tinygrad)、TorchInductor、XLA |
+| 部分                        | 你要写什么                                                                           | 难度梯度                       | 对应的真实系统                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------- |
+| **A** 张量核心              | stride/offset 寻址、transpose/slice/broadcast 视图、contiguous、广播逐元素运算、归约 | ① 代码填空（每个函数 5–20 行） | `torch.Tensor`、NumPy `ndarray`、[CMU Needle NDArray](https://dlsyscourse.org/) |
+| **B** GEMM 优化阶梯         | 从 1 GFLOP/s 的三重循环，一步步做到接近 BLAS                                         | ② 核心代码实现 + 性能目标      | OpenBLAS、BLIS、Intel MKL                                                       |
+| **C** Lazy 计算图与算子融合 | 拓扑排序、融合调度、表达式编译、分块解释器                                           | ③ 论文/系统设计的精简复现      | [tinygrad](https://github.com/tinygrad/tinygrad)、TorchInductor、XLA            |
 
 做完后你应当能回答：
 
@@ -25,11 +25,11 @@ PyTorch 的 `Tensor` 背后其实只有一块平坦的内存，再加上 shape�
 
 只需要一个 C++17 编译器和 CMake ≥ 3.18；不需要 GPU，也不需要 Python（Python 只用来跑基线和画图）。
 
-| 平台 | 安装 |
-|---|---|
+| 平台         | 安装                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | Windows 原生 | [MSYS2](https://www.msys2.org/) 的 `mingw-w64-ucrt-x86_64-gcc` 与 `cmake`，或 Visual Studio 2022 的 “使用 C++ 的桌面开发” |
-| WSL2 / Linux | `sudo apt install build-essential cmake` |
-| macOS | `xcode-select --install`，再 `brew install cmake` |
+| WSL2 / Linux | `sudo apt install build-essential cmake`                                                                                  |
+| macOS        | `xcode-select --install`，再 `brew install cmake`                                                                         |
 
 在**仓库根目录**执行：
 
@@ -75,17 +75,17 @@ lab0/
 
 先读讲义 L0 §1（内存布局与 stride）和 §2（视图与广播），然后打开 `src/tensor_student.cpp`。每个 TODO 上方都有规格说明和手算例子。建议**按编号顺序**完成：后面的函数会用到前面的。
 
-| TODO | 函数 | 要点 | 测试 |
-|---|---|---|---|
-| A1 | `contiguous_strides` | 最后一维变化最快 | `A1_*` |
-| A2 | `offset_of` | 先检查边界，再算 `offset + Σ idx·stride` | `A2_*` |
-| A3 | `is_contiguous` | 大小为 1 的维度，其 stride 可以是任意值 | `A3_*` |
-| A4 | `permute` / `transpose` | 只交换元数据 | `A4_*` |
-| A5 | `slice` | 新 offset = 旧 offset + start·stride；新 stride = 旧 stride·step | `A5_*` |
-| A6 | `broadcast_shapes` / `broadcast_to` | 从右往左对齐；被拉伸的维度 stride 设为 0 | `A6_*` |
-| A7 | `contiguous` | 唯一真正复制数据的操作 | `A7_*` |
-| A8 | `zip` | 先广播成视图，再逐元素计算 | `A8_*` |
-| A9 | `sum` | 用 `keepdim` 的技巧可以少写很多代码 | `A9_*` |
+| TODO | 函数                                | 要点                                                             | 测试   |
+| ---- | ----------------------------------- | ---------------------------------------------------------------- | ------ |
+| A1   | `contiguous_strides`                | 最后一维变化最快                                                 | `A1_*` |
+| A2   | `offset_of`                         | 先检查边界，再算 `offset + Σ idx·stride`                         | `A2_*` |
+| A3   | `is_contiguous`                     | 大小为 1 的维度，其 stride 可以是任意值                          | `A3_*` |
+| A4   | `permute` / `transpose`             | 只交换元数据                                                     | `A4_*` |
+| A5   | `slice`                             | 新 offset = 旧 offset + start·stride；新 stride = 旧 stride·step | `A5_*` |
+| A6   | `broadcast_shapes` / `broadcast_to` | 从右往左对齐；被拉伸的维度 stride 设为 0                         | `A6_*` |
+| A7   | `contiguous`                        | 唯一真正复制数据的操作                                           | `A7_*` |
+| A8   | `zip`                               | 先广播成视图，再逐元素计算                                       | `A8_*` |
+| A9   | `sum`                               | 用 `keepdim` 的技巧可以少写很多代码                              | `A9_*` |
 
 **动手画图（强烈推荐）**：每完成一个视图函数，就用 `describe()` 打印结果，并和 [Stride Visualizer](https://ezyang.github.io/stride-visualizer/index.html) 的结果对照。例如：
 
@@ -123,20 +123,22 @@ std::cout << t.slice(1, 1, 4, 2).describe();
 
 ### B1–B4 逐级优化
 
-| 步骤 | TODO | 做什么 | 参考实现在作者机器上的结果（i9 Alder Lake, GCC 13, n=1024） |
-|---|---|---|---|
-| B0 | 已提供 | i-j-k 三重循环 | ~1 GFLOP/s（n=1024 时 B 的列访问次次 cache miss） |
-| B1 | `gemm_reordered` | 交换成 i-k-j 循环 | ~30 |
-| B2 | `gemm_blocked` | 在 B1 外面套三层分块循环 | ~47 |
-| B3 | `pack_A` `pack_B` `micro_kernel` | Goto 算法：打包 + 6×16 寄存器微内核（5 层循环的驱动已提供） | ~113（MKL 单线程 129） |
-| B4 | `gemm_parallel` | 按行切块，交给 `std::thread` 并行 | ~605 / 24 线程（MKL 650） |
+| 步骤 | TODO                             | 做什么                                                      | 参考实现在作者机器上的结果（i9 Alder Lake, GCC 13, n=1024） |
+| ---- | -------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| B0   | 已提供                           | i-j-k 三重循环                                              | ~1 GFLOP/s（n=1024 时 B 的列访问次次 cache miss）           |
+| B1   | `gemm_reordered`                 | 交换成 i-k-j 循环                                           | ~30                                                         |
+| B2   | `gemm_blocked`                   | 在 B1 外面套三层分块循环                                    | ~47                                                         |
+| B3   | `pack_A` `pack_B` `micro_kernel` | Goto 算法：打包 + 6×16 寄存器微内核（5 层循环的驱动已提供） | ~113（MKL 单线程 129）                                      |
+| B4   | `gemm_parallel`                  | 按行切块，交给 `std::thread` 并行                           | ~605 / 24 线程（MKL 650）                                   |
 
 做每一步时都按这个循环走：**写代码 → `ctest -L partB` → `bench_gemm` → 记录数字 → 解释原因**。B3 拆成三个可以单独测试的函数，`B3a/B3b/B3c` 三个测试分别验证打包布局和微内核，逐个调通后再跑 `B3_packed`。
 
 > ⚠️ **向量化很脆弱**。用 GCC 13 实测：微内核里的累加器写成二维数组 `float acc[6][16]`，或者漏掉 `#pragma omp simd`，单核会从约 130 GFLOP/s 掉到约 3 GFLOP/s，因为累加器被溢出到了栈上。改完一定要跑 benchmark。想看汇编可以这样做：
+>
 > ```bash
 > g++ -std=c++17 -O3 -march=native -fopenmp-simd -Ilab0/include -S lab0/src/gemm_student.cpp -o - | grep -c vfmadd
 > ```
+>
 > 如果数到的 `vfmadd…ps %ymm` 指令很少，说明微内核没有被向量化。
 
 ### B5 测量与报告
@@ -166,12 +168,12 @@ python lab0/scripts/plot_gemm.py results/lab0/gemm.csv results/lab0/blas_1t.csv 
 
 `LazyTensor` 上的运算不会立即计算，只会构建一张 DAG。调用 `realize_*()` 后，才依次执行：拓扑排序 → 调度（决定哪些节点合并到同一个 kernel）→ 把每个 kernel 编译成后缀指令 → 解释执行。
 
-| TODO | 函数 | 要点 | 测试 |
-|---|---|---|---|
-| C1 | `toposort` | 深度优先后序遍历；每个节点只出现一次 | `C1_*` |
-| C2 | `schedule_fused` | 只有 3 类节点需要物化：根节点、SumLast、被使用 ≥2 次的节点 | `C2_*` |
-| C3 | `compile` | 生成后缀（栈机）指令；同一个 buffer 只分配一个编号 | `C3_*` |
-| C4 | `eval_tile` | 每条指令处理一整个 tile（512 个元素），而不是一个元素 | `C4_*` |
+| TODO | 函数             | 要点                                                       | 测试   |
+| ---- | ---------------- | ---------------------------------------------------------- | ------ |
+| C1   | `toposort`       | 深度优先后序遍历；每个节点只出现一次                       | `C1_*` |
+| C2   | `schedule_fused` | 只有 3 类节点需要物化：根节点、SumLast、被使用 ≥2 次的节点 | `C2_*` |
+| C3   | `compile`        | 生成后缀（栈机）指令；同一个 buffer 只分配一个编号         | `C3_*` |
+| C4   | `eval_tile`      | 每条指令处理一整个 tile（512 个元素），而不是一个元素      | `C4_*` |
 
 **手算练习（写进报告）**：对 `y = relu(x * w + b)`，`x`、`w`、`b` 各有 N 个 float，分别算出不融合和融合时的 kernel 数、读字节数、写字节数和中间 buffer 字节数。答案就在 `C1_unfused_schedule_counts` 和 `C2_fused_chain_is_one_kernel` 两个测试里，先自己算再去看。
 

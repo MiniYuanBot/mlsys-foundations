@@ -14,6 +14,7 @@ Implementation note: use exp2 instead of exp. Scale the scores by
 sm_scale * log2(e) once, then exp2(x) == exp(x * ln 2); exp2 maps to a single
 hardware instruction (MUFU.EX2). Convert back at the end: lse = (m + log2 l) * ln 2.
 """
+
 import math
 
 import torch
@@ -35,24 +36,46 @@ LN2 = tl.constexpr(0.6931471805599453)  # used inside kernels: must be constexpr
 #   out = dot(p.to(fp16), v) / l[:, None]; lse = (m + log2(l)) * LN2
 # Store out (fp16) and lse for rows < S.
 @triton.jit
-def attn_single_block_kernel(Q, K, V, O, L, qk_scale, S, stride_bh, stride_s,
-                             D: tl.constexpr, BM: tl.constexpr, BN: tl.constexpr):
+def attn_single_block_kernel(
+    Q,
+    K,
+    V,
+    O,
+    L,
+    qk_scale,
+    S,
+    stride_bh,
+    stride_s,
+    D: tl.constexpr,
+    BM: tl.constexpr,
+    BN: tl.constexpr,
+):
     pid_m = tl.program_id(0)
     bh = tl.program_id(1)
     offs_m = pid_m * BM + tl.arange(0, BM)
     offs_n = tl.arange(0, BN)
     offs_d = tl.arange(0, D)
     base = bh * stride_bh
-    q = tl.load(Q + base + offs_m[:, None] * stride_s + offs_d[None, :], mask=offs_m[:, None] < S, other=0.0)
-    k = tl.load(K + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=offs_n[:, None] < S, other=0.0)
-    v = tl.load(V + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=offs_n[:, None] < S, other=0.0)
+    q = tl.load(
+        Q + base + offs_m[:, None] * stride_s + offs_d[None, :], mask=offs_m[:, None] < S, other=0.0
+    )
+    k = tl.load(
+        K + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=offs_n[:, None] < S, other=0.0
+    )
+    v = tl.load(
+        V + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=offs_n[:, None] < S, other=0.0
+    )
     s = tl.dot(q, tl.trans(k)) * qk_scale
     s = tl.where(offs_n[None, :] < S, s, -float("inf"))
     m = tl.max(s, 1)
     p = tl.exp2(s - m[:, None])
     l = tl.sum(p, 1)
     out = tl.dot(p.to(tl.float16), v) / l[:, None]
-    tl.store(O + base + offs_m[:, None] * stride_s + offs_d[None, :], out.to(tl.float16), mask=offs_m[:, None] < S)
+    tl.store(
+        O + base + offs_m[:, None] * stride_s + offs_d[None, :],
+        out.to(tl.float16),
+        mask=offs_m[:, None] < S,
+    )
     tl.store(L + bh * S + offs_m, (m + tl.log2(l)) * LN2, mask=offs_m < S)
 
 
@@ -76,14 +99,29 @@ def attn_single_block_kernel(Q, K, V, O, L, qk_scale, S, stride_bh, stride_s,
 #       the loop at hi = min((pid_m + 1) * BM, S). This halves the work.
 # Do (a) first and check correctness, then add (b) and measure the speedup.
 @triton.jit
-def flash_fwd_kernel(Q, K, V, O, L, qk_scale, S, stride_bh, stride_s,
-                     D: tl.constexpr, BM: tl.constexpr, BN: tl.constexpr, CAUSAL: tl.constexpr):
+def flash_fwd_kernel(
+    Q,
+    K,
+    V,
+    O,
+    L,
+    qk_scale,
+    S,
+    stride_bh,
+    stride_s,
+    D: tl.constexpr,
+    BM: tl.constexpr,
+    BN: tl.constexpr,
+    CAUSAL: tl.constexpr,
+):
     pid_m = tl.program_id(0)
     bh = tl.program_id(1)
     offs_m = pid_m * BM + tl.arange(0, BM)
     offs_d = tl.arange(0, D)
     base = bh * stride_bh
-    q = tl.load(Q + base + offs_m[:, None] * stride_s + offs_d[None, :], mask=offs_m[:, None] < S, other=0.0)
+    q = tl.load(
+        Q + base + offs_m[:, None] * stride_s + offs_d[None, :], mask=offs_m[:, None] < S, other=0.0
+    )
     m_i = tl.full([BM], -float("inf"), dtype=tl.float32)
     l_i = tl.zeros([BM], dtype=tl.float32)
     acc = tl.zeros([BM, D], dtype=tl.float32)
@@ -91,7 +129,9 @@ def flash_fwd_kernel(Q, K, V, O, L, qk_scale, S, stride_bh, stride_s,
     for start_n in range(0, hi, BN):
         offs_n = start_n + tl.arange(0, BN)
         kv_mask = offs_n[:, None] < S
-        k = tl.load(K + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=kv_mask, other=0.0)
+        k = tl.load(
+            K + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=kv_mask, other=0.0
+        )
         s = tl.dot(q, tl.trans(k)) * qk_scale
         s = tl.where(offs_n[None, :] < S, s, -float("inf"))
         if CAUSAL:
@@ -100,11 +140,17 @@ def flash_fwd_kernel(Q, K, V, O, L, qk_scale, S, stride_bh, stride_s,
         alpha = tl.exp2(m_i - m_new)
         p = tl.exp2(s - m_new[:, None])
         l_i = l_i * alpha + tl.sum(p, 1)
-        v = tl.load(V + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=kv_mask, other=0.0)
+        v = tl.load(
+            V + base + offs_n[:, None] * stride_s + offs_d[None, :], mask=kv_mask, other=0.0
+        )
         acc = acc * alpha[:, None] + tl.dot(p.to(tl.float16), v)
         m_i = m_new
     out = acc / l_i[:, None]
-    tl.store(O + base + offs_m[:, None] * stride_s + offs_d[None, :], out.to(tl.float16), mask=offs_m[:, None] < S)
+    tl.store(
+        O + base + offs_m[:, None] * stride_s + offs_d[None, :],
+        out.to(tl.float16),
+        mask=offs_m[:, None] < S,
+    )
     tl.store(L + bh * S + offs_m, (m_i + tl.log2(l_i)) * LN2, mask=offs_m < S)
 
 
@@ -137,13 +183,23 @@ def attention_single_block(q, k, v, sm_scale=None):
     sm_scale = sm_scale if sm_scale is not None else 1.0 / math.sqrt(D)
     out = torch.empty_like(q)
     lse = torch.empty(B, H, S, device=q.device, dtype=torch.float32)
-    attn_single_block_kernel[(triton.cdiv(S, BM), B * H)](q, k, v, out, lse, sm_scale * LOG2E, S, S * D, D,
-                                                          D=D, BM=BM, BN=BN, num_warps=4)
+    attn_single_block_kernel[(triton.cdiv(S, BM), B * H)](
+        q, k, v, out, lse, sm_scale * LOG2E, S, S * D, D, D=D, BM=BM, BN=BN, num_warps=4
+    )
     return out, lse
 
 
-def flash_attention(q, k, v, causal=False, sm_scale=None, block_m=None, block_n=None, num_warps=None,
-                    num_stages=None):
+def flash_attention(
+    q,
+    k,
+    v,
+    causal=False,
+    sm_scale=None,
+    block_m=None,
+    block_n=None,
+    num_warps=None,
+    num_stages=None,
+):
     """Provided launcher for B2/B3. Returns (out [B,H,S,D] fp16, lse [B,H,S] fp32)."""
     if not B2_DONE:
         raise NotImplementedError("TODO B2 flash_fwd_kernel")
@@ -157,6 +213,21 @@ def flash_attention(q, k, v, causal=False, sm_scale=None, block_m=None, block_n=
     out = torch.empty_like(q)
     lse = torch.empty(B, H, S, device=q.device, dtype=torch.float32)
     extra = {"num_stages": num_stages} if num_stages else {}
-    flash_fwd_kernel[(triton.cdiv(S, BM), B * H)](q, k, v, out, lse, sm_scale * LOG2E, S, S * D, D, D=D, BM=BM,
-                                                  BN=BN, CAUSAL=causal, num_warps=warps, **extra)
+    flash_fwd_kernel[(triton.cdiv(S, BM), B * H)](
+        q,
+        k,
+        v,
+        out,
+        lse,
+        sm_scale * LOG2E,
+        S,
+        S * D,
+        D,
+        D=D,
+        BM=BM,
+        BN=BN,
+        CAUSAL=causal,
+        num_warps=warps,
+        **extra,
+    )
     return out, lse

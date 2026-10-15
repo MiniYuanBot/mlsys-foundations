@@ -31,14 +31,15 @@
 typedef __nv_bfloat16 bf16;
 constexpr int HEAD_DIM = 128;
 
-extern "C" __global__ void paged_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
-                                           const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
-                                           const int* __restrict__ token_seq, const int* __restrict__ token_pos,
-                                           bf16* __restrict__ out, int T, int num_heads, int num_kv_heads,
-                                           int max_blocks, int block_size, float scale) {
+extern "C" __global__ void
+paged_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
+                const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
+                const int* __restrict__ token_seq, const int* __restrict__ token_pos,
+                bf16* __restrict__ out, int T, int num_heads, int num_kv_heads, int max_blocks,
+                int block_size, float scale) {
     const int warp_global = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
     const int lane = threadIdx.x % 32;
-    if (warp_global >= T * num_heads) return;  // whole warps exit together
+    if (warp_global >= T * num_heads) return; // whole warps exit together
     const int t = warp_global / num_heads, h = warp_global % num_heads;
     const int kvh = h / (num_heads / num_kv_heads);
     const int* table = block_tables + (long)token_seq[t] * max_blocks;
@@ -46,10 +47,14 @@ extern "C" __global__ void paged_attention(const bf16* __restrict__ q, const bf1
     const int d0 = lane * 4;
     float qv[4];
     {
-        const uint2 raw = *reinterpret_cast<const uint2*>(q + ((long)t * num_heads + h) * HEAD_DIM + d0);
+        const uint2 raw =
+            *reinterpret_cast<const uint2*>(q + ((long)t * num_heads + h) * HEAD_DIM + d0);
         const float2 a = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.x));
         const float2 b = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.y));
-        qv[0] = a.x * scale; qv[1] = a.y * scale; qv[2] = b.x * scale; qv[3] = b.y * scale;
+        qv[0] = a.x * scale;
+        qv[1] = a.y * scale;
+        qv[2] = b.x * scale;
+        qv[3] = b.y * scale;
     }
     float m = -INFINITY, l = 0.f, acc[4] = {0.f, 0.f, 0.f, 0.f};
     for (int j = 0; j < n_keys; ++j) {

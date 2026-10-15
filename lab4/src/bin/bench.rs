@@ -45,11 +45,18 @@ fn percentile(v: &mut [f64], p: f64) -> f64 {
 fn main() -> Result<()> {
     let a: Vec<String> = std::env::args().skip(1).collect();
     let get = |name: &str, def: &str| -> String {
-        a.iter().position(|x| x == name).and_then(|i| a.get(i + 1).cloned()).unwrap_or_else(|| def.to_string())
+        a.iter()
+            .position(|x| x == name)
+            .and_then(|i| a.get(i + 1).cloned())
+            .unwrap_or_else(|| def.to_string())
     };
     let has = |name: &str| a.iter().any(|x| x == name);
-    let (n_req, prompt, shared, output) = (get("--requests", "64").parse::<usize>()?, get("--prompt", "512").parse::<usize>()?,
-        get("--shared-prefix", "0").parse::<usize>()?, get("--output", "128").parse::<usize>()?);
+    let (n_req, prompt, shared, output) = (
+        get("--requests", "64").parse::<usize>()?,
+        get("--prompt", "512").parse::<usize>()?,
+        get("--shared-prefix", "0").parse::<usize>()?,
+        get("--output", "128").parse::<usize>()?,
+    );
     let rate: f64 = get("--rate", "0").parse()?;
     let cfg = EngineConfig {
         block_size: 16,
@@ -61,14 +68,25 @@ fn main() -> Result<()> {
             static_batching: has("--static"),
         },
         prefix_caching: !has("--no-prefix-cache"),
-        attention: if get("--attention", "fast") == "naive" { AttnImpl::Naive } else { AttnImpl::Fast },
+        attention: if get("--attention", "fast") == "naive" {
+            AttnImpl::Naive
+        } else {
+            AttnImpl::Fast
+        },
     };
     let label = get("--label", "run");
     let mut engine = Engine::new(&model_dir(&get("--model", "Qwen3-0.6B")), cfg.clone())?;
-    eprintln!("# {} KV blocks of {} tokens ({:.2} GB)", engine.kv.num_blocks, cfg.block_size, cfg.kv_cache_bytes as f64 / 1e9);
+    eprintln!(
+        "# {} KV blocks of {} tokens ({:.2} GB)",
+        engine.kv.num_blocks,
+        cfg.block_size,
+        cfg.kv_cache_bytes as f64 / 1e9
+    );
 
     let mut rng = Rng(0x9e3779b97f4a7c15);
-    let common: Vec<u32> = (0..shared.min(prompt)).map(|_| 1000 + (rng.next() % 100_000) as u32).collect();
+    let common: Vec<u32> = (0..shared.min(prompt))
+        .map(|_| 1000 + (rng.next() % 100_000) as u32)
+        .collect();
     let mut arrivals = Vec::new();
     let mut t = 0.0;
     for _ in 0..n_req {
@@ -78,10 +96,20 @@ fn main() -> Result<()> {
         arrivals.push(t);
     }
     let out_lens: Vec<usize> = (0..n_req)
-        .map(|_| if has("--vary-output") { output / 4 + (rng.next() % (3 * output as u64 / 2 + 1)) as usize } else { output })
+        .map(|_| {
+            if has("--vary-output") {
+                output / 4 + (rng.next() % (3 * output as u64 / 2 + 1)) as usize
+            } else {
+                output
+            }
+        })
         .collect();
     let prompts: Vec<Vec<u32>> = (0..n_req)
-        .map(|_| { let mut p = common.clone(); p.extend((p.len()..prompt).map(|_| 1000 + (rng.next() % 100_000) as u32)); p })
+        .map(|_| {
+            let mut p = common.clone();
+            p.extend((p.len()..prompt).map(|_| 1000 + (rng.next() % 100_000) as u32));
+            p
+        })
         .collect();
 
     let start = Instant::now();
@@ -91,7 +119,8 @@ fn main() -> Result<()> {
         while next < n_req && start.elapsed() >= Duration::from_secs_f64(arrivals[next]) {
             let id = engine.add_request(prompts[next].clone(), out_lens[next].max(1), Vec::new());
             // Arrival time is the scheduled one, not when we got around to adding it.
-            engine.seqs.get_mut(&id).unwrap().arrival = start + Duration::from_secs_f64(arrivals[next]);
+            engine.seqs.get_mut(&id).unwrap().arrival =
+                start + Duration::from_secs_f64(arrivals[next]);
             ids.push(id);
             next += 1;
         }
@@ -106,8 +135,16 @@ fn main() -> Result<()> {
     let mut cached = 0usize;
     for id in &ids {
         let s = &engine.seqs[id];
-        let first = s.first_token_at.unwrap().duration_since(s.arrival).as_secs_f64();
-        let done = s.finished_at.unwrap().duration_since(s.arrival).as_secs_f64();
+        let first = s
+            .first_token_at
+            .unwrap()
+            .duration_since(s.arrival)
+            .as_secs_f64();
+        let done = s
+            .finished_at
+            .unwrap()
+            .duration_since(s.arrival)
+            .as_secs_f64();
         ttft.push(first * 1e3);
         e2e.push(done * 1e3);
         if s.num_generated() > 1 {

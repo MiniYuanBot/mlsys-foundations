@@ -23,8 +23,8 @@ use crate::sequence::Sequence;
 
 #[derive(Debug, Default, Clone)]
 pub struct KvStats {
-    pub prefix_queries: usize,  // blocks looked up in the prefix table
-    pub prefix_hits: usize,     // of which were found
+    pub prefix_queries: usize, // blocks looked up in the prefix table
+    pub prefix_hits: usize,    // of which were found
     pub evictions: usize,
 }
 
@@ -33,12 +33,12 @@ pub struct BlockManager {
     pub num_blocks: usize,
     pub prefix_caching: bool,
     pub stats: KvStats,
-    free: VecDeque<u32>,         // never-used or forgotten blocks, FIFO
+    free: VecDeque<u32>, // never-used or forgotten blocks, FIFO
     refcount: Vec<u32>,
     // ---- C2 ----
     block_hash: Vec<Option<u64>>, // hash of the content of a full, registered block
     #[allow(dead_code)] // used once you implement C2
-    cached: HashMap<u64, u32>,    // hash -> block
+    cached: HashMap<u64, u32>, // hash -> block
     evictable: VecDeque<u32>,     // refcount 0 but still cached; front = least recently freed
 }
 
@@ -127,7 +127,9 @@ impl BlockManager {
     // ALL OR NOTHING: if not enough blocks are available, allocate none and
     // return false (the scheduler then preempts or waits). Return true otherwise.
     pub fn ensure_capacity(&mut self, seq: &mut Sequence, num_tokens: usize) -> bool {
-        let need = self.blocks_for(num_tokens).saturating_sub(seq.block_table.len());
+        let need = self
+            .blocks_for(num_tokens)
+            .saturating_sub(seq.block_table.len());
         if need > self.num_free_blocks() {
             return false;
         }
@@ -175,7 +177,11 @@ impl BlockManager {
             let Some(&b) = self.cached.get(&h) else { break };
             self.stats.prefix_hits += 1;
             if self.refcount[b as usize] == 0 {
-                let pos = self.evictable.iter().position(|&x| x == b).expect("cached block with refcount 0 is evictable");
+                let pos = self
+                    .evictable
+                    .iter()
+                    .position(|&x| x == b)
+                    .expect("cached block with refcount 0 is evictable");
                 self.evictable.remove(pos);
             }
             self.refcount[b as usize] += 1;

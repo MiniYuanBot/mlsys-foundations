@@ -3,6 +3,7 @@
     python lab2/bench/bench_softmax.py > results/lab2/softmax.csv
 Effective GB/s counts the minimum traffic, 2 * rows * cols * 4 bytes (read + write once).
 """
+
 from common import time_ms, try_time
 
 import torch
@@ -20,8 +21,11 @@ def main():
     for rows, cols in [(4096, 1024), (4096, 4096), (1024, 16384), (64, 262144)]:
         x = torch.randn(rows, cols, device="cuda")
         nbytes = 2 * x.numel() * 4
-        impls = {"torch_unfused": lambda: unfused(x), "torch_softmax": lambda: torch.softmax(x, -1),
-                 "online_A2": lambda: softmax_online(x)}
+        impls = {
+            "torch_unfused": lambda: unfused(x),
+            "torch_softmax": lambda: torch.softmax(x, -1),
+            "online_A2": lambda: softmax_online(x),
+        }
         if cols <= 16384:
             impls["fused_A1"] = lambda: softmax_fused(x)
         for name, fn in impls.items():

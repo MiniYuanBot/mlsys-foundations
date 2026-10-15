@@ -14,12 +14,15 @@ Tensor::Tensor(std::shared_ptr<std::vector<float>> storage, Shape shape, Strides
     : storage_(std::move(storage)), shape_(std::move(shape)), strides_(std::move(strides)),
       offset_(offset) {
     if (!storage_) throw std::invalid_argument("null storage");
-    if (shape_.size() != strides_.size()) throw std::invalid_argument("shape/strides rank mismatch");
+    if (shape_.size() != strides_.size())
+        throw std::invalid_argument("shape/strides rank mismatch");
     for (auto d : shape_)
         if (d < 0) throw std::invalid_argument("negative dimension");
 }
 
-Tensor Tensor::zeros(const Shape& shape) { return full(shape, 0.0f); }
+Tensor Tensor::zeros(const Shape& shape) {
+    return full(shape, 0.0f);
+}
 
 Tensor Tensor::full(const Shape& shape, float value) {
     auto storage = std::make_shared<std::vector<float>>(numel_of(shape), value);
@@ -46,10 +49,10 @@ int64_t Tensor::size(int64_t dim) const {
 }
 
 Tensor Tensor::view(const Shape& new_shape) const {
-    if (numel_of(new_shape) != numel())
-        throw std::invalid_argument("view: element count changes");
+    if (numel_of(new_shape) != numel()) throw std::invalid_argument("view: element count changes");
     if (!is_contiguous())
-        throw std::invalid_argument("view: tensor is not contiguous, call contiguous() or reshape()");
+        throw std::invalid_argument(
+            "view: tensor is not contiguous, call contiguous() or reshape()");
     return Tensor(storage_, new_shape, contiguous_strides(new_shape), offset_);
 }
 
@@ -96,7 +99,8 @@ std::string Tensor::describe() const {
         }
     }
     os << "storage: [";
-    for (size_t i = 0; i < storage_->size(); ++i) os << (i ? " " : "") << (reached[i] ? "#" : ".") << i;
+    for (size_t i = 0; i < storage_->size(); ++i)
+        os << (i ? " " : "") << (reached[i] ? "#" : ".") << i;
     os << "]   (# = reachable from this view)\n";
     return os.str();
 }
@@ -131,10 +135,9 @@ Tensor matmul(const Tensor& a, const Tensor& b) {
     Tensor ac = a.contiguous(), bc = b.contiguous();
     const int64_t M = a.size(0), K = a.size(1), N = b.size(1);
     Tensor c = Tensor::zeros({M, N});
-    gemm(GemmKernel::Best, static_cast<int>(M), static_cast<int>(N), static_cast<int>(K),
-         ac.data(), static_cast<int>(K), bc.data(), static_cast<int>(N), c.data(),
-         static_cast<int>(N));
+    gemm(GemmKernel::Best, static_cast<int>(M), static_cast<int>(N), static_cast<int>(K), ac.data(),
+         static_cast<int>(K), bc.data(), static_cast<int>(N), c.data(), static_cast<int>(N));
     return c;
 }
 
-}  // namespace mt
+} // namespace mt

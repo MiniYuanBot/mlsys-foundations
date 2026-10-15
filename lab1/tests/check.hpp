@@ -27,44 +27,46 @@ inline std::vector<Case>& registry() {
     return cases;
 }
 struct Register {
-    Register(const char* name, std::function<void()> fn) { registry().push_back({name, std::move(fn)}); }
+    Register(const char* name, std::function<void()> fn) {
+        registry().push_back({name, std::move(fn)});
+    }
 };
 inline std::string where(const char* file, int line) {
     std::ostringstream os;
     os << file << ":" << line << ": ";
     return os.str();
 }
-}  // namespace check
+} // namespace check
 
-#define TEST(name)                                                   \
-    static void test_##name();                                       \
-    static check::Register register_##name(#name, test_##name);      \
+#define TEST(name)                                                                                 \
+    static void test_##name();                                                                     \
+    static check::Register register_##name(#name, test_##name);                                    \
     static void test_##name()
 
-#define CHECK(cond)                                                                                 \
-    do {                                                                                            \
-        if (!(cond)) throw check::Failure(check::where(__FILE__, __LINE__) + "CHECK(" #cond ")");   \
+#define CHECK(cond)                                                                                \
+    do {                                                                                           \
+        if (!(cond)) throw check::Failure(check::where(__FILE__, __LINE__) + "CHECK(" #cond ")");  \
     } while (0)
 
-#define CHECK_EQ(a, b)                                                                          \
-    do {                                                                                        \
-        const auto va_ = (a);                                                                   \
-        const auto vb_ = (b);                                                                   \
-        if (!(va_ == vb_)) {                                                                    \
-            std::ostringstream os_;                                                             \
-            os_ << check::where(__FILE__, __LINE__) << "CHECK_EQ(" #a ", " #b ")";              \
-            throw check::Failure(os_.str());                                                    \
-        }                                                                                       \
+#define CHECK_EQ(a, b)                                                                             \
+    do {                                                                                           \
+        const auto va_ = (a);                                                                      \
+        const auto vb_ = (b);                                                                      \
+        if (!(va_ == vb_)) {                                                                       \
+            std::ostringstream os_;                                                                \
+            os_ << check::where(__FILE__, __LINE__) << "CHECK_EQ(" #a ", " #b ")";                 \
+            throw check::Failure(os_.str());                                                       \
+        }                                                                                          \
     } while (0)
 
-#define CHECK_NEAR(a, b, tol)                                                                       \
-    do {                                                                                            \
-        const double va_ = (a), vb_ = (b);                                                          \
-        if (!(std::fabs(va_ - vb_) <= (tol))) {                                                     \
-            std::ostringstream os_;                                                                 \
-            os_ << check::where(__FILE__, __LINE__) << #a " = " << va_ << " but " #b " = " << vb_;  \
-            throw check::Failure(os_.str());                                                        \
-        }                                                                                           \
+#define CHECK_NEAR(a, b, tol)                                                                      \
+    do {                                                                                           \
+        const double va_ = (a), vb_ = (b);                                                         \
+        if (!(std::fabs(va_ - vb_) <= (tol))) {                                                    \
+            std::ostringstream os_;                                                                \
+            os_ << check::where(__FILE__, __LINE__) << #a " = " << va_ << " but " #b " = " << vb_; \
+            throw check::Failure(os_.str());                                                       \
+        }                                                                                          \
     } while (0)
 
 #define CHECK_THROWS(expr, Type)                                                                   \
@@ -76,7 +78,8 @@ inline std::string where(const char* file, int line) {
             thrown_ = true;                                                                        \
         }                                                                                          \
         if (!thrown_)                                                                              \
-            throw check::Failure(check::where(__FILE__, __LINE__) + #expr " did not throw " #Type); \
+            throw check::Failure(check::where(__FILE__, __LINE__) + #expr                          \
+                                 " did not throw " #Type);                                         \
     } while (0)
 
 inline int run_tests(int argc, char** argv) {

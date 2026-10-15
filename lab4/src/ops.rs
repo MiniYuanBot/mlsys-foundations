@@ -11,7 +11,11 @@ use crate::gpu::Gpu;
 pub type Buf = CudaSlice<bf16>;
 
 fn grid(n: usize, block: u32) -> LaunchConfig {
-    LaunchConfig { grid_dim: ((n as u32).max(1), 1, 1), block_dim: (block, 1, 1), shared_mem_bytes: 0 }
+    LaunchConfig {
+        grid_dim: ((n as u32).max(1), 1, 1),
+        block_dim: (block, 1, 1),
+        shared_mem_bytes: 0,
+    }
 }
 
 /// y[T, out] = x[T, in] @ w[out, in]^T   (bf16 in/out, fp32 accumulate).
@@ -20,7 +24,15 @@ fn grid(n: usize, block: u32) -> LaunchConfig {
 /// row-major w [out, in] is column-major w^T (in x out). We want column-major
 /// y^T (out x T) = w x^T = op(w^T) * x^T with op = transpose. So:
 /// m = out, n = T, k = in, A = w (transposed, lda = in), B = x (lda = in), C = y (ldc = out).
-pub fn linear(gpu: &Gpu, x: &Buf, w: &Buf, y: &mut Buf, t: usize, d_in: usize, d_out: usize) -> Result<()> {
+pub fn linear(
+    gpu: &Gpu,
+    x: &Buf,
+    w: &Buf,
+    y: &mut Buf,
+    t: usize,
+    d_in: usize,
+    d_out: usize,
+) -> Result<()> {
     let cfg = GemmConfig {
         transa: cublasOperation_t::CUBLAS_OP_T,
         transb: cublasOperation_t::CUBLAS_OP_N,
@@ -37,7 +49,14 @@ pub fn linear(gpu: &Gpu, x: &Buf, w: &Buf, y: &mut Buf, t: usize, d_in: usize, d
     Ok(())
 }
 
-pub fn embedding(gpu: &Gpu, table: &Buf, tokens: &CudaSlice<i32>, out: &mut Buf, t: usize, hidden: usize) -> Result<()> {
+pub fn embedding(
+    gpu: &Gpu,
+    table: &Buf,
+    tokens: &CudaSlice<i32>,
+    out: &mut Buf,
+    t: usize,
+    hidden: usize,
+) -> Result<()> {
     let (ti, hi) = (t as i32, hidden as i32);
     let mut b = gpu.stream.launch_builder(gpu.func("embedding"));
     b.arg(table).arg(tokens).arg(out).arg(&ti).arg(&hi);
@@ -46,7 +65,15 @@ pub fn embedding(gpu: &Gpu, table: &Buf, tokens: &CudaSlice<i32>, out: &mut Buf,
 }
 
 /// out = rmsnorm(x) * w, row by row. `rows` rows of `dim` elements.
-pub fn rmsnorm(gpu: &Gpu, x: &Buf, w: &Buf, out: &mut Buf, rows: usize, dim: usize, eps: f32) -> Result<()> {
+pub fn rmsnorm(
+    gpu: &Gpu,
+    x: &Buf,
+    w: &Buf,
+    out: &mut Buf,
+    rows: usize,
+    dim: usize,
+    eps: f32,
+) -> Result<()> {
     let (ri, di) = (rows as i32, dim as i32);
     let mut b = gpu.stream.launch_builder(gpu.func("rmsnorm"));
     b.arg(x).arg(w).arg(out).arg(&ri).arg(&di).arg(&eps);
@@ -55,7 +82,15 @@ pub fn rmsnorm(gpu: &Gpu, x: &Buf, w: &Buf, out: &mut Buf, rows: usize, dim: usi
 }
 
 /// In place: residual = x + residual; x = rmsnorm(residual) * w.
-pub fn fused_add_rmsnorm(gpu: &Gpu, x: &mut Buf, residual: &mut Buf, w: &Buf, rows: usize, dim: usize, eps: f32) -> Result<()> {
+pub fn fused_add_rmsnorm(
+    gpu: &Gpu,
+    x: &mut Buf,
+    residual: &mut Buf,
+    w: &Buf,
+    rows: usize,
+    dim: usize,
+    eps: f32,
+) -> Result<()> {
     let (ri, di) = (rows as i32, dim as i32);
     let mut b = gpu.stream.launch_builder(gpu.func("fused_add_rmsnorm"));
     b.arg(x).arg(residual).arg(w).arg(&ri).arg(&di).arg(&eps);
@@ -63,10 +98,25 @@ pub fn fused_add_rmsnorm(gpu: &Gpu, x: &mut Buf, residual: &mut Buf, w: &Buf, ro
     Ok(())
 }
 
-pub fn rope(gpu: &Gpu, q: &mut Buf, k: &mut Buf, positions: &CudaSlice<i32>, t: usize, heads: usize, kv_heads: usize, theta: f32) -> Result<()> {
+pub fn rope(
+    gpu: &Gpu,
+    q: &mut Buf,
+    k: &mut Buf,
+    positions: &CudaSlice<i32>,
+    t: usize,
+    heads: usize,
+    kv_heads: usize,
+    theta: f32,
+) -> Result<()> {
     let (ti, hi, ki) = (t as i32, heads as i32, kv_heads as i32);
     let mut b = gpu.stream.launch_builder(gpu.func("rope"));
-    b.arg(q).arg(k).arg(positions).arg(&ti).arg(&hi).arg(&ki).arg(&theta);
+    b.arg(q)
+        .arg(k)
+        .arg(positions)
+        .arg(&ti)
+        .arg(&hi)
+        .arg(&ki)
+        .arg(&theta);
     unsafe { b.launch(grid(t, 256))? };
     Ok(())
 }
@@ -79,7 +129,13 @@ pub fn silu_mul(gpu: &Gpu, gate: &Buf, up: &Buf, out: &mut Buf, n: usize) -> Res
     Ok(())
 }
 
-pub fn argmax_rows(gpu: &Gpu, logits: &Buf, out: &mut CudaSlice<i32>, rows: usize, cols: usize) -> Result<()> {
+pub fn argmax_rows(
+    gpu: &Gpu,
+    logits: &Buf,
+    out: &mut CudaSlice<i32>,
+    rows: usize,
+    cols: usize,
+) -> Result<()> {
     let (ri, ci) = (rows as i32, cols as i32);
     let mut b = gpu.stream.launch_builder(gpu.func("argmax_rows"));
     b.arg(logits).arg(out).arg(&ri).arg(&ci);
@@ -87,10 +143,25 @@ pub fn argmax_rows(gpu: &Gpu, logits: &Buf, out: &mut CudaSlice<i32>, rows: usiz
     Ok(())
 }
 
-pub fn reshape_and_cache(gpu: &Gpu, k: &Buf, v: &Buf, k_cache: &mut Buf, v_cache: &mut Buf, slots: &CudaSlice<i32>, t: usize, kv_heads: usize) -> Result<()> {
+pub fn reshape_and_cache(
+    gpu: &Gpu,
+    k: &Buf,
+    v: &Buf,
+    k_cache: &mut Buf,
+    v_cache: &mut Buf,
+    slots: &CudaSlice<i32>,
+    t: usize,
+    kv_heads: usize,
+) -> Result<()> {
     let (ti, hi) = (t as i32, kv_heads as i32);
     let mut b = gpu.stream.launch_builder(gpu.func("reshape_and_cache"));
-    b.arg(k).arg(v).arg(k_cache).arg(v_cache).arg(slots).arg(&ti).arg(&hi);
+    b.arg(k)
+        .arg(v)
+        .arg(k_cache)
+        .arg(v_cache)
+        .arg(slots)
+        .arg(&ti)
+        .arg(&hi);
     unsafe { b.launch(grid(t, (kv_heads * 128 / 8).min(1024) as u32))? };
     Ok(())
 }
@@ -115,21 +186,51 @@ pub struct AttnArgs<'a> {
     pub tree: Option<(&'a CudaSlice<u64>, usize)>,
 }
 
-pub fn paged_attention(gpu: &Gpu, which: AttnImpl, q: &Buf, k_cache: &Buf, v_cache: &Buf, out: &mut Buf, a: &AttnArgs) -> Result<()> {
+pub fn paged_attention(
+    gpu: &Gpu,
+    which: AttnImpl,
+    q: &Buf,
+    k_cache: &Buf,
+    v_cache: &Buf,
+    out: &mut Buf,
+    a: &AttnArgs,
+) -> Result<()> {
     let scale = 1.0f32 / (128f32).sqrt();
-    let (ti, hi, ki, mi, bi) = (a.t as i32, a.heads as i32, a.kv_heads as i32, a.max_blocks as i32, a.block_size as i32);
+    let (ti, hi, ki, mi, bi) = (
+        a.t as i32,
+        a.heads as i32,
+        a.kv_heads as i32,
+        a.max_blocks as i32,
+        a.block_size as i32,
+    );
     if let Some((mask, prefix_len)) = a.tree {
         // lab5: kernel "tree_attention", registered through Gpu::with_extra_kernels.
         let pl = prefix_len as i32;
         let mut b = gpu.stream.launch_builder(gpu.func("tree_attention"));
-        b.arg(q).arg(k_cache).arg(v_cache).arg(a.block_tables).arg(mask).arg(&pl).arg(out);
+        b.arg(q)
+            .arg(k_cache)
+            .arg(v_cache)
+            .arg(a.block_tables)
+            .arg(mask)
+            .arg(&pl)
+            .arg(out);
         b.arg(&ti).arg(&hi).arg(&ki).arg(&mi).arg(&bi).arg(&scale);
         unsafe { b.launch(grid((a.t * a.heads).div_ceil(4), 128))? };
         return Ok(());
     }
-    let name = if which == AttnImpl::Fast { "paged_attention" } else { "paged_attention_naive" };
+    let name = if which == AttnImpl::Fast {
+        "paged_attention"
+    } else {
+        "paged_attention_naive"
+    };
     let mut b = gpu.stream.launch_builder(gpu.func(name));
-    b.arg(q).arg(k_cache).arg(v_cache).arg(a.block_tables).arg(a.token_seq).arg(a.token_pos).arg(out);
+    b.arg(q)
+        .arg(k_cache)
+        .arg(v_cache)
+        .arg(a.block_tables)
+        .arg(a.token_seq)
+        .arg(a.token_pos)
+        .arg(out);
     b.arg(&ti).arg(&hi).arg(&ki).arg(&mi).arg(&bi).arg(&scale);
     let work = a.t * a.heads;
     let cfg = if which == AttnImpl::Fast {
@@ -141,7 +242,14 @@ pub fn paged_attention(gpu: &Gpu, which: AttnImpl, q: &Buf, k_cache: &Buf, v_cac
     Ok(())
 }
 
-pub fn gather_rows(gpu: &Gpu, x: &Buf, rows: &CudaSlice<i32>, out: &mut Buf, n: usize, dim: usize) -> Result<()> {
+pub fn gather_rows(
+    gpu: &Gpu,
+    x: &Buf,
+    rows: &CudaSlice<i32>,
+    out: &mut Buf,
+    n: usize,
+    dim: usize,
+) -> Result<()> {
     let (ni, di) = (n as i32, dim as i32);
     let mut b = gpu.stream.launch_builder(gpu.func("gather_rows"));
     b.arg(x).arg(rows).arg(out).arg(&ni).arg(&di);

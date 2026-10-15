@@ -45,14 +45,15 @@ public:
 private:
     std::vector<int> dims_;
     std::vector<size_t> offset_, size_;
-    std::vector<std::vector<float>> act_;  // activations of the last forward
+    std::vector<std::vector<float>> act_; // activations of the last forward
     std::vector<float> y_;
     int B_ = 0;
 };
 
 // Deterministic synthetic regression data: sample s (a global index) is the
 // same on every rank and every run. y = tanh(x A) for a fixed random A.
-void make_batch(int in, int out, size_t first_sample, int B, std::vector<float>& x, std::vector<float>& y);
+void make_batch(int in, int out, size_t first_sample, int B, std::vector<float>& x,
+                std::vector<float>& y);
 
 // ---------------------------------------------------------------- optimizers ----
 struct Adam {
@@ -72,8 +73,8 @@ class CommThread {
 public:
     CommThread(const Comm& c, AllreduceFn fn);
     ~CommThread();
-    void submit(float* data, size_t n);  // enqueue an in-place allreduce
-    void wait_all();                     // block until every submitted range is done
+    void submit(float* data, size_t n); // enqueue an in-place allreduce
+    void wait_all();                    // block until every submitted range is done
     int submitted() const { return submitted_; }
     double busy_seconds() const { return busy_; }
 
@@ -98,8 +99,8 @@ private:
 class Bucketer {
 public:
     Bucketer(MLP& model, size_t bucket_bytes, CommThread& comm, int world_size);
-    void on_layer_ready(int layer);  // called by MLP::backward
-    void finish();                   // after backward: flush, wait, average
+    void on_layer_ready(int layer); // called by MLP::backward
+    void finish();                  // after backward: flush, wait, average
     int buckets() const { return buckets_; }
 
 private:
@@ -107,8 +108,9 @@ private:
     size_t cap_floats_;
     CommThread& comm_;
     int P_;
-    size_t start_ = 0, pending_ = 0;  // [start_, start_ + pending_) of grads is ready but not submitted
-    int expect_ = -1;                 // next layer we expect to become ready
+    size_t start_ = 0,
+           pending_ = 0; // [start_, start_ + pending_) of grads is ready but not submitted
+    int expect_ = -1;    // next layer we expect to become ready
     int buckets_ = 0;
 };
 
@@ -129,4 +131,4 @@ private:
     int t_ = 0;
 };
 
-}  // namespace coll
+} // namespace coll

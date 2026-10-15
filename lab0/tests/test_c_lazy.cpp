@@ -26,13 +26,13 @@ int position(const std::vector<NodePtr>& order, const NodePtr& n) {
     return -1;
 }
 constexpr int64_t F = sizeof(float);
-}  // namespace
+} // namespace
 
 // y = relu(x * w + b)
 TEST(C1_toposort_order_and_uniqueness) {
     auto x = LazyTensor::input(random({8}, 1)), w = LazyTensor::input(random({8}, 2));
     auto d = x * w;
-    auto y = (d + d).relu();  // d is used twice but must appear once
+    auto y = (d + d).relu(); // d is used twice but must appear once
     auto order = toposort(y.node());
     CHECK_EQ(order.size(), 5u);
     CHECK(order.back() == y.node());
@@ -52,7 +52,7 @@ TEST(C1_unfused_schedule_counts) {
     auto st = analyze(schedule_unfused(y.node()), y.node());
     CHECK_EQ(st.kernels, 3);
     CHECK_EQ(st.bytes_written, 3 * N * F);
-    CHECK_EQ(st.bytes_read, 5 * N * F);  // mul: x,w   add: t1,b   relu: t2
+    CHECK_EQ(st.bytes_read, 5 * N * F); // mul: x,w   add: t1,b   relu: t2
     CHECK_EQ(st.intermediate_bytes, 2 * N * F);
 }
 
@@ -79,7 +79,7 @@ TEST(C2_shared_node_is_materialised) {
     CHECK_EQ(ks.size(), 2u);
     CHECK(ks[0].output == d.node());
     CHECK(ks[1].output == y.node());
-    CHECK_EQ(ks[1].nodes.size(), 3u);  // add, mul-by-2, final mul
+    CHECK_EQ(ks[1].nodes.size(), 3u); // add, mul-by-2, final mul
 }
 
 TEST(C2_square_counts_two_uses) {
@@ -134,7 +134,7 @@ TEST(C3_compile_reduction) {
     Program p = compile(schedule_fused(s.node())[0]);
     CHECK(p.reduce);
     CHECK_EQ(p.reduce_len, 10);
-    CHECK_EQ(p.code.size(), 2u);  // Load, Exp
+    CHECK_EQ(p.code.size(), 2u); // Load, Exp
 }
 
 TEST(C3_fused_equals_unfused_equals_eager) {
@@ -172,4 +172,6 @@ TEST(C4_tiled_matches_scalar) {
     expect_close(realize_fused(s, Interp::Tiled), realize_fused(s, Interp::Scalar), 1e-5);
 }
 
-int main(int argc, char** argv) { return run_tests(argc, argv); }
+int main(int argc, char** argv) {
+    return run_tests(argc, argv);
+}

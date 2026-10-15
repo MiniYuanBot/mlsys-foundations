@@ -15,7 +15,8 @@ namespace tc {
 #define TC_CUDA(x) check_rt((x), #x)
 #define TC_CU(x) check_drv((x), #x)
 static void check_rt(cudaError_t e, const char* what) {
-    if (e != cudaSuccess) throw std::runtime_error(std::string(what) + ": " + cudaGetErrorString(e));
+    if (e != cudaSuccess)
+        throw std::runtime_error(std::string(what) + ": " + cudaGetErrorString(e));
 }
 static void check_drv(CUresult e, const char* what) {
     if (e != CUDA_SUCCESS) {
@@ -26,7 +27,7 @@ static void check_drv(CUresult e, const char* what) {
 }
 
 struct Runtime::Impl {
-    std::unordered_map<std::string, CUfunction> cache;  // source -> function
+    std::unordered_map<std::string, CUfunction> cache; // source -> function
     std::vector<CUmodule> modules;
     std::string arch;
     int sms = 0;
@@ -35,7 +36,8 @@ struct Runtime::Impl {
         auto it = cache.find(src);
         if (it != cache.end()) return it->second;
         nvrtcProgram prog;
-        if (nvrtcCreateProgram(&prog, src.c_str(), "tc_kernel.cu", 0, nullptr, nullptr) != NVRTC_SUCCESS)
+        if (nvrtcCreateProgram(&prog, src.c_str(), "tc_kernel.cu", 0, nullptr, nullptr) !=
+            NVRTC_SUCCESS)
             throw std::runtime_error("nvrtcCreateProgram failed");
         const std::string arch_opt = "--gpu-architecture=" + arch;
         const char* opts[] = {arch_opt.c_str(), "-std=c++17", "-default-device"};
@@ -46,8 +48,8 @@ struct Runtime::Impl {
             std::string log(n, '\0');
             nvrtcGetProgramLog(prog, log.data());
             nvrtcDestroyProgram(&prog);
-            throw std::runtime_error("NVRTC failed to compile the generated kernel:\n" + log + "\n----- source -----\n" +
-                                     src);
+            throw std::runtime_error("NVRTC failed to compile the generated kernel:\n" + log +
+                                     "\n----- source -----\n" + src);
         }
         size_t n = 0;
         nvrtcGetCUBINSize(prog, &n);
@@ -64,7 +66,7 @@ struct Runtime::Impl {
 };
 
 Runtime::Runtime() : impl_(std::make_unique<Impl>()) {
-    TC_CUDA(cudaFree(nullptr));  // creates the primary context; the driver API then uses it
+    TC_CUDA(cudaFree(nullptr)); // creates the primary context; the driver API then uses it
     cudaDeviceProp p{};
     TC_CUDA(cudaGetDeviceProperties(&p, 0));
     impl_->arch = "sm_" + std::to_string(p.major) + std::to_string(p.minor);
@@ -75,11 +77,13 @@ Runtime::~Runtime() {
     for (CUmodule m : impl_->modules) cuModuleUnload(m);
 }
 
-int Runtime::compiled_kernels() const { return static_cast<int>(impl_->cache.size()); }
+int Runtime::compiled_kernels() const {
+    return static_cast<int>(impl_->cache.size());
+}
 
 namespace {
 struct DeviceState {
-    std::unordered_map<int, float*> buf;  // node id -> device buffer
+    std::unordered_map<int, float*> buf; // node id -> device buffer
     ~DeviceState() {
         for (auto& [id, p] : buf) cudaFree(p);
     }
@@ -96,8 +100,10 @@ void upload(const Graph& g, const Feeds& feeds, DeviceState& st) {
     for (int id : g.inputs()) {
         const Node& n = g.node(id);
         auto it = feeds.find(n.name);
-        if (it == feeds.end()) throw std::invalid_argument("missing feed for input '" + n.name + "'");
-        if (it->second.shape != n.shape) throw std::invalid_argument("feed '" + n.name + "' has the wrong shape");
+        if (it == feeds.end())
+            throw std::invalid_argument("missing feed for input '" + n.name + "'");
+        if (it->second.shape != n.shape)
+            throw std::invalid_argument("feed '" + n.name + "' has the wrong shape");
         std::vector<float> host(it->second.data.begin(), it->second.data.end());
         float* p = alloc(st, id, n.shape.numel());
         TC_CUDA(cudaMemcpy(p, host.data(), host.size() * sizeof(float), cudaMemcpyHostToDevice));
@@ -107,8 +113,8 @@ void upload(const Graph& g, const Feeds& feeds, DeviceState& st) {
 struct Launch {
     CUfunction fn;
     unsigned grid_x, grid_y, block;
-    std::vector<float*> ptrs;  // ins..., out
-    int64_t d0, d1, d2;        // dims
+    std::vector<float*> ptrs; // ins..., out
+    int64_t d0, d1, d2;       // dims
     int ndims;
 };
 
@@ -122,7 +128,8 @@ std::vector<Launch> prepare(Runtime::Impl& rt, const Graph& g, const Plan& plan,
         L.ptrs.push_back(alloc(st, k.output, os.numel()));
         if (k.kind == KernelKind::Elementwise) {
             L.block = 256;
-            L.grid_x = static_cast<unsigned>(std::min<int64_t>((os.numel() + 255) / 256, int64_t(rt.sms) * 8));
+            L.grid_x = static_cast<unsigned>(
+                std::min<int64_t>((os.numel() + 255) / 256, int64_t(rt.sms) * 8));
             L.grid_y = 1;
             L.d0 = os.rows, L.d1 = os.cols, L.ndims = 2;
         } else if (k.kind == KernelKind::Row) {
@@ -142,7 +149,8 @@ std::vector<Launch> prepare(Runtime::Impl& rt, const Graph& g, const Plan& plan,
             const Node* mm = nullptr;
             for (int id : k.nodes)
                 if (g.node(id).op == Op::MatMul) mm = &g.node(id);
-            const int64_t M = mm->shape.rows, N = mm->shape.cols, K = g.node(mm->srcs[0]).shape.cols;
+            const int64_t M = mm->shape.rows, N = mm->shape.cols,
+                          K = g.node(mm->srcs[0]).shape.cols;
             L.block = 256;
             L.grid_x = static_cast<unsigned>((N + 63) / 64);
             L.grid_y = static_cast<unsigned>((M + 63) / 64);
@@ -160,10 +168,11 @@ void launch_all(std::vector<Launch>& ls) {
         args.push_back(&L.d0);
         args.push_back(&L.d1);
         if (L.ndims == 3) args.push_back(&L.d2);
-        TC_CU(cuLaunchKernel(L.fn, L.grid_x, L.grid_y, 1, L.block, 1, 1, 0, nullptr, args.data(), nullptr));
+        TC_CU(cuLaunchKernel(L.fn, L.grid_x, L.grid_y, 1, L.block, 1, 1, 0, nullptr, args.data(),
+                             nullptr));
     }
 }
-}  // namespace
+} // namespace
 
 HostTensor Runtime::run(const Graph& g, const Plan& plan, const Feeds& feeds) {
     DeviceState st;
@@ -173,7 +182,8 @@ HostTensor Runtime::run(const Graph& g, const Plan& plan, const Feeds& feeds) {
     TC_CUDA(cudaDeviceSynchronize());
     const Shape s = g.node(g.output()).shape;
     std::vector<float> host(s.numel());
-    TC_CUDA(cudaMemcpy(host.data(), st.buf.at(g.output()), host.size() * sizeof(float), cudaMemcpyDeviceToHost));
+    TC_CUDA(cudaMemcpy(host.data(), st.buf.at(g.output()), host.size() * sizeof(float),
+                       cudaMemcpyDeviceToHost));
     return HostTensor{s, std::vector<double>(host.begin(), host.end())};
 }
 
@@ -202,4 +212,4 @@ double Runtime::time_ms(const Graph& g, const Plan& plan, const Feeds& feeds, in
     return times[times.size() / 2];
 }
 
-}  // namespace tc
+} // namespace tc

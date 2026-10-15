@@ -8,28 +8,51 @@
 
 namespace tc {
 
-bool is_unary(Op op) { return op == Op::Neg || op == Op::Exp || op == Op::Tanh || op == Op::Relu || op == Op::Rsqrt; }
-bool is_binary(Op op) { return op == Op::Add || op == Op::Sub || op == Op::Mul || op == Op::Div || op == Op::Max; }
-bool is_elementwise(Op op) { return is_unary(op) || is_binary(op); }
-bool is_reduction(Op op) { return op == Op::RowSum || op == Op::RowMax; }
+bool is_unary(Op op) {
+    return op == Op::Neg || op == Op::Exp || op == Op::Tanh || op == Op::Relu || op == Op::Rsqrt;
+}
+bool is_binary(Op op) {
+    return op == Op::Add || op == Op::Sub || op == Op::Mul || op == Op::Div || op == Op::Max;
+}
+bool is_elementwise(Op op) {
+    return is_unary(op) || is_binary(op);
+}
+bool is_reduction(Op op) {
+    return op == Op::RowSum || op == Op::RowMax;
+}
 
 const char* op_name(Op op) {
     switch (op) {
-        case Op::Input: return "Input";
-        case Op::Const: return "Const";
-        case Op::Neg: return "Neg";
-        case Op::Exp: return "Exp";
-        case Op::Tanh: return "Tanh";
-        case Op::Relu: return "Relu";
-        case Op::Rsqrt: return "Rsqrt";
-        case Op::Add: return "Add";
-        case Op::Sub: return "Sub";
-        case Op::Mul: return "Mul";
-        case Op::Div: return "Div";
-        case Op::Max: return "Max";
-        case Op::RowSum: return "RowSum";
-        case Op::RowMax: return "RowMax";
-        case Op::MatMul: return "MatMul";
+    case Op::Input:
+        return "Input";
+    case Op::Const:
+        return "Const";
+    case Op::Neg:
+        return "Neg";
+    case Op::Exp:
+        return "Exp";
+    case Op::Tanh:
+        return "Tanh";
+    case Op::Relu:
+        return "Relu";
+    case Op::Rsqrt:
+        return "Rsqrt";
+    case Op::Add:
+        return "Add";
+    case Op::Sub:
+        return "Sub";
+    case Op::Mul:
+        return "Mul";
+    case Op::Div:
+        return "Div";
+    case Op::Max:
+        return "Max";
+    case Op::RowSum:
+        return "RowSum";
+    case Op::RowMax:
+        return "RowMax";
+    case Op::MatMul:
+        return "MatMul";
     }
     return "?";
 }
@@ -38,7 +61,8 @@ Shape broadcast(Shape a, Shape b) {
     auto dim = [](int64_t x, int64_t y) {
         if (x == y || y == 1) return x;
         if (x == 1) return y;
-        throw std::invalid_argument("broadcast: incompatible dims " + std::to_string(x) + " vs " + std::to_string(y));
+        throw std::invalid_argument("broadcast: incompatible dims " + std::to_string(x) + " vs " +
+                                    std::to_string(y));
     };
     return {dim(a.rows, b.rows), dim(a.cols, b.cols)};
 }
@@ -54,7 +78,9 @@ int Graph::constant(double value) {
     return size() - 1;
 }
 
-int Graph::matmul(int a, int b) { return add_node(Op::MatMul, {a, b}); }
+int Graph::matmul(int a, int b) {
+    return add_node(Op::MatMul, {a, b});
+}
 
 int Graph::add_node(Op op, std::vector<int> srcs, double value, const std::string& name) {
     for (int s : srcs)
@@ -103,7 +129,8 @@ std::string Graph::to_string() const {
         if (n.op == Op::Input) os << n.name;
         if (n.op == Op::Const) os << n.value;
         for (size_t k = 0; k < n.srcs.size(); ++k) os << (k ? ", " : "") << "n" << n.srcs[k];
-        os << ") [" << n.shape.rows << "x" << n.shape.cols << "]" << (i == output_ ? "  <- output" : "") << "\n";
+        os << ") [" << n.shape.rows << "x" << n.shape.cols << "]"
+           << (i == output_ ? "  <- output" : "") << "\n";
     }
     return os.str();
 }
@@ -119,7 +146,8 @@ std::string Graph::canonical() const {
         if (it != label.end()) return "#" + std::to_string(it->second);
         const Node& n = nodes_[id];
         std::string s;
-        if (n.op == Op::Input) s = n.name;
+        if (n.op == Op::Input)
+            s = n.name;
         else if (n.op == Op::Const) {
             std::ostringstream os;
             os.precision(17);
@@ -138,4 +166,4 @@ std::string Graph::canonical() const {
     return go(output_);
 }
 
-}  // namespace tc
+} // namespace tc

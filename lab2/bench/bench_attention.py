@@ -5,6 +5,7 @@ vs your Triton (Part B) and CUDA (Part C1) kernels.
     python lab2/bench/bench_attention.py --D 128 --causal
 TFLOP/s uses 4*B*H*S^2*D FLOPs (halved for causal).
 """
+
 import argparse
 
 from common import try_time
@@ -28,16 +29,22 @@ def main():
     a = ap.parse_args()
     print("B,H,S,D,causal,impl,ms,tflops,pct_of_sdpa_flash")
     for S in map(int, a.seqs.split(",")):
-        q, k, v = (torch.randn(a.B, a.H, S, a.D, device="cuda", dtype=torch.float16) for _ in range(3))
+        q, k, v = (
+            torch.randn(a.B, a.H, S, a.D, device="cuda", dtype=torch.float16) for _ in range(3)
+        )
 
         def sdpa(backend):
             def run():
                 with sdpa_kernel(backend):
                     return F.scaled_dot_product_attention(q, k, v, is_causal=a.causal)
+
             return run
 
-        impls = {"sdpa_flash": sdpa(SDPBackend.FLASH_ATTENTION), "sdpa_math": sdpa(SDPBackend.MATH),
-                 "triton_B": lambda: flash_attention(q, k, v, causal=a.causal)}
+        impls = {
+            "sdpa_flash": sdpa(SDPBackend.FLASH_ATTENTION),
+            "sdpa_math": sdpa(SDPBackend.MATH),
+            "triton_B": lambda: flash_attention(q, k, v, causal=a.causal),
+        }
         if a.D == 64 and S % 64 == 0 and library_path().is_file():
             impls["cuda_C1"] = lambda: flash_attention_cuda(q, k, v, causal=a.causal)
         flops = attention_flops(a.B, a.H, S, a.D, a.causal)
@@ -49,8 +56,11 @@ def main():
             if ms is None:
                 continue
             base = base or ms
-            print(f"{a.B},{a.H},{S},{a.D},{int(a.causal)},{name},{ms:.4f},{flops / ms / 1e9:.2f},"
-                  f"{100 * base / ms:.1f}", flush=True)
+            print(
+                f"{a.B},{a.H},{S},{a.D},{int(a.causal)},{name},{ms:.4f},{flops / ms / 1e9:.2f},"
+                f"{100 * base / ms:.1f}",
+                flush=True,
+            )
         del q, k, v
         torch.cuda.empty_cache()
 

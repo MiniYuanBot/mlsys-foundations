@@ -34,10 +34,10 @@ struct Group {
     KernelKind kind;
     int output;
     std::set<int> nodes;
-    int64_t rows;         // rows of the kernel's iteration space
-    int64_t width;        // length of the column loop: output cols, or the reduced dim (0 = not yet known)
-    int matmul = -1;      // MatMul kernels: the MatMul node
-    std::set<int> prologue;  // MatMul kernels: nodes fused into the A operand
+    int64_t rows;  // rows of the kernel's iteration space
+    int64_t width; // length of the column loop: output cols, or the reduced dim (0 = not yet known)
+    int matmul = -1;        // MatMul kernels: the MatMul node
+    std::set<int> prologue; // MatMul kernels: nodes fused into the A operand
 };
 
 // TODO(B1a) the fusion rules. Return true if node n may join group K, given
@@ -62,7 +62,8 @@ struct Group {
 //    otherwise -> no (Row kernels cannot contain a GEMM; one GEMM per kernel)
 //
 // `cons` = consumers of n (each edge once per use).
-[[maybe_unused]] bool can_absorb(const Graph& g, const Group& K, int n, const std::vector<int>& cons, bool* to_prologue) {
+[[maybe_unused]] bool can_absorb(const Graph& g, const Group& K, int n,
+                                 const std::vector<int>& cons, bool* to_prologue) {
     const Node& node = g.node(n);
     *to_prologue = false;
     if (is_elementwise(node.op)) {
@@ -70,7 +71,7 @@ struct Group {
         bool all_pro = true, any_pro = false;
         for (int c : cons) {
             const bool is_mm = c == K.matmul;
-            if (is_mm && g.node(c).srcs[1] == n) return false;  // B operand: must be materialised
+            if (is_mm && g.node(c).srcs[1] == n) return false; // B operand: must be materialised
             const bool pro = (is_mm && g.node(c).srcs[0] == n) || K.prologue.count(c);
             all_pro &= pro;
             any_pro |= pro;
@@ -91,7 +92,7 @@ struct Group {
     return false;
 }
 
-}  // namespace
+} // namespace
 
 // TODO(B1b) the driver. Most of it is bookkeeping; the decisions are in can_absorb.
 //   1. order = toposort(g); cons = g.consumers(); kernel_of[id] = -1 for all.
@@ -140,7 +141,13 @@ Plan plan_fused(const Graph& g) {
             kernel_of[id] = k;
             continue;
         }
-        Group G{KernelKind::Elementwise, id, {id}, n.shape.rows, n.shape.cols > 1 ? n.shape.cols : 0, -1, {}};
+        Group G{KernelKind::Elementwise,
+                id,
+                {id},
+                n.shape.rows,
+                n.shape.cols > 1 ? n.shape.cols : 0,
+                -1,
+                {}};
         if (is_reduction(n.op)) {
             G.kind = KernelKind::Row;
             G.width = g.node(n.srcs[0]).shape.cols;
@@ -161,4 +168,4 @@ Plan plan_fused(const Graph& g) {
     return plan;
 }
 
-}  // namespace tc
+} // namespace tc

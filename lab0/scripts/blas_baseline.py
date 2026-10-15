@@ -8,6 +8,7 @@ Prints CSV in the same format as bench_gemm, so you can concatenate them:
 The thread count must be set before NumPy is imported, which is why this
 script sets the environment variables itself.
 """
+
 import argparse
 import os
 import sys
@@ -15,13 +16,20 @@ import time
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("--sizes", default="128,256,512,1024")
     parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--repeats", type=int, default=3)
     args = parser.parse_args()
 
-    for var in ("OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "OMP_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    for var in (
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "OMP_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+    ):
         os.environ[var] = str(args.threads)
     import numpy as np
 

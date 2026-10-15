@@ -24,10 +24,10 @@ namespace mt::lazy {
 
 enum class Op { Input, Const, Neg, Exp, Tanh, Relu, Add, Sub, Mul, Div, SumLast };
 
-bool is_leaf(Op op);         // Input, Const
-bool is_unary(Op op);        // Neg, Exp, Tanh, Relu
-bool is_binary(Op op);       // Add, Sub, Mul, Div
-bool is_elementwise(Op op);  // unary or binary
+bool is_leaf(Op op);        // Input, Const
+bool is_unary(Op op);       // Neg, Exp, Tanh, Relu
+bool is_binary(Op op);      // Add, Sub, Mul, Div
+bool is_elementwise(Op op); // unary or binary
 const char* op_name(Op op);
 float apply_unary(Op op, float x);
 float apply_binary(Op op, float a, float b);
@@ -36,9 +36,9 @@ struct Node {
     Op op;
     std::vector<std::shared_ptr<Node>> srcs;
     Shape shape;
-    Tensor value;        // Input only
-    float scalar = 0.f;  // Const only
-    int id = 0;          // creation order, handy for debugging / stable ordering
+    Tensor value;       // Input only
+    float scalar = 0.f; // Const only
+    int id = 0;         // creation order, handy for debugging / stable ordering
 };
 using NodePtr = std::shared_ptr<Node>;
 
@@ -108,15 +108,15 @@ std::vector<Kernel> schedule_fused(const NodePtr& root);
 enum class InstrKind { Load, Const, Unary, Binary };
 struct Instr {
     InstrKind kind;
-    Op op = Op::Const;  // for Unary / Binary
-    int buffer = -1;    // for Load: index into Program::buffers
-    float value = 0.f;  // for Const
+    Op op = Op::Const; // for Unary / Binary
+    int buffer = -1;   // for Load: index into Program::buffers
+    float value = 0.f; // for Const
 };
 struct Program {
     std::vector<Instr> code;
-    std::vector<NodePtr> buffers;  // nodes whose materialised values are loaded
-    bool reduce = false;           // output is SumLast: code computes its src
-    int64_t reduce_len = 1;        // size of the reduced (last) dim
+    std::vector<NodePtr> buffers; // nodes whose materialised values are loaded
+    bool reduce = false;          // output is SumLast: code computes its src
+    int64_t reduce_len = 1;       // size of the reduced (last) dim
 };
 
 // C3: compile a kernel to a postfix program. Walk the expression tree from
@@ -133,13 +133,14 @@ float eval_scalar(const Program& p, const std::vector<const float*>& inputs, int
 // C4: tiled interpreter. Evaluate elements [begin, begin+n) (n <= kTile)
 // instruction by instruction on whole tiles, writing the results to out[0..n).
 constexpr int kTile = 512;
-void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n, float* out);
+void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n,
+               float* out);
 
 struct ExecStats {
     int kernels = 0;
-    int64_t bytes_read = 0;          // each distinct buffer read by a kernel counts once per kernel
-    int64_t bytes_written = 0;       // every kernel output buffer
-    int64_t intermediate_bytes = 0;  // buffers allocated for non-root kernel outputs
+    int64_t bytes_read = 0;         // each distinct buffer read by a kernel counts once per kernel
+    int64_t bytes_written = 0;      // every kernel output buffer
+    int64_t intermediate_bytes = 0; // buffers allocated for non-root kernel outputs
 };
 // Provided: memory-traffic accounting of a schedule (no execution needed).
 ExecStats analyze(const std::vector<Kernel>& kernels, const NodePtr& root);
@@ -147,15 +148,16 @@ ExecStats analyze(const std::vector<Kernel>& kernels, const NodePtr& root);
 enum class Interp { Scalar, Tiled };
 
 // Provided: run the kernels in order and return the root's value.
-Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root, Interp interp = Interp::Scalar,
-               ExecStats* stats = nullptr);
+Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root,
+               Interp interp = Interp::Scalar, ExecStats* stats = nullptr);
 
 // Convenience wrappers.
 Tensor realize_unfused(const LazyTensor& t, ExecStats* stats = nullptr);
-Tensor realize_fused(const LazyTensor& t, Interp interp = Interp::Scalar, ExecStats* stats = nullptr);
+Tensor realize_fused(const LazyTensor& t, Interp interp = Interp::Scalar,
+                     ExecStats* stats = nullptr);
 
 // Pretty-print a schedule, e.g.
 //   kernel 0 -> n4 Relu [1024]  nodes: n2 Mul, n3 Add, n4 Relu  reads: n0 n1 n5
 std::string describe(const std::vector<Kernel>& kernels);
 
-}  // namespace mt::lazy
+} // namespace mt::lazy

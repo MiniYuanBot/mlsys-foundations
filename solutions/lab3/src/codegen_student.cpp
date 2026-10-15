@@ -25,17 +25,28 @@ namespace tc {
 //   Add (a + b)  Sub (a - b)  Mul (a * b)  Div (a / b)  Max fmaxf(a, b)
 std::string emit_op(Op op, const std::vector<std::string>& a) {
     switch (op) {
-        case Op::Neg: return "(-" + a[0] + ")";
-        case Op::Exp: return "expf(" + a[0] + ")";
-        case Op::Tanh: return "tanhf(" + a[0] + ")";
-        case Op::Relu: return "fmaxf(" + a[0] + ", 0.0f)";
-        case Op::Rsqrt: return "rsqrtf(" + a[0] + ")";
-        case Op::Add: return "(" + a[0] + " + " + a[1] + ")";
-        case Op::Sub: return "(" + a[0] + " - " + a[1] + ")";
-        case Op::Mul: return "(" + a[0] + " * " + a[1] + ")";
-        case Op::Div: return "(" + a[0] + " / " + a[1] + ")";
-        case Op::Max: return "fmaxf(" + a[0] + ", " + a[1] + ")";
-        default: throw std::logic_error(std::string("emit_op: not elementwise: ") + op_name(op));
+    case Op::Neg:
+        return "(-" + a[0] + ")";
+    case Op::Exp:
+        return "expf(" + a[0] + ")";
+    case Op::Tanh:
+        return "tanhf(" + a[0] + ")";
+    case Op::Relu:
+        return "fmaxf(" + a[0] + ", 0.0f)";
+    case Op::Rsqrt:
+        return "rsqrtf(" + a[0] + ")";
+    case Op::Add:
+        return "(" + a[0] + " + " + a[1] + ")";
+    case Op::Sub:
+        return "(" + a[0] + " - " + a[1] + ")";
+    case Op::Mul:
+        return "(" + a[0] + " * " + a[1] + ")";
+    case Op::Div:
+        return "(" + a[0] + " / " + a[1] + ")";
+    case Op::Max:
+        return "fmaxf(" + a[0] + ", " + a[1] + ")";
+    default:
+        throw std::logic_error(std::string("emit_op: not elementwise: ") + op_name(op));
     }
 }
 
@@ -56,7 +67,9 @@ namespace detail {
 
 // A node is "full" if it varies along the row (cols > 1): it must be computed
 // inside a column loop. Otherwise it is a per-row scalar (shape [R,1] or [1,1]).
-[[maybe_unused]] static bool is_full(const Ctx& c, int id) { return c.g.node(id).shape.cols > 1; }
+[[maybe_unused]] static bool is_full(const Ctx& c, int id) {
+    return c.g.node(id).shape.cols > 1;
+}
 
 // Provided: the full nodes of this kernel that `target` needs, in topological
 // order (stops at per-row scalars, which are already in registers, and at
@@ -126,9 +139,11 @@ std::string codegen_row(const Ctx& c) {
            << "  for (long j = threadIdx.x; j < C; j += blockDim.x) {\n";
         emit_ssa(c, full_closure(c, src), os, "    ");
         const std::string v = operand(c, src);
-        os << "    acc" << id << (sum ? " += " + v : " = fmaxf(acc" + std::to_string(id) + ", " + v + ")") << ";\n  }\n"
-           << "  const float v" << id << " = " << (sum ? "tc_block_sum" : "tc_block_max") << "(acc" << id
-           << ", tc_smem);\n";
+        os << "    acc" << id
+           << (sum ? " += " + v : " = fmaxf(acc" + std::to_string(id) + ", " + v + ")")
+           << ";\n  }\n"
+           << "  const float v" << id << " = " << (sum ? "tc_block_sum" : "tc_block_max") << "(acc"
+           << id << ", tc_smem);\n";
         emitted.insert(id);
         emit_ready_scalars();
     }
@@ -186,5 +201,5 @@ MatmulHooks matmul_hooks(const Ctx& c) {
     return h;
 }
 
-}  // namespace detail
-}  // namespace tc
+} // namespace detail
+} // namespace tc

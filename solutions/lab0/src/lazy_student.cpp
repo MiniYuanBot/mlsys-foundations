@@ -88,7 +88,8 @@ Program compile(const Kernel& kernel) {
             p.code.push_back(Instr{InstrKind::Const, Op::Const, -1, n->scalar});
         } else if (inside.count(n.get()) && n->op != Op::SumLast) {
             for (const auto& s : n->srcs) emit(s);
-            p.code.push_back(Instr{is_unary(n->op) ? InstrKind::Unary : InstrKind::Binary, n->op, -1, 0.f});
+            p.code.push_back(
+                Instr{is_unary(n->op) ? InstrKind::Unary : InstrKind::Binary, n->op, -1, 0.f});
         } else {
             auto it = slot.find(n.get());
             if (it == slot.end()) {
@@ -119,44 +120,60 @@ Program compile(const Kernel& kernel) {
 // Finally copy the single remaining tile into out[0..n).
 // Write the inner loops so the compiler can vectorise them: switch on the
 // op OUTSIDE the element loop, e.g. case Op::Add: for (t..) a[t] += b[t];
-void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n, float* out) {
+void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n,
+               float* out) {
     static thread_local float regs[16][kTile];
     int sp = 0;
     for (const auto& ins : p.code) {
         switch (ins.kind) {
-            case InstrKind::Load: {
-                const float* src = inputs[ins.buffer] + begin;
-                float* dst = regs[sp++];
-                for (int t = 0; t < n; ++t) dst[t] = src[t];
+        case InstrKind::Load: {
+            const float* src = inputs[ins.buffer] + begin;
+            float* dst = regs[sp++];
+            for (int t = 0; t < n; ++t) dst[t] = src[t];
+            break;
+        }
+        case InstrKind::Const: {
+            float* dst = regs[sp++];
+            for (int t = 0; t < n; ++t) dst[t] = ins.value;
+            break;
+        }
+        case InstrKind::Unary: {
+            float* a = regs[sp - 1];
+            switch (ins.op) {
+            case Op::Neg:
+                for (int t = 0; t < n; ++t) a[t] = -a[t];
+                break;
+            case Op::Relu:
+                for (int t = 0; t < n; ++t) a[t] = a[t] > 0.f ? a[t] : 0.f;
+                break;
+            default:
+                for (int t = 0; t < n; ++t) a[t] = apply_unary(ins.op, a[t]);
                 break;
             }
-            case InstrKind::Const: {
-                float* dst = regs[sp++];
-                for (int t = 0; t < n; ++t) dst[t] = ins.value;
+            break;
+        }
+        case InstrKind::Binary: {
+            float* a = regs[sp - 2];
+            const float* b = regs[sp - 1];
+            switch (ins.op) {
+            case Op::Add:
+                for (int t = 0; t < n; ++t) a[t] += b[t];
                 break;
-            }
-            case InstrKind::Unary: {
-                float* a = regs[sp - 1];
-                switch (ins.op) {
-                    case Op::Neg: for (int t = 0; t < n; ++t) a[t] = -a[t]; break;
-                    case Op::Relu: for (int t = 0; t < n; ++t) a[t] = a[t] > 0.f ? a[t] : 0.f; break;
-                    default: for (int t = 0; t < n; ++t) a[t] = apply_unary(ins.op, a[t]); break;
-                }
+            case Op::Sub:
+                for (int t = 0; t < n; ++t) a[t] -= b[t];
                 break;
-            }
-            case InstrKind::Binary: {
-                float* a = regs[sp - 2];
-                const float* b = regs[sp - 1];
-                switch (ins.op) {
-                    case Op::Add: for (int t = 0; t < n; ++t) a[t] += b[t]; break;
-                    case Op::Sub: for (int t = 0; t < n; ++t) a[t] -= b[t]; break;
-                    case Op::Mul: for (int t = 0; t < n; ++t) a[t] *= b[t]; break;
-                    case Op::Div: for (int t = 0; t < n; ++t) a[t] /= b[t]; break;
-                    default: throw std::logic_error("eval_tile: bad binary op");
-                }
-                --sp;
+            case Op::Mul:
+                for (int t = 0; t < n; ++t) a[t] *= b[t];
                 break;
+            case Op::Div:
+                for (int t = 0; t < n; ++t) a[t] /= b[t];
+                break;
+            default:
+                throw std::logic_error("eval_tile: bad binary op");
             }
+            --sp;
+            break;
+        }
         }
         if (sp >= 16) throw std::runtime_error("eval_tile: expression too deep");
     }
@@ -164,4 +181,4 @@ void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_
     for (int t = 0; t < n; ++t) out[t] = regs[0][t];
 }
 
-}  // namespace mt::lazy
+} // namespace mt::lazy

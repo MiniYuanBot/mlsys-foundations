@@ -1,4 +1,5 @@
 """lab7 tests (CPU only, standard library):  python -m unittest lab7.tests.test_stats -v"""
+
 import json
 import random
 import statistics
@@ -81,7 +82,11 @@ class S3Decide(unittest.TestCase):
 
 class Provided(unittest.TestCase):
     def test_prereg_lock_detects_edits(self):
-        spec = json.loads((Path(__file__).parents[1] / "examples" / "bucket_overlap.prereg.json").read_text(encoding="utf-8"))
+        spec = json.loads(
+            (Path(__file__).parents[1] / "examples" / "bucket_overlap.prereg.json").read_text(
+                encoding="utf-8"
+            )
+        )
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "x.prereg.json"
             p.write_text(json.dumps(spec), encoding="utf-8")

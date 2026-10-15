@@ -16,16 +16,16 @@
 //                                  d[2..3] = (row g+8, cols 2t, 2t+1)
 #include "ptx.cuh"
 
-#include <cuda_fp16.h>
 #include <cstdio>
+#include <cuda_fp16.h>
 #include <string>
 
 namespace l2 {
 
-constexpr int D = 64;         // head dim
-constexpr int BM = 64;        // query rows per block
-constexpr int BN = 64;        // keys per tile
-constexpr int PITCH = D + 8;  // padded smem row (halves): kills ldmatrix bank conflicts
+constexpr int D = 64;        // head dim
+constexpr int BM = 64;       // query rows per block
+constexpr int BN = 64;       // keys per tile
+constexpr int PITCH = D + 8; // padded smem row (halves): kills ldmatrix bank conflicts
 constexpr int THREADS = 128;
 constexpr float LOG2E = 1.4426950408889634f;
 constexpr float LN2 = 0.6931471805599453f;
@@ -50,8 +50,9 @@ __device__ __forceinline__ uint32_t pack_half2(float lo, float hi) {
 
 template <bool CAUSAL>
 __global__ void __launch_bounds__(THREADS)
-    flash_mma_kernel(const __half* __restrict__ Q, const __half* __restrict__ K, const __half* __restrict__ V,
-                     __half* __restrict__ O, float* __restrict__ L, int S, float qk_scale) {
+    flash_mma_kernel(const __half* __restrict__ Q, const __half* __restrict__ K,
+                     const __half* __restrict__ V, __half* __restrict__ O, float* __restrict__ L,
+                     int S, float qk_scale) {
     __shared__ __align__(16) __half Qs[BM * PITCH];
     __shared__ __align__(16) __half Ks[BN * PITCH];
     __shared__ __align__(16) __half Vs[BN * PITCH];
@@ -60,7 +61,10 @@ __global__ void __launch_bounds__(THREADS)
     const int g = lane / 4, t = lane % 4;
     const int m_block = blockIdx.x;
     const size_t bh_off = size_t(blockIdx.y) * S * D;
-    Q += bh_off; K += bh_off; V += bh_off; O += bh_off;
+    Q += bh_off;
+    K += bh_off;
+    V += bh_off;
+    O += bh_off;
     L += size_t(blockIdx.y) * S;
 
     // Q tile -> registers, once. qa[kk] is the A fragment for d = kk*16 .. +16.
@@ -74,14 +78,14 @@ __global__ void __launch_bounds__(THREADS)
     // Softmax state for this thread's two rows (g and g+8), in log2 units.
     float m_row[2] = {-INFINITY, -INFINITY};
     float l_row[2] = {0.f, 0.f};
-    float o[D / 8][4];  // output accumulator: 8 n-tiles (8 cols each) of the 16 x 64 warp tile
+    float o[D / 8][4]; // output accumulator: 8 n-tiles (8 cols each) of the 16 x 64 warp tile
 #pragma unroll
     for (int j = 0; j < D / 8; ++j) o[j][0] = o[j][1] = o[j][2] = o[j][3] = 0.f;
 
-    const int q_row0 = m_block * BM + warp * 16;  // first query row of this warp
+    const int q_row0 = m_block * BM + warp * 16; // first query row of this warp
     const int n_tiles = CAUSAL ? m_block + 1 : S / BN;
     for (int n_block = 0; n_block < n_tiles; ++n_block) {
-        __syncthreads();  // everyone is done with the previous K/V tile
+        __syncthreads(); // everyone is done with the previous K/V tile
         load_tile(Ks, K, n_block * BN);
         load_tile(Vs, V, n_block * BN);
         __syncthreads();
@@ -143,7 +147,8 @@ __global__ void __launch_bounds__(THREADS)
         for (int r = 0; r < 2; ++r) {
             float mx = -INFINITY;
 #pragma unroll
-            for (int nt = 0; nt < BN / 8; ++nt) mx = fmaxf(mx, fmaxf(s[nt][2 * r], s[nt][2 * r + 1]));
+            for (int nt = 0; nt < BN / 8; ++nt)
+                mx = fmaxf(mx, fmaxf(s[nt][2 * r], s[nt][2 * r + 1]));
             mx = fmaxf(mx, __shfl_xor_sync(0xffffffffu, mx, 1));
             mx = fmaxf(mx, __shfl_xor_sync(0xffffffffu, mx, 2));
             const float m_new = fmaxf(m_row[r], mx);
@@ -182,13 +187,15 @@ __global__ void __launch_bounds__(THREADS)
         // and mma_16816(o[j], pa, ...) for j = 0..7.
 #pragma unroll
         for (int kk2 = 0; kk2 < BN / 16; ++kk2) {
-            const uint32_t pa[4] = {pack_half2(s[2 * kk2][0], s[2 * kk2][1]), pack_half2(s[2 * kk2][2], s[2 * kk2][3]),
+            const uint32_t pa[4] = {pack_half2(s[2 * kk2][0], s[2 * kk2][1]),
+                                    pack_half2(s[2 * kk2][2], s[2 * kk2][3]),
                                     pack_half2(s[2 * kk2 + 1][0], s[2 * kk2 + 1][1]),
                                     pack_half2(s[2 * kk2 + 1][2], s[2 * kk2 + 1][3])};
 #pragma unroll
             for (int j = 0; j < D / 8; j += 2) {
                 uint32_t r[4];
-                ptx::ldmatrix_x4_trans(r, &Vs[(kk2 * 16 + lane % 16) * PITCH + j * 8 + (lane / 16) * 8]);
+                ptx::ldmatrix_x4_trans(
+                    r, &Vs[(kk2 * 16 + lane % 16) * PITCH + j * 8 + (lane / 16) * 8]);
                 const uint32_t b0[2] = {r[0], r[1]}, b1[2] = {r[2], r[3]};
                 ptx::mma_16816(o[j], pa, b0);
                 ptx::mma_16816(o[j + 1], pa, b1);
@@ -213,12 +220,12 @@ constexpr bool C1_DONE = true;
 
 static std::string last_error;
 
-}  // namespace l2
+} // namespace l2
 
 // C ABI for the ctypes bridge in attn/cuda.py. Returns 0 on success,
 // 1 if not implemented, 2 on a CUDA or argument error (see flash_mma_error()).
-extern "C" int flash_mma_forward(const void* q, const void* k, const void* v, void* o, void* lse, int BH, int S,
-                                 int causal, float sm_scale) {
+extern "C" int flash_mma_forward(const void* q, const void* k, const void* v, void* o, void* lse,
+                                 int BH, int S, int causal, float sm_scale) {
     using namespace l2;
     if (!C1_DONE) {
         last_error = "TODO C1 flash_mma_kernel is not implemented yet";
@@ -230,7 +237,8 @@ extern "C" int flash_mma_forward(const void* q, const void* k, const void* v, vo
     }
     const dim3 grid(S / BM, BH);
     const float qk_scale = sm_scale * LOG2E;
-    auto Qp = static_cast<const __half*>(q), Kp = static_cast<const __half*>(k), Vp = static_cast<const __half*>(v);
+    auto Qp = static_cast<const __half*>(q), Kp = static_cast<const __half*>(k),
+         Vp = static_cast<const __half*>(v);
     auto Op = static_cast<__half*>(o);
     auto Lp = static_cast<float*>(lse);
     if (causal)
@@ -245,4 +253,6 @@ extern "C" int flash_mma_forward(const void* q, const void* k, const void* v, vo
     return 0;
 }
 
-extern "C" const char* flash_mma_error() { return l2::last_error.c_str(); }
+extern "C" const char* flash_mma_error() {
+    return l2::last_error.c_str();
+}

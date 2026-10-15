@@ -15,10 +15,15 @@ option(MT_SANITIZE "Build with AddressSanitizer + UBSan (GCC/Clang, not MinGW)" 
 
 find_package(Threads REQUIRED)
 
-add_library(minitensor
-  src/tensor_core.cpp src/tensor_student.cpp
-  src/gemm_core.cpp src/gemm_student.cpp
-  src/lazy_core.cpp src/lazy_student.cpp)
+add_library(
+  minitensor
+  src/tensor_core.cpp
+  src/tensor_student.cpp
+  src/gemm_core.cpp
+  src/gemm_student.cpp
+  src/lazy_core.cpp
+  src/lazy_student.cpp
+)
 target_include_directories(minitensor PUBLIC include)
 target_link_libraries(minitensor PUBLIC Threads::Threads)
 
@@ -27,7 +32,7 @@ if(MSVC)
   if(MT_NATIVE)
     target_compile_options(minitensor PUBLIC /arch:AVX2)
   endif()
-  target_compile_options(minitensor PUBLIC /openmp:experimental)  # enables `#pragma omp simd` only
+  target_compile_options(minitensor PUBLIC /openmp:experimental) # enables `#pragma omp simd` only
 else()
   target_compile_options(minitensor PUBLIC -Wall -Wextra)
   # Honour `#pragma omp simd` without pulling in the OpenMP runtime.
@@ -38,14 +43,17 @@ else()
     if(HAS_MARCH_NATIVE)
       target_compile_options(minitensor PUBLIC -march=native)
     else()
-      check_cxx_compiler_flag(-mcpu=native HAS_MCPU_NATIVE)  # Apple clang on arm64
+      check_cxx_compiler_flag(-mcpu=native HAS_MCPU_NATIVE) # Apple clang on arm64
       if(HAS_MCPU_NATIVE)
         target_compile_options(minitensor PUBLIC -mcpu=native)
       endif()
     endif()
   endif()
   if(MT_SANITIZE)
-    target_compile_options(minitensor PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g)
+    target_compile_options(
+      minitensor
+      PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g
+    )
     target_link_options(minitensor PUBLIC -fsanitize=address,undefined)
   endif()
 endif()

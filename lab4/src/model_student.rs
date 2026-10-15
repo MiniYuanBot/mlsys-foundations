@@ -40,7 +40,11 @@ impl Qwen3 {
     pub fn load(gpu: &Gpu, dir: &Path) -> Result<Self> {
         let cfg = Qwen3Config::load(dir)?;
         let w = Weights::load(gpu, dir, &cfg)?;
-        Ok(Self { cfg, w, attn: AttnImpl::Fast })
+        Ok(Self {
+            cfg,
+            w,
+            attn: AttnImpl::Fast,
+        })
     }
 
     /// Run one step. Returns logits [num_samples, vocab] (bf16, on the GPU).
@@ -51,7 +55,7 @@ impl Qwen3 {
         let (h, inter, qd, kvd) = (c.hidden_size, c.intermediate_size, c.q_dim(), c.kv_dim());
         let (heads, kv_heads, eps) = (c.num_attention_heads, c.num_key_value_heads, c.rms_norm_eps);
         // Activation buffers for this step (stream-ordered allocations, cheap).
-        let mut hidden = gpu.alloc::<bf16>(t * h)?;   // h: the sub-layer output / next input
+        let mut hidden = gpu.alloc::<bf16>(t * h)?; // h: the sub-layer output / next input
         let mut residual = gpu.alloc::<bf16>(t * h)?; // the residual stream
         let mut q_raw = gpu.alloc::<bf16>(t * qd)?;
         let mut k_raw = gpu.alloc::<bf16>(t * kvd)?;
@@ -84,7 +88,23 @@ impl Qwen3 {
         // the MLP output). Write K/V with ops::reshape_and_cache(.., &mut
         // cache.k[l], &mut cache.v[l], &b.slots, ..) BEFORE attention, then
         // ops::paged_attention(gpu, self.attn, &q, &cache.k[l], &cache.v[l], &mut attn_out, &attn_args).
-        let _ = (&mut q_raw, &mut k_raw, &mut q, &mut k, &mut v, &mut attn_out, &mut gate, &mut up, &mut act, &attn_args, inter, qd, kvd, heads, kv_heads);
+        let _ = (
+            &mut q_raw,
+            &mut k_raw,
+            &mut q,
+            &mut k,
+            &mut v,
+            &mut attn_out,
+            &mut gate,
+            &mut up,
+            &mut act,
+            &attn_args,
+            inter,
+            qd,
+            kvd,
+            heads,
+            kv_heads,
+        );
         anyhow::bail!("TODO A2: decoder layers in model_student.rs");
 
         // Final norm, keep the sampled rows, project to the vocabulary (provided).
@@ -93,7 +113,15 @@ impl Qwen3 {
         let mut picked = gpu.alloc::<bf16>(n * h)?;
         ops::gather_rows(gpu, &hidden, &b.sample_rows, &mut picked, n, h)?;
         let mut logits = gpu.alloc::<bf16>(n * c.vocab_size)?;
-        ops::linear(gpu, &picked, &self.w.lm_head, &mut logits, n, h, c.vocab_size)?;
+        ops::linear(
+            gpu,
+            &picked,
+            &self.w.lm_head,
+            &mut logits,
+            n,
+            h,
+            c.vocab_size,
+        )?;
         Ok(logits)
     }
 }

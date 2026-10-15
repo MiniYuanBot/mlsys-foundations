@@ -32,14 +32,18 @@ __device__ __forceinline__ void load4(const bf16* p, float (&v)[4]) {
     const uint2 raw = *reinterpret_cast<const uint2*>(p);
     const float2 a = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.x));
     const float2 b = __bfloat1622float2(*reinterpret_cast<const __nv_bfloat162*>(&raw.y));
-    v[0] = a.x; v[1] = a.y; v[2] = b.x; v[3] = b.y;
+    v[0] = a.x;
+    v[1] = a.y;
+    v[2] = b.x;
+    v[3] = b.y;
 }
 
-extern "C" __global__ void tree_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
-                                          const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
-                                          const unsigned long long* __restrict__ tree_mask, int prefix_len,
-                                          bf16* __restrict__ out, int T, int num_heads, int num_kv_heads,
-                                          int max_blocks, int block_size, float scale) {
+extern "C" __global__ void
+tree_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
+               const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
+               const unsigned long long* __restrict__ tree_mask, int prefix_len,
+               bf16* __restrict__ out, int T, int num_heads, int num_kv_heads, int max_blocks,
+               int block_size, float scale) {
     const int warp_global = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
     const int lane = threadIdx.x % 32;
     if (warp_global >= T * num_heads) return;

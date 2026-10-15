@@ -1,4 +1,5 @@
 """Part B tests:  python -m pytest lab2/tests/test_b_flash.py -v"""
+
 import pytest
 import torch
 

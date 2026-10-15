@@ -51,7 +51,12 @@ pub struct SchedulerConfig {
 
 impl Default for SchedulerConfig {
     fn default() -> Self {
-        Self { max_num_seqs: 64, max_batched_tokens: 2048, chunked_prefill: true, static_batching: false }
+        Self {
+            max_num_seqs: 64,
+            max_batched_tokens: 2048,
+            chunked_prefill: true,
+            static_batching: false,
+        }
     }
 }
 
@@ -75,7 +80,11 @@ pub struct Scheduler {
 
 impl Scheduler {
     pub fn new(cfg: SchedulerConfig) -> Self {
-        Self { cfg, waiting: VecDeque::new(), running: Vec::new() }
+        Self {
+            cfg,
+            waiting: VecDeque::new(),
+            running: Vec::new(),
+        }
     }
 
     pub fn add(&mut self, id: usize) {
@@ -93,7 +102,13 @@ impl Scheduler {
 
     /// Provided: preempt `id` (recompute policy).
     #[allow(dead_code)]
-    fn preempt(&mut self, id: usize, seqs: &mut HashMap<usize, Sequence>, kv: &mut BlockManager, out: &mut SchedulerOutput) {
+    fn preempt(
+        &mut self,
+        id: usize,
+        seqs: &mut HashMap<usize, Sequence>,
+        kv: &mut BlockManager,
+        out: &mut SchedulerOutput,
+    ) {
         let seq = seqs.get_mut(&id).expect("unknown sequence");
         kv.free_sequence(seq);
         seq.status = Status::Waiting;
@@ -105,7 +120,11 @@ impl Scheduler {
 
     // TODO(B3 + C1) implement the policy described at the top of this file.
     #[allow(unreachable_code, unused_mut)]
-    pub fn schedule(&mut self, seqs: &mut HashMap<usize, Sequence>, kv: &mut BlockManager) -> SchedulerOutput {
+    pub fn schedule(
+        &mut self,
+        seqs: &mut HashMap<usize, Sequence>,
+        kv: &mut BlockManager,
+    ) -> SchedulerOutput {
         let mut out = SchedulerOutput::default();
         let mut budget = self.cfg.max_batched_tokens;
         let had_running = !self.running.is_empty();
@@ -132,13 +151,18 @@ impl Scheduler {
                     break 'running;
                 }
             }
-            out.items.push(Scheduled { seq_id: id, num_tokens: n });
+            out.items.push(Scheduled {
+                seq_id: id,
+                num_tokens: n,
+            });
             budget -= n;
             i += 1;
         }
         let may_admit = !(self.cfg.static_batching && had_running);
         while may_admit && self.running.len() < self.cfg.max_num_seqs && budget > 0 {
-            let Some(&id) = self.waiting.front() else { break };
+            let Some(&id) = self.waiting.front() else {
+                break;
+            };
             let seq = seqs.get_mut(&id).unwrap();
             if seq.block_table.is_empty() {
                 kv.match_prefix(seq);
@@ -152,7 +176,9 @@ impl Scheduler {
                     break;
                 }
             }
-            let whole = kv.blocks_for(seq.len()).saturating_sub(seq.block_table.len());
+            let whole = kv
+                .blocks_for(seq.len())
+                .saturating_sub(seq.block_table.len());
             if whole > kv.num_free_blocks() || !kv.ensure_capacity(seq, seq.num_computed + n) {
                 kv.free_sequence(seq);
                 break;
@@ -160,7 +186,10 @@ impl Scheduler {
             seq.status = Status::Running;
             self.waiting.pop_front();
             self.running.push(id);
-            out.items.push(Scheduled { seq_id: id, num_tokens: n });
+            out.items.push(Scheduled {
+                seq_id: id,
+                num_tokens: n,
+            });
             budget = budget.saturating_sub(n);
         }
         out

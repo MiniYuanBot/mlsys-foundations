@@ -40,11 +40,11 @@ int64_t numel_of(const Shape& shape);
 class Tensor {
 public:
     // ---- construction (provided) ----
-    Tensor();  // 0-d tensor holding 0.0f
+    Tensor(); // 0-d tensor holding 0.0f
     static Tensor zeros(const Shape& shape);
     static Tensor full(const Shape& shape, float value);
     static Tensor from_vector(const Shape& shape, std::vector<float> values);
-    static Tensor arange(int64_t n);  // 1-d {0, 1, ..., n-1}
+    static Tensor arange(int64_t n); // 1-d {0, 1, ..., n-1}
 
     // Low-level constructor: wrap existing storage with explicit metadata.
     Tensor(std::shared_ptr<std::vector<float>> storage, Shape shape, Strides strides,
@@ -80,8 +80,8 @@ public:
     Tensor view(const Shape& new_shape) const;
 
     // ---- copies ----
-    Tensor contiguous() const;                     // Part A7
-    Tensor reshape(const Shape& new_shape) const;  // provided: view if possible, else copy
+    Tensor contiguous() const;                    // Part A7
+    Tensor reshape(const Shape& new_shape) const; // provided: view if possible, else copy
 
     // Human-readable dump of metadata plus the storage grid (provided).
     std::string describe() const;
@@ -102,16 +102,24 @@ void for_each_index(const Shape& shape, const std::function<void(const Index&)>&
 using UnaryFn = std::function<float(float)>;
 using BinaryFn = std::function<float(float, float)>;
 
-Tensor map(const Tensor& x, const UnaryFn& fn);                         // provided
-Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn);       // Part A8
-Tensor sum(const Tensor& x, int64_t dim, bool keepdim = false);         // Part A9
+Tensor map(const Tensor& x, const UnaryFn& fn);                   // provided
+Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn); // Part A8
+Tensor sum(const Tensor& x, int64_t dim, bool keepdim = false);   // Part A9
 
-inline Tensor operator+(const Tensor& a, const Tensor& b) { return zip(a, b, [](float x, float y) { return x + y; }); }
-inline Tensor operator-(const Tensor& a, const Tensor& b) { return zip(a, b, [](float x, float y) { return x - y; }); }
-inline Tensor operator*(const Tensor& a, const Tensor& b) { return zip(a, b, [](float x, float y) { return x * y; }); }
-inline Tensor operator/(const Tensor& a, const Tensor& b) { return zip(a, b, [](float x, float y) { return x / y; }); }
+inline Tensor operator+(const Tensor& a, const Tensor& b) {
+    return zip(a, b, [](float x, float y) { return x + y; });
+}
+inline Tensor operator-(const Tensor& a, const Tensor& b) {
+    return zip(a, b, [](float x, float y) { return x - y; });
+}
+inline Tensor operator*(const Tensor& a, const Tensor& b) {
+    return zip(a, b, [](float x, float y) { return x * y; });
+}
+inline Tensor operator/(const Tensor& a, const Tensor& b) {
+    return zip(a, b, [](float x, float y) { return x / y; });
+}
 
 // 2-D matmul on top of the GEMM kernels in gemm.hpp (provided).
 Tensor matmul(const Tensor& a, const Tensor& b);
 
-}  // namespace mt
+} // namespace mt

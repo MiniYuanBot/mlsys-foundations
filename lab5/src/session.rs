@@ -61,7 +61,11 @@ impl Logits {
         let mut buf = gpu.alloc::<bf16>(rows.len() * self.vocab)?;
         let idx = gpu.upload(&rows.iter().map(|&r| r as i32).collect::<Vec<_>>())?;
         ops::gather_rows(gpu, &self.buf, &idx, &mut buf, rows.len(), self.vocab)?;
-        Ok(Logits { buf, rows: rows.len(), vocab: self.vocab })
+        Ok(Logits {
+            buf,
+            rows: rows.len(),
+            vocab: self.vocab,
+        })
     }
 
     /// Indices of the k largest logits of every row (host side), largest first.
@@ -74,7 +78,9 @@ impl Logits {
             .chunks(self.vocab)
             .map(|row| {
                 let mut idx: Vec<u32> = (0..self.vocab as u32).collect();
-                idx.select_nth_unstable_by(k - 1, |&a, &b| row[b as usize].partial_cmp(&row[a as usize]).unwrap());
+                idx.select_nth_unstable_by(k - 1, |&a, &b| {
+                    row[b as usize].partial_cmp(&row[a as usize]).unwrap()
+                });
                 let mut top = idx[..k].to_vec();
                 top.sort_by(|&a, &b| row[b as usize].partial_cmp(&row[a as usize]).unwrap());
                 top
@@ -107,7 +113,10 @@ impl<'m> Session<'m> {
     /// every fed position. Does NOT touch `tokens`; advances num_computed.
     pub fn feed(&mut self, gpu: &Gpu, new: &[u32]) -> Result<Logits> {
         let start = self.num_computed;
-        anyhow::ensure!(start + new.len() <= self.capacity(), "session capacity exceeded");
+        anyhow::ensure!(
+            start + new.len() <= self.capacity(),
+            "session capacity exceeded"
+        );
         let mut b = BatchInput::build(&[(new, start, &self.table, true)], self.cache.block_size);
         b.sample_rows = (0..new.len() as i32).collect();
         let db = DeviceBatch::upload(gpu, &b)?;
@@ -115,7 +124,11 @@ impl<'m> Session<'m> {
         self.num_computed += new.len();
         self.forward_calls += 1;
         self.tokens_fed += new.len();
-        Ok(Logits { buf, rows: new.len(), vocab: self.model.cfg.vocab_size })
+        Ok(Logits {
+            buf,
+            rows: new.len(),
+            vocab: self.model.cfg.vocab_size,
+        })
     }
 
     /// Feed every committed token except the last one (no-op if up to date).
@@ -138,7 +151,11 @@ impl<'m> Session<'m> {
         let mut last = gpu.alloc::<bf16>(all.vocab)?;
         let rows = gpu.upload(&[(all.rows - 1) as i32])?;
         ops::gather_rows(gpu, &all.buf, &rows, &mut last, 1, all.vocab)?;
-        Ok(Logits { buf: last, rows: 1, vocab: all.vocab })
+        Ok(Logits {
+            buf: last,
+            rows: 1,
+            vocab: all.vocab,
+        })
     }
 
     /// Forget cache contents beyond position `n` (they will be overwritten).
@@ -154,7 +171,10 @@ impl<'m> Session<'m> {
     /// Does not advance num_computed: call `commit_tree_path` afterwards.
     pub fn feed_tree(&mut self, gpu: &Gpu, tokens: &[u32], parents: &[usize]) -> Result<Logits> {
         let n = tokens.len();
-        anyhow::ensure!(n <= 64 && parents.len() == n, "tree must have at most 64 nodes");
+        anyhow::ensure!(
+            n <= 64 && parents.len() == n,
+            "tree must have at most 64 nodes"
+        );
         let base = self.num_computed;
         anyhow::ensure!(base + n <= self.capacity(), "session capacity exceeded");
         let mut mask = vec![0u64; n];
@@ -184,7 +204,11 @@ impl<'m> Session<'m> {
         let buf = self.model.forward(gpu, &db, &mut self.cache)?;
         self.forward_calls += 1;
         self.tokens_fed += n;
-        Ok(Logits { buf, rows: n, vocab: self.model.cfg.vocab_size })
+        Ok(Logits {
+            buf,
+            rows: n,
+            vocab: self.model.cfg.vocab_size,
+        })
     }
 
     /// After `feed_tree`: keep the root-to-node path `path` (node indices,
@@ -193,8 +217,12 @@ impl<'m> Session<'m> {
     pub fn commit_tree_path(&mut self, gpu: &Gpu, path: &[usize]) -> Result<()> {
         anyhow::ensure!(path.first() == Some(&0), "path must start at the root");
         let base = self.num_computed;
-        let moves: Vec<(i32, i32)> =
-            path.iter().enumerate().filter(|(d, &j)| *d != j).map(|(d, &j)| ((base + j) as i32, (base + d) as i32)).collect();
+        let moves: Vec<(i32, i32)> = path
+            .iter()
+            .enumerate()
+            .filter(|(d, &j)| *d != j)
+            .map(|(d, &j)| ((base + j) as i32, (base + d) as i32))
+            .collect();
         if !moves.is_empty() {
             let src = gpu.upload(&moves.iter().map(|m| m.0).collect::<Vec<_>>())?;
             let dst = gpu.upload(&moves.iter().map(|m| m.1).collect::<Vec<_>>())?;

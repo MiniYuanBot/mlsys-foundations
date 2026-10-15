@@ -18,7 +18,7 @@ TEST(A1_toposort_postorder_and_unique) {
 TEST(A1_toposort_skips_unreachable) {
     Graph g;
     int x = g.input("x", {2, 2});
-    g.exp(x);  // dead
+    g.exp(x); // dead
     g.set_output(g.neg(x));
     CHECK_EQ(toposort(g).size(), 2u);
 }
@@ -27,7 +27,9 @@ TEST(A2_elementwise_and_broadcast) {
     Graph g;
     int x = g.input("x", {2, 3}), row = g.input("row", {1, 3}), col = g.input("col", {2, 1});
     g.set_output(g.sub(g.mul(x, row), g.max(col, g.constant(0.5))));
-    Feeds f{{"x", {{2, 3}, {1, 2, 3, 4, 5, 6}}}, {"row", {{1, 3}, {10, 20, 30}}}, {"col", {{2, 1}, {0, 1}}}};
+    Feeds f{{"x", {{2, 3}, {1, 2, 3, 4, 5, 6}}},
+            {"row", {{1, 3}, {10, 20, 30}}},
+            {"col", {{2, 1}, {0, 1}}}};
     CHECK_EQ(evaluate(g, f).data, (std::vector<double>{9.5, 39.5, 89.5, 39, 99, 179}));
 }
 
@@ -41,7 +43,8 @@ TEST(A2_unary_reductions_matmul) {
     CHECK_EQ(evaluate(g, f).data, (std::vector<double>{6, 14}));
     Graph h;
     int z = h.input("z", {1, 3});
-    h.set_output(h.add(h.add(h.exp(z), h.tanh(z)), h.add(h.relu(z), h.rsqrt(h.add(h.mul(z, z), h.constant(1))))));
+    h.set_output(h.add(h.add(h.exp(z), h.tanh(z)),
+                       h.add(h.relu(z), h.rsqrt(h.add(h.mul(z, z), h.constant(1))))));
     Feeds fz{{"z", {{1, 3}, {-1, 0, 2}}}};
     const auto v = evaluate(h, fz).data;
     CHECK_NEAR(v[0], std::exp(-1.0) + std::tanh(-1.0) + 0 + 1 / std::sqrt(2.0), 1e-12);
@@ -61,7 +64,8 @@ TEST(A2_softmax_rows_sum_to_one) {
 TEST(A2_rejects_bad_feed) {
     Graph g;
     g.set_output(g.exp(g.input("x", {2, 2})));
-    CHECK_THROWS(evaluate(g, Feeds{{"x", {{3, 2}, std::vector<double>(6)}}}), std::invalid_argument);
+    CHECK_THROWS(evaluate(g, Feeds{{"x", {{3, 2}, std::vector<double>(6)}}}),
+                 std::invalid_argument);
     CHECK_THROWS(evaluate(g, Feeds{}), std::invalid_argument);
 }
 
@@ -93,4 +97,6 @@ TEST(A3_unfused_plans_run_on_gpu) {
     expect_plan_matches(rt, g, p, "elementwise ops");
 }
 
-int main(int argc, char** argv) { return run_tests(argc, argv); }
+int main(int argc, char** argv) {
+    return run_tests(argc, argv);
+}

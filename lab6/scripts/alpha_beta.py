@@ -13,6 +13,7 @@ Predicted allreduce times (lecture L6 section 2.4), P ranks, n bytes:
 The reduction arithmetic (gamma term) is ignored on purpose: the table shows
 how much it, and caches, matter.
 """
+
 import argparse
 import csv
 import math
@@ -24,11 +25,17 @@ def read(path):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("pingpong")
     ap.add_argument("allreduce", nargs="?")
-    ap.add_argument("--max-fit-bytes", type=float, default=4 << 20,
-                    help="fit only messages up to this size (larger ones fall out of cache)")
+    ap.add_argument(
+        "--max-fit-bytes",
+        type=float,
+        default=4 << 20,
+        help="fit only messages up to this size (larger ones fall out of cache)",
+    )
     ap.add_argument("--out")
     a = ap.parse_args()
 
@@ -42,12 +49,16 @@ def main():
     alpha = small[len(small) // 2]
     big = [(n, t - alpha) for n, t in pts if 16 * 1024 <= n <= a.max_fit_bytes]
     beta = sum(n * t for n, t in big) / sum(n * n for n, _ in big)
-    print(f"alpha = {alpha * 1e6:.3f} us    beta = {beta * 1e9:.4f} ns/B  ({1 / beta / 1e9:.1f} GB/s)")
+    print(
+        f"alpha = {alpha * 1e6:.3f} us    beta = {beta * 1e9:.4f} ns/B  ({1 / beta / 1e9:.1f} GB/s)"
+    )
     print(f"half-bandwidth message size n_1/2 = alpha / beta = {alpha / beta / 1024:.1f} KiB")
 
     rows = []
     if a.allreduce:
-        print(f"\n{'algo':5} {'P':>2} {'bytes':>10} {'measured_us':>12} {'model_us':>10} {'ratio':>6}")
+        print(
+            f"\n{'algo':5} {'P':>2} {'bytes':>10} {'measured_us':>12} {'model_us':>10} {'ratio':>6}"
+        )
         for r in read(a.allreduce):
             P, n, t = int(r["P"]), float(r["bytes"]), float(r["us"]) * 1e-6
             algo = r["algo"]
@@ -60,26 +71,51 @@ def main():
             else:
                 continue
             rows.append((algo, P, n, t, model))
-            print(f"{algo:5} {P:>2} {int(n):>10} {t * 1e6:>12.2f} {model * 1e6:>10.2f} {t / model:>6.2f}")
+            print(
+                f"{algo:5} {P:>2} {int(n):>10} {t * 1e6:>12.2f} {model * 1e6:>10.2f} {t / model:>6.2f}"
+            )
 
     if a.out:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+
         fig, (l, r) = plt.subplots(1, 2, figsize=(12, 4.5), layout="constrained")
         ns = [n for n, _ in pts]
         l.loglog(ns, [t * 1e6 for _, t in pts], "o", label="ping-pong (one way)")
-        l.loglog(ns, [(alpha + n * beta) * 1e6 for n in ns], "-", label=f"alpha={alpha*1e6:.2f}us, {1/beta/1e9:.1f} GB/s")
+        l.loglog(
+            ns,
+            [(alpha + n * beta) * 1e6 for n in ns],
+            "-",
+            label=f"alpha={alpha * 1e6:.2f}us, {1 / beta / 1e9:.1f} GB/s",
+        )
         l.set(xlabel="message bytes", ylabel="us", title="alpha-beta fit")
-        l.legend(); l.grid(alpha=0.3, which="both")
+        l.legend()
+        l.grid(alpha=0.3, which="both")
         for algo, color in (("ring", "C0"), ("rd", "C1"), ("star", "C2")):
             sel = [x for x in rows if x[0] == algo]
             if not sel:
                 continue
-            r.loglog([x[2] for x in sel], [x[3] * 1e6 for x in sel], "o", color=color, label=f"{algo} measured")
-            r.loglog([x[2] for x in sel], [x[4] * 1e6 for x in sel], "--", color=color, label=f"{algo} model")
-        r.set(xlabel="message bytes", ylabel="us", title=f"allreduce, P={rows[0][1] if rows else '?'}")
-        r.legend(fontsize=8); r.grid(alpha=0.3, which="both")
+            r.loglog(
+                [x[2] for x in sel],
+                [x[3] * 1e6 for x in sel],
+                "o",
+                color=color,
+                label=f"{algo} measured",
+            )
+            r.loglog(
+                [x[2] for x in sel],
+                [x[4] * 1e6 for x in sel],
+                "--",
+                color=color,
+                label=f"{algo} model",
+            )
+        r.set(
+            xlabel="message bytes", ylabel="us", title=f"allreduce, P={rows[0][1] if rows else '?'}"
+        )
+        r.legend(fontsize=8)
+        r.grid(alpha=0.3, which="both")
         fig.savefig(a.out, dpi=150)
         print(f"\nwrote {a.out}")
 

@@ -56,8 +56,9 @@ static void gelu_loop(int64_t n, const float* __restrict x, float* __restrict ou
     }
 }
 
-static void run_workload(const char* workload, const LazyTensor& y, const std::function<void(float*)>& handwritten,
-                         int64_t n, int64_t hand_bytes, int repeats) {
+static void run_workload(const char* workload, const LazyTensor& y,
+                         const std::function<void(float*)>& handwritten, int64_t n,
+                         int64_t hand_bytes, int repeats) {
     std::vector<float> want(n), scratch(n);
     handwritten(want.data());
     struct Variant {
@@ -79,7 +80,8 @@ static void run_workload(const char* workload, const LazyTensor& y, const std::f
             continue;
         }
         double err = 0;
-        for (int64_t i = 0; i < n; ++i) err = std::max(err, double(std::fabs(out.data()[i] - want[i])));
+        for (int64_t i = 0; i < n; ++i)
+            err = std::max(err, double(std::fabs(out.data()[i] - want[i])));
         const int64_t moved = st.bytes_read + st.bytes_written;
         for (int r = 1; r <= repeats; ++r) {
             const double ms = time_ms([&] { out = v.run(nullptr); });
@@ -90,8 +92,8 @@ static void run_workload(const char* workload, const LazyTensor& y, const std::f
     }
     for (int r = 1; r <= repeats; ++r) {
         const double ms = time_ms([&] { handwritten(scratch.data()); });
-        std::printf("%s,handwritten,%d,%.3f,1,%lld,%.2f,0\n", workload, r, ms, (long long)hand_bytes,
-                    hand_bytes / (ms * 1e6));
+        std::printf("%s,handwritten,%d,%.3f,1,%lld,%.2f,0\n", workload, r, ms,
+                    (long long)hand_bytes, hand_bytes / (ms * 1e6));
     }
 }
 
@@ -100,8 +102,10 @@ int main(int argc, char** argv) {
     int repeats = 3;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
-        if (a == "--n" && i + 1 < argc) n = std::stoll(argv[++i]);
-        else if (a == "--repeats" && i + 1 < argc) repeats = std::stoi(argv[++i]);
+        if (a == "--n" && i + 1 < argc)
+            n = std::stoll(argv[++i]);
+        else if (a == "--repeats" && i + 1 < argc)
+            repeats = std::stoi(argv[++i]);
         else {
             std::fprintf(stderr, "usage: bench_fusion [--n N] [--repeats R]\n");
             return 2;
@@ -115,7 +119,9 @@ int main(int argc, char** argv) {
     std::printf("workload,variant,repeat,ms,kernels,bytes_moved,effective_GBps,max_abs_err\n");
 
     auto affine = (x * w + b).relu() * 0.5f + x;
-    run_workload("affine", affine, [&](float* out) { affine_loop(n, xp, wp, bp, out); }, n, 4 * n * F, repeats);
+    run_workload(
+        "affine", affine, [&](float* out) { affine_loop(n, xp, wp, bp, out); }, n, 4 * n * F,
+        repeats);
 
     auto inner = 0.7978845608f * (x + 0.044715f * (x * x * x));
     auto gelu = 0.5f * x * (1.0f + inner.tanh());
@@ -126,7 +132,8 @@ int main(int argc, char** argv) {
         const double ms = time_ms([&] {
             for (int64_t i = 0; i < n; ++i) dst[i] = xp[i];
         });
-        std::printf("bandwidth,copy,%d,%.3f,1,%lld,%.2f,0\n", r, ms, (long long)(2 * n * F), 2.0 * n * F / (ms * 1e6));
+        std::printf("bandwidth,copy,%d,%.3f,1,%lld,%.2f,0\n", r, ms, (long long)(2 * n * F),
+                    2.0 * n * F / (ms * 1e6));
     }
     return 0;
 }

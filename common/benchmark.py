@@ -1,4 +1,5 @@
 """Supplied synchronous forward benchmark. Input allocation is outside timing."""
+
 import gc
 import time
 import torch
@@ -50,8 +51,12 @@ def measure(fn, inputs, oracle, device, warmup=20, iterations=100):
         latency_ms = (time.perf_counter() - start) * 1000 / iterations
         del output
         gc.collect()
-        memory = dict(allocated_baseline_bytes=None, peak_allocated_bytes=None,
-                      peak_increment_bytes=None, reserved_bytes=None)
+        memory = dict(
+            allocated_baseline_bytes=None,
+            peak_allocated_bytes=None,
+            peak_increment_bytes=None,
+            reserved_bytes=None,
+        )
         if torch.device(device).type == "cuda":
             synchronize(device)
             baseline = torch.cuda.memory_allocated(device)
@@ -59,28 +64,57 @@ def measure(fn, inputs, oracle, device, warmup=20, iterations=100):
             output = fn(*inputs)
             synchronize(device)
             peak = torch.cuda.max_memory_allocated(device)
-            memory = dict(allocated_baseline_bytes=baseline, peak_allocated_bytes=peak,
-                          peak_increment_bytes=peak - baseline,
-                          reserved_bytes=torch.cuda.memory_reserved(device))
+            memory = dict(
+                allocated_baseline_bytes=baseline,
+                peak_allocated_bytes=peak,
+                peak_increment_bytes=peak - baseline,
+                reserved_bytes=torch.cuda.memory_reserved(device),
+            )
             del output
-        rows.append(dict(repeat=repeat, warmup=warmup, iterations=iterations,
-                         latency_ms=latency_ms, first_call_ms=first_call_ms,
-                         max_abs_error=max(errors), output_errors=repr(errors),
-                         device=str(device), dtype="float32", **memory))
+        rows.append(
+            dict(
+                repeat=repeat,
+                warmup=warmup,
+                iterations=iterations,
+                latency_ms=latency_ms,
+                first_call_ms=first_call_ms,
+                max_abs_error=max(errors),
+                output_errors=repr(errors),
+                device=str(device),
+                dtype="float32",
+                **memory,
+            )
+        )
     return rows
 
 
 def save_measurements(out, rows):
     write_csv(out / "raw.csv", rows)
-    write_json(out / "correctness.json", [
-        {key: row[key] for key in ("shape", "implementation", "max_abs_error", "output_errors")}
-        for row in rows if row["repeat"] == 1])
+    write_json(
+        out / "correctness.json",
+        [
+            {key: row[key] for key in ("shape", "implementation", "max_abs_error", "output_errors")}
+            for row in rows
+            if row["repeat"] == 1
+        ],
+    )
     import statistics
+
     summary = []
     keys = sorted(set((r["shape"], r["implementation"]) for r in rows))
     for shape, implementation in keys:
-        values = [r["latency_ms"] for r in rows if (r["shape"], r["implementation"]) == (shape, implementation)]
-        summary.append(dict(shape=shape, implementation=implementation,
-                            median_ms=statistics.median(values), min_ms=min(values), max_ms=max(values)))
+        values = [
+            r["latency_ms"]
+            for r in rows
+            if (r["shape"], r["implementation"]) == (shape, implementation)
+        ]
+        summary.append(
+            dict(
+                shape=shape,
+                implementation=implementation,
+                median_ms=statistics.median(values),
+                min_ms=min(values),
+                max_ms=max(values),
+            )
+        )
     write_csv(out / "summary.csv", summary)
-

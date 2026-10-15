@@ -7,6 +7,7 @@ Each (kernel, threads) pair becomes one line; the value plotted is the median
 over repeats, with the min-max range as a shaded band. --peak draws your
 computed single-core FP32 peak as a dashed line (see lecture L0 section 3.1).
 """
+
 import argparse
 import csv
 import statistics
@@ -15,13 +16,18 @@ from pathlib import Path
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("inputs", nargs="+")
-    parser.add_argument("--peak", type=float, help="single-core peak GFLOP/s to draw as a reference line")
+    parser.add_argument(
+        "--peak", type=float, help="single-core peak GFLOP/s to draw as a reference line"
+    )
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 

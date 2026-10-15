@@ -24,7 +24,8 @@ namespace tc {
 //   Neg (-a)  Exp expf(a)  Tanh tanhf(a)  Relu fmaxf(a, 0.0f)  Rsqrt rsqrtf(a)
 //   Add (a + b)  Sub (a - b)  Mul (a * b)  Div (a / b)  Max fmaxf(a, b)
 std::string emit_op(Op op, const std::vector<std::string>& a) {
-    (void)op; (void)a;
+    (void)op;
+    (void)a;
     throw todo("A3a emit_op");
 }
 
@@ -34,7 +35,8 @@ std::string emit_op(Op op, const std::vector<std::string>& a) {
 //   [R, C] -> "buf[i * C + j]"     (C written as a number, e.g. "in0[i * 64 + j]")
 //   [1, C] -> "buf[j]"     [R, 1] -> "buf[i]"     [1, 1] -> "buf[0]"
 std::string emit_load(const std::string& buf, Shape s) {
-    (void)buf; (void)s;
+    (void)buf;
+    (void)s;
     throw todo("A3b emit_load");
 }
 
@@ -42,7 +44,9 @@ namespace detail {
 
 // A node is "full" if it varies along the row (cols > 1): it must be computed
 // inside a column loop. Otherwise it is a per-row scalar (shape [R,1] or [1,1]).
-[[maybe_unused]] static bool is_full(const Ctx& c, int id) { return c.g.node(id).shape.cols > 1; }
+[[maybe_unused]] static bool is_full(const Ctx& c, int id) {
+    return c.g.node(id).shape.cols > 1;
+}
 
 // Provided: the full nodes of this kernel that `target` needs, in topological
 // order (stops at per-row scalars, which are already in registers, and at
@@ -110,5 +114,5 @@ MatmulHooks matmul_hooks(const Ctx& c) {
     throw todo("B3 matmul_hooks");
 }
 
-}  // namespace detail
-}  // namespace tc
+} // namespace detail
+} // namespace tc

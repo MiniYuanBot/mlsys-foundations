@@ -5,11 +5,11 @@
 
 decode 是访存受限的：读一遍 3.4 GB 的权重才产出 1 个 token。然而，让目标模型**一次验证 k 个 token**，代价几乎和生成 1 个一样，因为权重同样只读一遍。推测解码就利用了这一点：先用便宜的办法猜出几个 token，再让大模型一次性检查。只要验证规则设计得当，输出与不做推测**完全相同**：greedy 解码时逐 token 一致；采样时服从同一个分布。
 
-| 部分 | 你要写什么 | 难度梯度 | 对应的论文或系统 |
-|---|---|---|---|
-| **A** greedy 推测 | n-gram 草稿（prompt lookup）、链式 greedy 验证、一轮推测加 KV 回滚 | ① 填空 | [prompt lookup decoding](https://github.com/apoorvumang/prompt-lookup-decoding)、[Lookahead](https://arxiv.org/abs/2402.02057) |
-| **B** 草稿模型 + 拒绝采样 | 保证输出分布不变的 speculative sampling、采样模式下的一轮推测 | ② 核心算法（带正确性证明） | [Leviathan et al.](https://arxiv.org/abs/2211.17192)（ICML'23） |
-| **C** token tree | tree attention kernel（在 lab4 kernel 的基础上加祖先掩码）、tree 的 greedy 验证 | ③ 前沿复现 | **[SpecInfer](https://arxiv.org/abs/2305.09781)**（ASPLOS'24，苗旭鹏等） |
+| 部分                      | 你要写什么                                                                      | 难度梯度                   | 对应的论文或系统                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **A** greedy 推测         | n-gram 草稿（prompt lookup）、链式 greedy 验证、一轮推测加 KV 回滚              | ① 填空                     | [prompt lookup decoding](https://github.com/apoorvumang/prompt-lookup-decoding)、[Lookahead](https://arxiv.org/abs/2402.02057) |
+| **B** 草稿模型 + 拒绝采样 | 保证输出分布不变的 speculative sampling、采样模式下的一轮推测                   | ② 核心算法（带正确性证明） | [Leviathan et al.](https://arxiv.org/abs/2211.17192)（ICML'23）                                                                |
+| **C** token tree          | tree attention kernel（在 lab4 kernel 的基础上加祖先掩码）、tree 的 greedy 验证 | ③ 前沿复现                 | **[SpecInfer](https://arxiv.org/abs/2305.09781)**（ASPLOS'24，苗旭鹏等）                                                       |
 
 做完后你应当能回答：
 
@@ -54,20 +54,20 @@ lab5/
 
 ## Part A：greedy 推测（约 2.5 小时）
 
-| TODO | 内容 |
-|---|---|
-| A1 | `ngram_propose`：在已有文本中找到最近一次出现的后缀 n-gram，把它后面的 k 个 token 作为草稿 |
-| A2 | `greedy_accept`：逐个比较草稿与目标模型的 argmax，得到接受的个数加一个 bonus token |
-| A3 | `greedy_round`：feed → argmax → accept → 更新 tokens → `truncate` |
+| TODO | 内容                                                                                       |
+| ---- | ------------------------------------------------------------------------------------------ |
+| A1   | `ngram_propose`：在已有文本中找到最近一次出现的后缀 n-gram，把它后面的 k 个 token 作为草稿 |
+| A2   | `greedy_accept`：逐个比较草稿与目标模型的 argmax，得到接受的个数加一个 bonus token         |
+| A3   | `greedy_round`：feed → argmax → accept → 更新 tokens → `truncate`                          |
 
 `tests/spec.rs` 中的 `a3_*` 会检查：推测解码的输出与普通 greedy 解码**逐 token 相同**，并且目标模型的 forward 次数确实减少了。
 
 ## Part B：草稿模型与拒绝采样（约 2 小时）
 
-| TODO | 内容 |
-|---|---|
-| B1 | `speculative_sample`：以 min(1, p/q) 的概率接受草稿 token；被拒绝时从残差分布 max(0, p − q) 中采样；全部接受时再从 p 多采一个 |
-| B2 | `sampling_round`：草稿模型逐个采样 k 个 token 并记下 q，目标模型一次给出 p，然后调用 B1 |
+| TODO | 内容                                                                                                                          |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------- |
+| B1   | `speculative_sample`：以 min(1, p/q) 的概率接受草稿 token；被拒绝时从残差分布 max(0, p − q) 中采样；全部接受时再从 p 多采一个 |
+| B2   | `sampling_round`：草稿模型逐个采样 k 个 token 并记下 q，目标模型一次给出 p，然后调用 B1                                       |
 
 `b1_speculative_sampling_is_exact` 用两个小词表的马尔可夫链，分别充当“目标模型”和“草稿模型”，采样 20 万次，比较三元组的经验分布与目标模型的精确分布。参考实现的最大误差是 0.0017。**做完 B1 再读讲义 §3 的证明**，你会更清楚每一步为什么必不可少。
 
@@ -75,10 +75,10 @@ lab5/
 
 链式草稿的问题在于，只要第一个 token 猜错，后面全部作废。SpecInfer 让草稿给出**一棵树**（每层保留几个候选），目标模型用 **tree attention** 一次验证所有分支：每个节点只看前缀和它自己的祖先。
 
-| TODO | 内容 |
-|---|---|
-| C1 | `tree_attention` kernel：从你 lab4 的 `paged_attention` 改出来；key 的集合 = 前缀的所有位置 + `tree_mask` 中置位的树节点 |
-| C2 | `tree_accept`：从根出发，每一步走到 token 等于目标模型 argmax 的那个子节点 |
+| TODO | 内容                                                                                                                     |
+| ---- | ------------------------------------------------------------------------------------------------------------------------ |
+| C1   | `tree_attention` kernel：从你 lab4 的 `paged_attention` 改出来；key 的集合 = 前缀的所有位置 + `tree_mask` 中置位的树节点 |
+| C2   | `tree_accept`：从根出发，每一步走到 token 等于目标模型 argmax 的那个子节点                                               |
 
 `c1_tree_attention_matches_causal_attention_on_paths` 对树上的每个节点，把它的路径重新排成连续的序列，再用 lab4 的因果 kernel 算一遍作为对照。树的构建（用草稿模型逐层取 top-k，每层一次 tree forward）和接受之后的 KV 搬移（`commit_tree_path`）都已提供，请读懂它们。
 
@@ -92,13 +92,13 @@ cargo run --release --bin bench -- --tokens 192 > ../results/lab5/bench.csv
 
 参考实现在 RTX 4060 Laptop 上的结果（target 1.7B 单独解码为 56 tok/s）：
 
-| 方法 | chat | code | copy | 每次目标模型 forward 产出的 token 数（copy） |
-|---|---|---|---|---|
-| n-gram k=8 | 1.24× | 2.05× | **2.85×** | 3.10 |
-| draft k=2 | 1.20× | 1.20× | 1.19× | 2.59 |
-| draft k=5 | 1.03× | 1.12× | 1.11× | 4.27 |
-| tree [3,2,1,1] | 1.05× | 1.11× | 1.17× | 4.47 |
-| sample T=0.8 k=3 | 1.04× | 1.04× | 1.07× | 3.25 |
+| 方法             | chat  | code  | copy      | 每次目标模型 forward 产出的 token 数（copy） |
+| ---------------- | ----- | ----- | --------- | -------------------------------------------- |
+| n-gram k=8       | 1.24× | 2.05× | **2.85×** | 3.10                                         |
+| draft k=2        | 1.20× | 1.20× | 1.19×     | 2.59                                         |
+| draft k=5        | 1.03× | 1.12× | 1.11×     | 4.27                                         |
+| tree [3,2,1,1]   | 1.05× | 1.11× | 1.17×     | 4.47                                         |
+| sample T=0.8 k=3 | 1.04× | 1.04× | 1.07×     | 3.25                                         |
 
 **通过标准**
 

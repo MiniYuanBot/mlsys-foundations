@@ -34,10 +34,10 @@ struct Group {
     KernelKind kind;
     int output;
     std::set<int> nodes;
-    int64_t rows;         // rows of the kernel's iteration space
-    int64_t width;        // length of the column loop: output cols, or the reduced dim (0 = not yet known)
-    int matmul = -1;      // MatMul kernels: the MatMul node
-    std::set<int> prologue;  // MatMul kernels: nodes fused into the A operand
+    int64_t rows;  // rows of the kernel's iteration space
+    int64_t width; // length of the column loop: output cols, or the reduced dim (0 = not yet known)
+    int matmul = -1;        // MatMul kernels: the MatMul node
+    std::set<int> prologue; // MatMul kernels: nodes fused into the A operand
 };
 
 // TODO(B1a) the fusion rules. Return true if node n may join group K, given
@@ -62,14 +62,17 @@ struct Group {
 //    otherwise -> no (Row kernels cannot contain a GEMM; one GEMM per kernel)
 //
 // `cons` = consumers of n (each edge once per use).
-[[maybe_unused]] bool can_absorb(const Graph& g, const Group& K, int n, const std::vector<int>& cons, bool* to_prologue) {
+[[maybe_unused]] bool can_absorb(const Graph& g, const Group& K, int n,
+                                 const std::vector<int>& cons, bool* to_prologue) {
     const Node& node = g.node(n);
     *to_prologue = false;
-    (void)node; (void)K; (void)cons;
+    (void)node;
+    (void)K;
+    (void)cons;
     throw todo("B1a can_absorb");
 }
 
-}  // namespace
+} // namespace
 
 // TODO(B1b) the driver. Most of it is bookkeeping; the decisions are in can_absorb.
 //   1. order = toposort(g); cons = g.consumers(); kernel_of[id] = -1 for all.
@@ -92,4 +95,4 @@ Plan plan_fused(const Graph& g) {
     throw todo("B1b plan_fused");
 }
 
-}  // namespace tc
+} // namespace tc

@@ -10,45 +10,74 @@
 
 namespace mt::lazy {
 
-bool is_leaf(Op op) { return op == Op::Input || op == Op::Const; }
-bool is_unary(Op op) { return op == Op::Neg || op == Op::Exp || op == Op::Tanh || op == Op::Relu; }
-bool is_binary(Op op) { return op == Op::Add || op == Op::Sub || op == Op::Mul || op == Op::Div; }
-bool is_elementwise(Op op) { return is_unary(op) || is_binary(op); }
+bool is_leaf(Op op) {
+    return op == Op::Input || op == Op::Const;
+}
+bool is_unary(Op op) {
+    return op == Op::Neg || op == Op::Exp || op == Op::Tanh || op == Op::Relu;
+}
+bool is_binary(Op op) {
+    return op == Op::Add || op == Op::Sub || op == Op::Mul || op == Op::Div;
+}
+bool is_elementwise(Op op) {
+    return is_unary(op) || is_binary(op);
+}
 
 const char* op_name(Op op) {
     switch (op) {
-        case Op::Input: return "Input";
-        case Op::Const: return "Const";
-        case Op::Neg: return "Neg";
-        case Op::Exp: return "Exp";
-        case Op::Tanh: return "Tanh";
-        case Op::Relu: return "Relu";
-        case Op::Add: return "Add";
-        case Op::Sub: return "Sub";
-        case Op::Mul: return "Mul";
-        case Op::Div: return "Div";
-        case Op::SumLast: return "SumLast";
+    case Op::Input:
+        return "Input";
+    case Op::Const:
+        return "Const";
+    case Op::Neg:
+        return "Neg";
+    case Op::Exp:
+        return "Exp";
+    case Op::Tanh:
+        return "Tanh";
+    case Op::Relu:
+        return "Relu";
+    case Op::Add:
+        return "Add";
+    case Op::Sub:
+        return "Sub";
+    case Op::Mul:
+        return "Mul";
+    case Op::Div:
+        return "Div";
+    case Op::SumLast:
+        return "SumLast";
     }
     return "?";
 }
 
 float apply_unary(Op op, float x) {
     switch (op) {
-        case Op::Neg: return -x;
-        case Op::Exp: return std::exp(x);
-        case Op::Tanh: return std::tanh(x);
-        case Op::Relu: return x > 0.f ? x : 0.f;
-        default: throw std::logic_error("apply_unary: not a unary op");
+    case Op::Neg:
+        return -x;
+    case Op::Exp:
+        return std::exp(x);
+    case Op::Tanh:
+        return std::tanh(x);
+    case Op::Relu:
+        return x > 0.f ? x : 0.f;
+    default:
+        throw std::logic_error("apply_unary: not a unary op");
     }
 }
 
 float apply_binary(Op op, float a, float b) {
     switch (op) {
-        case Op::Add: return a + b;
-        case Op::Sub: return a - b;
-        case Op::Mul: return a * b;
-        case Op::Div: return a / b;
-        default: throw std::logic_error("apply_binary: not a binary op");
+    case Op::Add:
+        return a + b;
+    case Op::Sub:
+        return a - b;
+    case Op::Mul:
+        return a * b;
+    case Op::Div:
+        return a / b;
+    default:
+        throw std::logic_error("apply_binary: not a binary op");
     }
 }
 
@@ -76,37 +105,71 @@ LazyTensor LazyTensor::constant(float value) {
     return LazyTensor(n);
 }
 
-static LazyTensor unary(Op op, const LazyTensor& x) { return LazyTensor(make(op, {x.node()}, x.shape())); }
+static LazyTensor unary(Op op, const LazyTensor& x) {
+    return LazyTensor(make(op, {x.node()}, x.shape()));
+}
 
 static LazyTensor binary(Op op, const LazyTensor& a, const LazyTensor& b) {
     const bool ac = a.node()->op == Op::Const, bc = b.node()->op == Op::Const;
     Shape shape;
-    if (ac) shape = b.shape();
-    else if (bc) shape = a.shape();
-    else if (a.shape() == b.shape()) shape = a.shape();
-    else throw std::invalid_argument("lazy: binary op needs equal shapes or a scalar constant");
+    if (ac)
+        shape = b.shape();
+    else if (bc)
+        shape = a.shape();
+    else if (a.shape() == b.shape())
+        shape = a.shape();
+    else
+        throw std::invalid_argument("lazy: binary op needs equal shapes or a scalar constant");
     return LazyTensor(make(op, {a.node(), b.node()}, shape));
 }
 
-LazyTensor LazyTensor::neg() const { return unary(Op::Neg, *this); }
-LazyTensor LazyTensor::exp() const { return unary(Op::Exp, *this); }
-LazyTensor LazyTensor::tanh() const { return unary(Op::Tanh, *this); }
-LazyTensor LazyTensor::relu() const { return unary(Op::Relu, *this); }
+LazyTensor LazyTensor::neg() const {
+    return unary(Op::Neg, *this);
+}
+LazyTensor LazyTensor::exp() const {
+    return unary(Op::Exp, *this);
+}
+LazyTensor LazyTensor::tanh() const {
+    return unary(Op::Tanh, *this);
+}
+LazyTensor LazyTensor::relu() const {
+    return unary(Op::Relu, *this);
+}
 LazyTensor LazyTensor::sum_last() const {
     if (shape().empty()) throw std::invalid_argument("sum_last on a 0-d tensor");
     Shape s(shape().begin(), shape().end() - 1);
     return LazyTensor(make(Op::SumLast, {node_}, s));
 }
-LazyTensor operator+(const LazyTensor& a, const LazyTensor& b) { return binary(Op::Add, a, b); }
-LazyTensor operator-(const LazyTensor& a, const LazyTensor& b) { return binary(Op::Sub, a, b); }
-LazyTensor operator*(const LazyTensor& a, const LazyTensor& b) { return binary(Op::Mul, a, b); }
-LazyTensor operator/(const LazyTensor& a, const LazyTensor& b) { return binary(Op::Div, a, b); }
-LazyTensor operator*(float s, const LazyTensor& a) { return LazyTensor::constant(s) * a; }
-LazyTensor operator+(float s, const LazyTensor& a) { return LazyTensor::constant(s) + a; }
-LazyTensor operator+(const LazyTensor& a, float s) { return a + LazyTensor::constant(s); }
-LazyTensor operator-(const LazyTensor& a, float s) { return a - LazyTensor::constant(s); }
-LazyTensor operator*(const LazyTensor& a, float s) { return a * LazyTensor::constant(s); }
-LazyTensor operator/(const LazyTensor& a, float s) { return a / LazyTensor::constant(s); }
+LazyTensor operator+(const LazyTensor& a, const LazyTensor& b) {
+    return binary(Op::Add, a, b);
+}
+LazyTensor operator-(const LazyTensor& a, const LazyTensor& b) {
+    return binary(Op::Sub, a, b);
+}
+LazyTensor operator*(const LazyTensor& a, const LazyTensor& b) {
+    return binary(Op::Mul, a, b);
+}
+LazyTensor operator/(const LazyTensor& a, const LazyTensor& b) {
+    return binary(Op::Div, a, b);
+}
+LazyTensor operator*(float s, const LazyTensor& a) {
+    return LazyTensor::constant(s) * a;
+}
+LazyTensor operator+(float s, const LazyTensor& a) {
+    return LazyTensor::constant(s) + a;
+}
+LazyTensor operator+(const LazyTensor& a, float s) {
+    return a + LazyTensor::constant(s);
+}
+LazyTensor operator-(const LazyTensor& a, float s) {
+    return a - LazyTensor::constant(s);
+}
+LazyTensor operator*(const LazyTensor& a, float s) {
+    return a * LazyTensor::constant(s);
+}
+LazyTensor operator/(const LazyTensor& a, float s) {
+    return a / LazyTensor::constant(s);
+}
 
 // ----------------------------------------------------------- scheduling ----
 std::vector<Kernel> schedule_unfused(const NodePtr& root) {
@@ -116,7 +179,9 @@ std::vector<Kernel> schedule_unfused(const NodePtr& root) {
     return kernels;
 }
 
-static int64_t bytes_of(const Shape& s) { return numel_of(s) * static_cast<int64_t>(sizeof(float)); }
+static int64_t bytes_of(const Shape& s) {
+    return numel_of(s) * static_cast<int64_t>(sizeof(float));
+}
 
 ExecStats analyze(const std::vector<Kernel>& kernels, const NodePtr& root) {
     ExecStats st;
@@ -139,7 +204,8 @@ std::string describe(const std::vector<Kernel>& kernels) {
     for (size_t i = 0; i < kernels.size(); ++i) {
         const auto& k = kernels[i];
         os << "kernel " << i << " -> n" << k.output->id << " " << op_name(k.output->op) << " [";
-        for (size_t d = 0; d < k.output->shape.size(); ++d) os << (d ? "," : "") << k.output->shape[d];
+        for (size_t d = 0; d < k.output->shape.size(); ++d)
+            os << (d ? "," : "") << k.output->shape[d];
         os << "]  nodes:";
         std::set<const Node*> inside;
         for (const auto& n : k.nodes) {
@@ -163,22 +229,30 @@ float eval_scalar(const Program& p, const std::vector<const float*>& inputs, int
     int sp = 0;
     for (const auto& ins : p.code) {
         switch (ins.kind) {
-            case InstrKind::Load: stack[sp++] = inputs[ins.buffer][i]; break;
-            case InstrKind::Const: stack[sp++] = ins.value; break;
-            case InstrKind::Unary: stack[sp - 1] = apply_unary(ins.op, stack[sp - 1]); break;
-            case InstrKind::Binary:
-                --sp;
-                stack[sp - 1] = apply_binary(ins.op, stack[sp - 1], stack[sp]);
-                break;
+        case InstrKind::Load:
+            stack[sp++] = inputs[ins.buffer][i];
+            break;
+        case InstrKind::Const:
+            stack[sp++] = ins.value;
+            break;
+        case InstrKind::Unary:
+            stack[sp - 1] = apply_unary(ins.op, stack[sp - 1]);
+            break;
+        case InstrKind::Binary:
+            --sp;
+            stack[sp - 1] = apply_binary(ins.op, stack[sp - 1], stack[sp]);
+            break;
         }
         if (sp >= 64) throw std::runtime_error("eval_scalar: expression too deep");
     }
-    if (sp != 1) throw std::runtime_error("eval_scalar: malformed program (stack depth != 1 at end)");
+    if (sp != 1)
+        throw std::runtime_error("eval_scalar: malformed program (stack depth != 1 at end)");
     return stack[0];
 }
 
 // ------------------------------------------------------------ execution ----
-Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root, Interp interp, ExecStats* stats) {
+Tensor execute(const std::vector<Kernel>& kernels, const NodePtr& root, Interp interp,
+               ExecStats* stats) {
     std::unordered_map<const Node*, Tensor> buffers;
     for (const auto& n : toposort(root))
         if (n->op == Op::Input) buffers[n.get()] = n->value;
@@ -238,4 +312,4 @@ Tensor realize_fused(const LazyTensor& t, Interp interp, ExecStats* stats) {
     return execute(schedule_fused(t.node()), t.node(), interp, stats);
 }
 
-}  // namespace mt::lazy
+} // namespace mt::lazy

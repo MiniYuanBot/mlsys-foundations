@@ -25,7 +25,12 @@ impl KvCache {
             k.push(gpu.zeros::<bf16>(per_layer)?);
             v.push(gpu.zeros::<bf16>(per_layer)?);
         }
-        Ok(Self { k, v, num_blocks, block_size })
+        Ok(Self {
+            k,
+            v,
+            num_blocks,
+            block_size,
+        })
     }
 
     /// How many blocks fit in `bytes` of memory.

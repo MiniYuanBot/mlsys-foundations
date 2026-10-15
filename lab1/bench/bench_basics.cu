@@ -16,8 +16,10 @@ int main(int argc, char** argv) {
     int n = 1 << 26, side = 8192;
     for (int i = 1; i < argc; ++i) {
         const std::string a = argv[i];
-        if (a == "--n" && i + 1 < argc) n = std::stoi(argv[++i]);
-        else if (a == "--side" && i + 1 < argc) side = std::stoi(argv[++i]);
+        if (a == "--n" && i + 1 < argc)
+            n = std::stoi(argv[++i]);
+        else if (a == "--side" && i + 1 < argc)
+            side = std::stoi(argv[++i]);
         else {
             std::fprintf(stderr, "usage: bench_basics [--n N] [--side S]\n");
             return 2;
@@ -34,7 +36,8 @@ int main(int argc, char** argv) {
 
     std::printf("op,variant,size,bytes,ms,GBps,pct_of_memcpy\n");
     double memcpy_gbps = 0;
-    auto report = [&](const char* op, const char* variant, long long size, double bytes, const std::function<void()>& fn) {
+    auto report = [&](const char* op, const char* variant, long long size, double bytes,
+                      const std::function<void()>& fn) {
         float ms;
         try {
             ms = time_ms(fn);
@@ -44,20 +47,27 @@ int main(int argc, char** argv) {
         }
         const double gbps = bytes / (ms * 1e6);
         if (memcpy_gbps == 0) memcpy_gbps = gbps;
-        std::printf("%s,%s,%lld,%.0f,%.4f,%.1f,%.1f\n", op, variant, size, bytes, ms, gbps, 100 * gbps / memcpy_gbps);
+        std::printf("%s,%s,%lld,%.0f,%.4f,%.1f,%.1f\n", op, variant, size, bytes, ms, gbps,
+                    100 * gbps / memcpy_gbps);
         std::fflush(stdout);
     };
 
-    report("copy", "cudaMemcpy", n, 2 * n * fbytes,
-           [&] { CUDA_CHECK(cudaMemcpyAsync(c.get(), a.get(), n * fbytes, cudaMemcpyDeviceToDevice)); });
-    report("vector_add", "grid_stride", n, 3 * n * fbytes, [&] { vector_add(a.get(), b.get(), c.get(), n); });
-    report("reduce_sum", "shuffle", n, n * fbytes, [&] { reduce_sum(a.get(), n, partial.get(), out.get()); });
+    report("copy", "cudaMemcpy", n, 2 * n * fbytes, [&] {
+        CUDA_CHECK(cudaMemcpyAsync(c.get(), a.get(), n * fbytes, cudaMemcpyDeviceToDevice));
+    });
+    report("vector_add", "grid_stride", n, 3 * n * fbytes,
+           [&] { vector_add(a.get(), b.get(), c.get(), n); });
+    report("reduce_sum", "shuffle", n, n * fbytes,
+           [&] { reduce_sum(a.get(), n, partial.get(), out.get()); });
 
     const long long elems = static_cast<long long>(side) * side;
     if (elems <= n) {
-        report("transpose", "naive", elems, 2 * elems * fbytes, [&] { transpose_naive(a.get(), c.get(), side, side); });
-        report("transpose", "tiled", elems, 2 * elems * fbytes, [&] { transpose_tiled(a.get(), c.get(), side, side); });
-        report("transpose", "padded", elems, 2 * elems * fbytes, [&] { transpose_padded(a.get(), c.get(), side, side); });
+        report("transpose", "naive", elems, 2 * elems * fbytes,
+               [&] { transpose_naive(a.get(), c.get(), side, side); });
+        report("transpose", "tiled", elems, 2 * elems * fbytes,
+               [&] { transpose_tiled(a.get(), c.get(), side, side); });
+        report("transpose", "padded", elems, 2 * elems * fbytes,
+               [&] { transpose_padded(a.get(), c.get(), side, side); });
     }
     return 0;
 }

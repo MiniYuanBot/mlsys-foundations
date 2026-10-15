@@ -24,7 +24,10 @@ struct RefEntry {
 fn load_ref(model: &str) -> Option<Vec<(RefEntry, Vec<f32>)>> {
     let dir = ref_dir(model);
     let Ok(text) = std::fs::read_to_string(dir.join("index.json")) else {
-        eprintln!("SKIP: no reference in {} -- run `python lab4/scripts/make_reference.py` first", dir.display());
+        eprintln!(
+            "SKIP: no reference in {} -- run `python lab4/scripts/make_reference.py` first",
+            dir.display()
+        );
         return None;
     };
     let entries: Vec<RefEntry> = serde_json::from_str(&text).unwrap();
@@ -33,7 +36,10 @@ fn load_ref(model: &str) -> Option<Vec<(RefEntry, Vec<f32>)>> {
             .into_iter()
             .map(|e| {
                 let raw = std::fs::read(dir.join(format!("{}.logits.f32", e.name))).unwrap();
-                let logits = raw.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+                let logits = raw
+                    .chunks_exact(4)
+                    .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+                    .collect();
                 (e, logits)
             })
             .collect(),
@@ -51,13 +57,24 @@ fn cosine(a: &[f32], b: &[f32]) -> f64 {
 }
 
 fn argmax(v: &[f32]) -> usize {
-    v.iter().enumerate().fold((0, f32::NEG_INFINITY), |(bi, bv), (i, &x)| if x > bv { (i, x) } else { (bi, bv) }).0
+    v.iter()
+        .enumerate()
+        .fold((0, f32::NEG_INFINITY), |(bi, bv), (i, &x)| {
+            if x > bv {
+                (i, x)
+            } else {
+                (bi, bv)
+            }
+        })
+        .0
 }
 
 #[test]
 fn a2_teacher_forced_logits_match_hf() {
     let _gpu = common::gpu_lock();
-    let Some(refs) = load_ref("Qwen3-0.6B") else { return };
+    let Some(refs) = load_ref("Qwen3-0.6B") else {
+        return;
+    };
     let gpu = Gpu::new().unwrap();
     let model = Qwen3::load(&gpu, &model_dir("Qwen3-0.6B")).unwrap();
     for (e, want) in &refs {
@@ -71,13 +88,26 @@ fn a2_teacher_forced_logits_match_hf() {
         let got = gpu.download(&f).unwrap();
         let (mut worst_cos, mut agree) = (1.0f64, 0usize);
         for t in 0..e.ids.len() {
-            let (g, w) = (&got[t * e.vocab..(t + 1) * e.vocab], &want[t * e.vocab..(t + 1) * e.vocab]);
+            let (g, w) = (
+                &got[t * e.vocab..(t + 1) * e.vocab],
+                &want[t * e.vocab..(t + 1) * e.vocab],
+            );
             worst_cos = worst_cos.min(cosine(g, w));
             agree += (argmax(g) == argmax(w)) as usize;
         }
         let rate = agree as f64 / e.ids.len() as f64;
-        eprintln!("{}: {} positions, min cosine {:.5}, top-1 agreement {:.3}", e.name, e.ids.len(), worst_cos, rate);
-        assert!(worst_cos > 0.99, "{}: logits diverge from HF (min cosine {worst_cos:.4})", e.name);
+        eprintln!(
+            "{}: {} positions, min cosine {:.5}, top-1 agreement {:.3}",
+            e.name,
+            e.ids.len(),
+            worst_cos,
+            rate
+        );
+        assert!(
+            worst_cos > 0.99,
+            "{}: logits diverge from HF (min cosine {worst_cos:.4})",
+            e.name
+        );
         assert!(rate >= 0.9, "{}: top-1 agreement {rate:.3} < 0.9", e.name);
     }
 }
@@ -85,12 +115,29 @@ fn a2_teacher_forced_logits_match_hf() {
 #[test]
 fn a2_greedy_generation_matches_hf() {
     let _gpu = common::gpu_lock();
-    let Some(refs) = load_ref("Qwen3-0.6B") else { return };
-    let mut engine = Engine::new(&model_dir("Qwen3-0.6B"), EngineConfig { kv_cache_bytes: 256 << 20, ..Default::default() }).unwrap();
+    let Some(refs) = load_ref("Qwen3-0.6B") else {
+        return;
+    };
+    let mut engine = Engine::new(
+        &model_dir("Qwen3-0.6B"),
+        EngineConfig {
+            kv_cache_bytes: 256 << 20,
+            ..Default::default()
+        },
+    )
+    .unwrap();
     for (e, _) in &refs {
         let got = engine.generate(&e.ids, e.greedy.len(), &[]).unwrap();
-        let same = got.iter().zip(&e.greedy).take_while(|(a, b)| a == b).count();
-        eprintln!("{}: first {same} of {} greedy tokens identical to HF", e.name, e.greedy.len());
+        let same = got
+            .iter()
+            .zip(&e.greedy)
+            .take_while(|(a, b)| a == b)
+            .count();
+        eprintln!(
+            "{}: first {same} of {} greedy tokens identical to HF",
+            e.name,
+            e.greedy.len()
+        );
         // bf16 vs fp32 can flip a near-tie; the first several tokens must agree.
         assert!(same >= 8, "{}: only {same} leading tokens match HF", e.name);
     }

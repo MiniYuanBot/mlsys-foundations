@@ -27,13 +27,20 @@ int main(int argc, char** argv) {
     int steps = 20, batch = 16, hidden = 1024, layers = 3;
     for (int i = 1; i + 1 < argc; i += 2) {
         const std::string a = argv[i], v = argv[i + 1];
-        if (a == "--mode") mode = v;
-        else if (a == "--bucket-mb") bucket_mb = std::atof(v.c_str());
-        else if (a == "--steps") steps = std::atoi(v.c_str());
-        else if (a == "--batch") batch = std::atoi(v.c_str());
-        else if (a == "--hidden") hidden = std::atoi(v.c_str());
-        else if (a == "--layers") layers = std::atoi(v.c_str());
-        else if (a == "--algo") algo = v;
+        if (a == "--mode")
+            mode = v;
+        else if (a == "--bucket-mb")
+            bucket_mb = std::atof(v.c_str());
+        else if (a == "--steps")
+            steps = std::atoi(v.c_str());
+        else if (a == "--batch")
+            batch = std::atoi(v.c_str());
+        else if (a == "--hidden")
+            hidden = std::atoi(v.c_str());
+        else if (a == "--layers")
+            layers = std::atoi(v.c_str());
+        else if (a == "--algo")
+            algo = v;
     }
     const AllreduceFn fn = algo == "mpi" ? allreduce_mpi : allreduce_ring;
     std::vector<int> dims = {hidden};
@@ -56,7 +63,8 @@ int main(int argc, char** argv) {
             MPI_Barrier(c.comm);
             comm_busy0 = ct.busy_seconds();
         }
-        make_batch(dims.front(), dims.back(), (static_cast<size_t>(s) * c.size + c.rank) * batch, batch, x, y);
+        make_batch(dims.front(), dims.back(), (static_cast<size_t>(s) * c.size + c.rank) * batch,
+                   batch, x, y);
         const double t0 = MPI_Wtime();
         loss = m.forward(x.data(), y.data(), batch);
         double t1, t2;
@@ -65,18 +73,20 @@ int main(int argc, char** argv) {
             t1 = MPI_Wtime();
             bk.finish();
             t2 = MPI_Wtime();
-            adam_update(m.params.data(), m.grads.data(), mm.data(), vv.data(), m.num_params(), s + 1, Adam{});
+            adam_update(m.params.data(), m.grads.data(), mm.data(), vv.data(), m.num_params(),
+                        s + 1, Adam{});
         } else if (mode == "zero1") {
             m.backward();
             t1 = t2 = MPI_Wtime();
             z.step(m.params, m.grads);
-        } else {  // sync: backward, then one allreduce of everything
+        } else { // sync: backward, then one allreduce of everything
             m.backward();
             t1 = MPI_Wtime();
             fn(m.grads.data(), m.num_params(), c);
             for (float& g : m.grads) g /= c.size;
             t2 = MPI_Wtime();
-            adam_update(m.params.data(), m.grads.data(), mm.data(), vv.data(), m.num_params(), s + 1, Adam{});
+            adam_update(m.params.data(), m.grads.data(), mm.data(), vv.data(), m.num_params(),
+                        s + 1, Adam{});
         }
         const double t3 = MPI_Wtime();
         if (s >= warm) {
@@ -88,13 +98,17 @@ int main(int argc, char** argv) {
     }
     double mine[4] = {t_step / steps, t_compute / steps, t_wait / steps, t_opt / steps}, mx[4];
     MPI_Reduce(mine, mx, 4, MPI_DOUBLE, MPI_MAX, 0, c.comm);
-    const double opt_mb = (mode == "zero1" ? z.state_floats() : 2 * m.num_params()) * 4.0 / (1 << 20);
+    const double opt_mb =
+        (mode == "zero1" ? z.state_floats() : 2 * m.num_params()) * 4.0 / (1 << 20);
     if (c.rank == 0) {
-        std::printf("mode,algo,P,batch,bucket_mb,params_M,grad_MB,step_ms,compute_ms,comm_wait_ms,optimizer_ms,"
+        std::printf("mode,algo,P,batch,bucket_mb,params_M,grad_MB,step_ms,compute_ms,comm_wait_ms,"
+                    "optimizer_ms,"
                     "comm_thread_busy_ms,buckets_per_step,opt_state_MB_per_rank,loss\n");
-        std::printf("%s,%s,%d,%d,%.2f,%.2f,%.1f,%.2f,%.2f,%.2f,%.2f,%.2f,%.1f,%.1f,%.5f\n", mode.c_str(), algo.c_str(), c.size,
-                    batch, mode == "overlap" ? bucket_mb : 0.0, m.num_params() / 1e6, m.num_params() * 4.0 / (1 << 20),
-                    mx[0] * 1e3, mx[1] * 1e3, mx[2] * 1e3, mx[3] * 1e3, (ct.busy_seconds() - comm_busy0) / steps * 1e3,
+        std::printf("%s,%s,%d,%d,%.2f,%.2f,%.1f,%.2f,%.2f,%.2f,%.2f,%.2f,%.1f,%.1f,%.5f\n",
+                    mode.c_str(), algo.c_str(), c.size, batch, mode == "overlap" ? bucket_mb : 0.0,
+                    m.num_params() / 1e6, m.num_params() * 4.0 / (1 << 20), mx[0] * 1e3,
+                    mx[1] * 1e3, mx[2] * 1e3, mx[3] * 1e3,
+                    (ct.busy_seconds() - comm_busy0) / steps * 1e3,
                     mode == "overlap" ? double(bk.buckets()) / (warm + steps) : 0.0, opt_mb, loss);
     }
     MPI_Finalize();

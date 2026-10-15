@@ -17,7 +17,8 @@ TEST(B1_elementwise_chain_is_one_kernel) {
 }
 
 TEST(B1_softmax_layernorm_rmsnorm_are_one_row_kernel) {
-    for (const Graph& g : {models::softmax(8, 100), models::layernorm(8, 100), models::rmsnorm(8, 100)}) {
+    for (const Graph& g :
+         {models::softmax(8, 100), models::layernorm(8, 100), models::rmsnorm(8, 100)}) {
         const Plan p = plan_fused(g);
         CHECK_EQ(p.kernels.size(), 1u);
         CHECK(p.kernels[0].kind == KernelKind::Row);
@@ -30,7 +31,8 @@ TEST(B1_matmul_absorbs_epilogue) {
     CHECK_EQ(p.kernels.size(), 1u);
     CHECK(p.kernels[0].kind == KernelKind::MatMul);
     size_t compute_nodes = 0;
-    for (int id : toposort(g)) compute_nodes += g.node(id).op != Op::Input && g.node(id).op != Op::Const;
+    for (int id : toposort(g))
+        compute_nodes += g.node(id).op != Op::Input && g.node(id).op != Op::Const;
     CHECK_EQ(plan_unfused(g).kernels.size(), compute_nodes);
 }
 
@@ -38,12 +40,12 @@ TEST(B1_matmul_absorbs_elementwise_prologue_on_A_only) {
     Graph g;
     int x = g.input("x", {64, 32}), s = g.input("s", {1, 32}), w = g.input("W", {32, 16});
     int a = g.relu(g.mul(x, s));
-    g.set_output(g.matmul(a, g.mul(w, g.constant(2.0))));  // prologue on A ok, on B not
+    g.set_output(g.matmul(a, g.mul(w, g.constant(2.0)))); // prologue on A ok, on B not
     const Plan p = plan_fused(g);
     CHECK_EQ(p.kernels.size(), 2u);
-    CHECK(p.kernels[0].kind == KernelKind::Elementwise);  // W * 2 is materialised
+    CHECK(p.kernels[0].kind == KernelKind::Elementwise); // W * 2 is materialised
     CHECK(p.kernels[1].kind == KernelKind::MatMul);
-    CHECK_EQ(p.kernels[1].nodes.size(), 3u);  // mul, relu, matmul
+    CHECK_EQ(p.kernels[1].nodes.size(), 3u); // mul, relu, matmul
 }
 
 TEST(B1_reduction_cannot_join_matmul) {
@@ -57,7 +59,7 @@ TEST(B1_reduction_cannot_join_matmul) {
 TEST(B1_node_feeding_two_kernels_is_materialised) {
     Graph g;
     int x = g.input("x", {16, 16}), w = g.input("W", {16, 16});
-    int t = g.exp(x);  // feeds the matmul's A AND the epilogue: both sides
+    int t = g.exp(x); // feeds the matmul's A AND the epilogue: both sides
     g.set_output(g.add(g.matmul(t, w), t));
     const Plan p = plan_fused(g);
     CHECK_EQ(p.kernels.size(), 2u);
@@ -67,7 +69,7 @@ TEST(B1_node_feeding_two_kernels_is_materialised) {
 TEST(B1_reduction_width_must_match) {
     Graph g;
     int x = g.input("x", {8, 32}), y = g.input("y", {8, 16});
-    g.set_output(g.mul(y, g.row_sum(x)));  // a 16-column loop cannot also reduce 32 columns
+    g.set_output(g.mul(y, g.row_sum(x))); // a 16-column loop cannot also reduce 32 columns
     CHECK_EQ(plan_fused(g).kernels.size(), 2u);
 }
 
@@ -85,7 +87,7 @@ TEST(B2_row_kernel_with_scalar_output) {
     Runtime rt;
     Graph g;
     int x = g.input("x", {40, 300});
-    g.set_output(g.rsqrt(g.add(g.row_sum(g.mul(x, x)), g.constant(1.0))));  // [40, 1]
+    g.set_output(g.rsqrt(g.add(g.row_sum(g.mul(x, x)), g.constant(1.0)))); // [40, 1]
     const Plan p = plan_fused(g);
     CHECK_EQ(p.kernels.size(), 1u);
     expect_plan_matches(rt, g, p, "row kernel with [R,1] output");
@@ -93,7 +95,8 @@ TEST(B2_row_kernel_with_scalar_output) {
 
 TEST(B3_matmul_epilogue_on_gpu) {
     Runtime rt;
-    const std::tuple<int64_t, int64_t, int64_t> shapes[] = {{64, 32, 64}, {1, 5, 3}, {100, 70, 130}, {256, 512, 192}};
+    const std::tuple<int64_t, int64_t, int64_t> shapes[] = {
+        {64, 32, 64}, {1, 5, 3}, {100, 70, 130}, {256, 512, 192}};
     for (const auto& [M, K, N] : shapes) {
         Graph g = models::matmul_bias_gelu(M, K, N);
         expect_plan_matches(rt, g, plan_fused(g), "matmul_bias_gelu", 1e-4);
@@ -103,7 +106,8 @@ TEST(B3_matmul_epilogue_on_gpu) {
 TEST(B3_matmul_prologue_on_gpu) {
     Runtime rt;
     Graph g;
-    int x = g.input("x", {77, 45}), s = g.input("s", {1, 45}), r = g.input("r", {77, 1}), w = g.input("W", {45, 33});
+    int x = g.input("x", {77, 45}), s = g.input("s", {1, 45}), r = g.input("r", {77, 1}),
+        w = g.input("W", {45, 33});
     g.set_output(g.mul(g.matmul(g.mul(g.relu(g.mul(x, s)), r), w), g.constant(0.5)));
     const Plan p = plan_fused(g);
     CHECK_EQ(p.kernels.size(), 1u);
@@ -117,4 +121,6 @@ TEST(B_fused_equals_unfused_on_rmsnorm_matmul) {
     expect_plan_matches(rt, g, plan_fused(g), "fused");
 }
 
-int main(int argc, char** argv) { return run_tests(argc, argv); }
+int main(int argc, char** argv) {
+    return run_tests(argc, argv);
+}

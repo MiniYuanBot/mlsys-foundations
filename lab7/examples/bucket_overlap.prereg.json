@@ -9,10 +9,13 @@
   "workdir": ".",
   "command": "mpirun --oversubscribe -np {P} build/lab6/train --mode {mode} --bucket-mb {bucket} --batch {batch} --steps 12",
   "arms": {
-    "baseline": {"mode": "sync", "bucket": 0},
-    "treatment": {"mode": "overlap", "bucket": 4},
-    "ablation_one_bucket": {"mode": "overlap", "bucket": 64}
+    "baseline": { "mode": "sync", "bucket": 0 },
+    "treatment": { "mode": "overlap", "bucket": 4 },
+    "ablation_one_bucket": { "mode": "overlap", "bucket": 64 }
   },
-  "dev": [{"P": 4, "batch": 16}],
-  "heldout": [{"P": 2, "batch": 16}, {"P": 4, "batch": 64}]
+  "dev": [{ "P": 4, "batch": 16 }],
+  "heldout": [
+    { "P": 2, "batch": 16 },
+    { "P": 4, "batch": 64 }
+  ]
 }

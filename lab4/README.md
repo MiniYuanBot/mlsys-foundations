@@ -11,11 +11,11 @@ requests -> Scheduler (B3, C1) -> BatchInput -> Qwen3::forward (A2) -> argmax ->
                +-- BlockManager (B1, C2) -----------+-- paged KV cache (GPU) <- paged_attention (B2)
 ```
 
-| 部分 | 你要写什么 | 语言 | 难度梯度 |
-|---|---|---|---|
-| **A** 模型 | embedding、RMSNorm、fused add+RMSNorm、RoPE、SwiGLU、argmax 六个 kernel；28 层前向 | CUDA + Rust | ① 填空：熟悉 Transformer 推理的每一步 |
-| **B** PagedAttention + 调度 | 带引用计数的块分配器、warp 级 paged attention kernel、continuous batching 调度器（含抢占） | Rust + CUDA | ② 核心实现 + 性能目标 |
-| **C** 前沿机制 | chunked prefill（[Sarathi-Serve](https://arxiv.org/abs/2403.02310)）、自动前缀缓存（hash 链 + LRU 驱逐，vLLM APC / [SGLang RadixAttention](https://arxiv.org/abs/2312.07104) 的块级版本） | Rust | ③ 论文机制的精简复现 |
+| 部分                        | 你要写什么                                                                                                                                                                                | 语言        | 难度梯度                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------- |
+| **A** 模型                  | embedding、RMSNorm、fused add+RMSNorm、RoPE、SwiGLU、argmax 六个 kernel；28 层前向                                                                                                        | CUDA + Rust | ① 填空：熟悉 Transformer 推理的每一步 |
+| **B** PagedAttention + 调度 | 带引用计数的块分配器、warp 级 paged attention kernel、continuous batching 调度器（含抢占）                                                                                                | Rust + CUDA | ② 核心实现 + 性能目标                 |
+| **C** 前沿机制              | chunked prefill（[Sarathi-Serve](https://arxiv.org/abs/2403.02310)）、自动前缀缓存（hash 链 + LRU 驱逐，vLLM APC / [SGLang RadixAttention](https://arxiv.org/abs/2312.07104) 的块级版本） | Rust        | ③ 论文机制的精简复现                  |
 
 做完后你应当能回答：
 
@@ -74,14 +74,14 @@ Rust 只要会写结构体、`Vec`、`HashMap`、`match`、`Option` 就够用了
 
 ### A1 六个 kernel（`kernels/basic_student.cu`）
 
-| TODO | kernel | 要点 |
-|---|---|---|
-| A1a | `embedding` | 按行拷贝 |
-| A1b | `rmsnorm` | block 内求平方和；**在乘 weight 之前先舍入到 bf16**（与 HF 一致） |
-| A1c | `fused_add_rmsnorm` | 原地完成 residual += x 和 x = norm(residual)，3 个 kernel 合成 1 个 |
-| A1d | `rope` | NeoX 风格：第 i 维与第 i+64 维配对；cos/sin 先舍入到 bf16 |
-| A1e | `silu_mul` | SwiGLU |
-| A1f | `argmax_rows` | 15 万维 vocab 的 block 归约；并列时取下标最小的 |
+| TODO | kernel              | 要点                                                                |
+| ---- | ------------------- | ------------------------------------------------------------------- |
+| A1a  | `embedding`         | 按行拷贝                                                            |
+| A1b  | `rmsnorm`           | block 内求平方和；**在乘 weight 之前先舍入到 bf16**（与 HF 一致）   |
+| A1c  | `fused_add_rmsnorm` | 原地完成 residual += x 和 x = norm(residual)，3 个 kernel 合成 1 个 |
+| A1d  | `rope`              | NeoX 风格：第 i 维与第 i+64 维配对；cos/sin 先舍入到 bf16           |
+| A1e  | `silu_mul`          | SwiGLU                                                              |
+| A1f  | `argmax_rows`       | 15 万维 vocab 的 block 归约；并列时取下标最小的                     |
 
 每个 kernel 都在 `tests/kernels.rs` 中与一个**在同样位置做 bf16 舍入**的 CPU 参考实现对比。注释中的舍入位置要严格照做，否则 A2 的结果对不上 HF。
 
@@ -105,12 +105,12 @@ Rust 只要会写结构体、`Vec`、`HashMap`、`match`、`Option` 就够用了
 
 KV cache 是一个由 `num_blocks` 个块组成的池子，每块存放 16 个 token 的 K/V。每个序列有一张 block table，把逻辑块映射到物理块。分配和释放都要维护引用计数，C2 的共享要靠它。
 
-| TODO | 内容 |
-|---|---|
-| B1a | `allocate` |
-| B1b | `release`：引用计数减到 0 才归还；重复释放要 panic |
-| B1c | `ensure_capacity`：**要么全部分配成功，要么一个都不分配** |
-| B1d | `free_sequence` |
+| TODO | 内容                                                      |
+| ---- | --------------------------------------------------------- |
+| B1a  | `allocate`                                                |
+| B1b  | `release`：引用计数减到 0 才归还；重复释放要 panic        |
+| B1c  | `ensure_capacity`：**要么全部分配成功，要么一个都不分配** |
+| B1d  | `free_sequence`                                           |
 
 ### B2 Paged attention kernel（`kernels/attention_student.cu`）
 
@@ -155,10 +155,10 @@ cargo run --release --bin bench -- --label continuous --requests 64 --prompt 256
 
 ### C2 前缀缓存（`kv_student.rs` 中的 C2 部分）
 
-| TODO | 内容 |
-|---|---|
-| C2a | `match_prefix`：对新请求按块计算链式 hash，命中的块直接复用（引用计数 +1），并且**永远不复用最后一个 token** |
-| C2b | `register_full_blocks`：每一步之后，为新填满的块登记 hash |
+| TODO | 内容                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------ |
+| C2a  | `match_prefix`：对新请求按块计算链式 hash，命中的块直接复用（引用计数 +1），并且**永远不复用最后一个 token** |
+| C2b  | `register_full_blocks`：每一步之后，为新填满的块登记 hash                                                    |
 
 引用计数降到 0 的已缓存块不会立即释放，而是进入 evictable 队列；只有空闲列表用完时，才按 LRU 顺序驱逐。
 

@@ -46,7 +46,10 @@ fn b1c_ensure_capacity_is_all_or_nothing() {
     assert_eq!(s.block_table.len(), 3);
     let mut t = seq(1, (0..100).collect());
     assert!(!kv.ensure_capacity(&mut t, 100)); // needs 7, only 2 free
-    assert!(t.block_table.is_empty(), "a failed ensure_capacity must not keep partial allocations");
+    assert!(
+        t.block_table.is_empty(),
+        "a failed ensure_capacity must not keep partial allocations"
+    );
     assert_eq!(kv.num_free_blocks(), 2);
     assert!(kv.ensure_capacity(&mut s, 49)); // 4th block
 }
@@ -102,7 +105,11 @@ fn c2a_never_reuses_the_last_token() {
     let mut a = seq(0, (0..8).collect());
     compute(&mut kv, &mut a);
     let mut b = seq(1, (0..8).collect()); // identical prompt, exactly 2 blocks
-    assert_eq!(kv.match_prefix(&mut b), 4, "the last block must be recomputed to get logits");
+    assert_eq!(
+        kv.match_prefix(&mut b),
+        4,
+        "the last block must be recomputed to get logits"
+    );
     assert_eq!(b.block_table.len(), 1);
 }
 

@@ -10,6 +10,7 @@ For each prompt it stores, from the fp32 model (bf16 weights upcast):
 Needs ~3 GB of GPU memory for Qwen3-0.6B in fp32. Run it once; the Rust test
 reads the files and skips (with a message) when they are missing.
 """
+
 import argparse
 import json
 import os
@@ -21,7 +22,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 ROOT = Path(__file__).resolve().parents[2]
 PROMPTS = {
     "kv": "<|im_start|>user\nWhat is a KV cache in LLM inference?<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
-    "code": "def fibonacci(n):\n    \"\"\"Return the n-th Fibonacci number.\"\"\"\n",
+    "code": 'def fibonacci(n):\n    """Return the n-th Fibonacci number."""\n',
     "zh": "北京大学的计算机系统研究方向包括",
     "long": "The quick brown fox jumps over the lazy dog. " * 24,
 }
@@ -43,10 +44,19 @@ def main():
         x = torch.tensor([ids], device="cuda")
         with torch.no_grad():
             logits = model(x).logits[0].float().cpu()
-            gen = model.generate(x, max_new_tokens=24, do_sample=False, temperature=None, top_p=None, top_k=None)
+            gen = model.generate(
+                x, max_new_tokens=24, do_sample=False, temperature=None, top_p=None, top_k=None
+            )
         logits.numpy().astype("<f4").tofile(out / f"{name}.logits.f32")
-        index.append({"name": name, "ids": ids, "greedy": gen[0, len(ids):].tolist(), "vocab": logits.shape[1]})
-        print(f"{name}: {len(ids)} tokens, continuation {tok.decode(gen[0, len(ids):])!r}")
+        index.append(
+            {
+                "name": name,
+                "ids": ids,
+                "greedy": gen[0, len(ids) :].tolist(),
+                "vocab": logits.shape[1],
+            }
+        )
+        print(f"{name}: {len(ids)} tokens, continuation {tok.decode(gen[0, len(ids) :])!r}")
     (out / "index.json").write_text(json.dumps(index), encoding="utf-8")
     print(f"wrote {out}")
 

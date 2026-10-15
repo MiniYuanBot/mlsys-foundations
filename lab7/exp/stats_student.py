@@ -8,6 +8,7 @@ and attach a bootstrap confidence interval, and we decide a hypothesis by
 comparing that interval with a PRE-REGISTERED minimal effect. Lecture L7 §3.
 Pure Python (random, statistics); no numpy needed.
 """
+
 import random
 import statistics
 

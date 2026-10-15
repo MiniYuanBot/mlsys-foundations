@@ -15,8 +15,8 @@ namespace l1 {
 
 inline void check_cuda(cudaError_t code, const char* expr, const char* file, int line) {
     if (code != cudaSuccess)
-        throw std::runtime_error(std::string(file) + ":" + std::to_string(line) + ": " + expr + ": " +
-                                 cudaGetErrorString(code));
+        throw std::runtime_error(std::string(file) + ":" + std::to_string(line) + ": " + expr +
+                                 ": " + cudaGetErrorString(code));
 }
 inline void check_cublas(cublasStatus_t code, const char* expr, const char* file, int line) {
     if (code != CUBLAS_STATUS_SUCCESS)
@@ -34,8 +34,7 @@ struct NotImplemented : std::logic_error {
 };
 
 // Owning device allocation. Non-copyable, movable.
-template <class T>
-class DeviceBuffer {
+template <class T> class DeviceBuffer {
 public:
     DeviceBuffer() = default;
     explicit DeviceBuffer(size_t n) : n_(n) { CUDA_CHECK(cudaMalloc(&ptr_, n * sizeof(T))); }
@@ -44,7 +43,10 @@ public:
     }
     DeviceBuffer(const DeviceBuffer&) = delete;
     DeviceBuffer& operator=(const DeviceBuffer&) = delete;
-    DeviceBuffer(DeviceBuffer&& o) noexcept : ptr_(o.ptr_), n_(o.n_) { o.ptr_ = nullptr; o.n_ = 0; }
+    DeviceBuffer(DeviceBuffer&& o) noexcept : ptr_(o.ptr_), n_(o.n_) {
+        o.ptr_ = nullptr;
+        o.n_ = 0;
+    }
     DeviceBuffer& operator=(DeviceBuffer&& o) noexcept {
         std::swap(ptr_, o.ptr_);
         std::swap(n_, o.n_);
@@ -91,8 +93,7 @@ inline std::vector<__half> to_half(const std::vector<float>& v) {
 
 // Times `fn` with CUDA events. Runs `warmup` launches, then repeats the
 // launch until at least `min_ms` has elapsed, and returns ms per launch.
-template <class F>
-float time_ms(F&& fn, int warmup = 3, float min_ms = 50.f) {
+template <class F> float time_ms(F&& fn, int warmup = 3, float min_ms = 50.f) {
     for (int i = 0; i < warmup; ++i) fn();
     CUDA_CHECK(cudaDeviceSynchronize());
     cudaEvent_t start, stop;
@@ -114,6 +115,8 @@ float time_ms(F&& fn, int warmup = 3, float min_ms = 50.f) {
     return ms / iters;
 }
 
-inline int ceil_div(int a, int b) { return (a + b - 1) / b; }
+inline int ceil_div(int a, int b) {
+    return (a + b - 1) / b;
+}
 
-}  // namespace l1
+} // namespace l1

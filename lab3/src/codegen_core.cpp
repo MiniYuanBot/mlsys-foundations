@@ -27,14 +27,17 @@ std::string operand(const Ctx& c, int id) {
     const Node& n = c.g.node(id);
     if (n.op == Op::Const) return literal(n.value);
     auto it = c.buf.find(id);
-    if (it == c.buf.end()) throw std::logic_error("codegen: operand n" + std::to_string(id) + " is not available");
+    if (it == c.buf.end())
+        throw std::logic_error("codegen: operand n" + std::to_string(id) + " is not available");
     return emit_load(it->second, n.shape);
 }
 
-void emit_ssa(const Ctx& c, const std::vector<int>& nodes, std::ostringstream& os, const std::string& indent) {
+void emit_ssa(const Ctx& c, const std::vector<int>& nodes, std::ostringstream& os,
+              const std::string& indent) {
     for (int id : nodes) {
         const Node& n = c.g.node(id);
-        if (!is_elementwise(n.op)) throw std::logic_error(std::string("emit_ssa: not elementwise: ") + op_name(n.op));
+        if (!is_elementwise(n.op))
+            throw std::logic_error(std::string("emit_ssa: not elementwise: ") + op_name(n.op));
         std::vector<std::string> args;
         for (int s : n.srcs) args.push_back(operand(c, s));
         os << indent << "const float v" << id << " = " << emit_op(n.op, args) << ";\n";
@@ -52,7 +55,8 @@ std::string signature(const Ctx& c, const std::string& dims) {
 // Parameter list / argument list of the inputs, for the GEMM helper functions.
 static std::string in_params(const Ctx& c) {
     std::string s;
-    for (size_t i = 0; i < c.k.reads.size(); ++i) s += "const float* __restrict__ in" + std::to_string(i) + ", ";
+    for (size_t i = 0; i < c.k.reads.size(); ++i)
+        s += "const float* __restrict__ in" + std::to_string(i) + ", ";
     return s;
 }
 static std::string in_args(const Ctx& c) {
@@ -101,7 +105,8 @@ __device__ float tc_block_max(float v, float* smem) {
 std::string codegen_elementwise(const Ctx& c) {
     std::ostringstream os;
     os << kPrelude << signature(c, "long R, long C") << " {\n"
-       << "  for (long t = blockIdx.x * (long)blockDim.x + threadIdx.x; t < R * C; t += (long)gridDim.x * blockDim.x) {\n"
+       << "  for (long t = blockIdx.x * (long)blockDim.x + threadIdx.x; t < R * C; t += "
+          "(long)gridDim.x * blockDim.x) {\n"
        << "    const long i = t / C, j = t % C;\n";
     emit_ssa(c, c.k.nodes, os, "    ");
     os << "    out[t] = v" << c.k.output << ";\n  }\n}\n";
@@ -115,10 +120,12 @@ std::string codegen_matmul(const Ctx& c) {
     const MatmulHooks h = matmul_hooks(c);
     const std::string P = in_params(c), A = in_args(c);
     std::ostringstream os;
-    os << kPrelude
-       << "__device__ __forceinline__ float tc_load_a(" << P << "long i, long j) {\n" << h.load_a << "}\n"
-       << "__device__ __forceinline__ float tc_load_b(" << P << "long i, long j) {\n" << h.load_b << "}\n"
-       << "__device__ __forceinline__ float tc_epilogue(float acc, " << P << "long i, long j) {\n" << h.epilogue << "}\n"
+    os << kPrelude << "__device__ __forceinline__ float tc_load_a(" << P << "long i, long j) {\n"
+       << h.load_a << "}\n"
+       << "__device__ __forceinline__ float tc_load_b(" << P << "long i, long j) {\n"
+       << h.load_b << "}\n"
+       << "__device__ __forceinline__ float tc_epilogue(float acc, " << P << "long i, long j) {\n"
+       << h.epilogue << "}\n"
        << signature(c, "long M, long N, long K") << R"( {
   constexpr int BM = 64, BN = 64, BK = 16, TM = 4, TN = 4;
   __shared__ float As[BK][BM + 4];
@@ -130,12 +137,14 @@ std::string codegen_matmul(const Ctx& c) {
     for (int e = threadIdx.x; e < BM * BK; e += 256) {
       const int r = e / BK, kk = e % BK;
       const long i = m0 + r, j = k0 + kk;
-      As[kk][r] = (i < M && j < K) ? tc_load_a()" << A << R"(i, j) : 0.f;
+      As[kk][r] = (i < M && j < K) ? tc_load_a()"
+       << A << R"(i, j) : 0.f;
     }
     for (int e = threadIdx.x; e < BK * BN; e += 256) {
       const int kk = e / BN, cc = e % BN;
       const long i = k0 + kk, j = n0 + cc;
-      Bs[kk][cc] = (i < K && j < N) ? tc_load_b()" << A << R"(i, j) : 0.f;
+      Bs[kk][cc] = (i < K && j < N) ? tc_load_b()"
+       << A << R"(i, j) : 0.f;
     }
     __syncthreads();
 #pragma unroll
@@ -157,25 +166,29 @@ std::string codegen_matmul(const Ctx& c) {
 #pragma unroll
     for (int y = 0; y < TN; ++y) {
       const long i = m0 + ty * TM + x, j = n0 + tx * TN + y;
-      if (i < M && j < N) out[i * N + j] = tc_epilogue(acc[x][y], )" << A << R"(i, j);
+      if (i < M && j < N) out[i * N + j] = tc_epilogue(acc[x][y], )"
+       << A << R"(i, j);
     }
 }
 )";
     return os.str();
 }
 
-}  // namespace tc::detail
+} // namespace tc::detail
 
 namespace tc {
 
 std::string codegen(const Graph& g, const Kernel& k) {
     const detail::Ctx c = detail::make_ctx(g, k);
     switch (k.kind) {
-        case KernelKind::Elementwise: return detail::codegen_elementwise(c);
-        case KernelKind::Row: return detail::codegen_row(c);
-        case KernelKind::MatMul: return detail::codegen_matmul(c);
+    case KernelKind::Elementwise:
+        return detail::codegen_elementwise(c);
+    case KernelKind::Row:
+        return detail::codegen_row(c);
+    case KernelKind::MatMul:
+        return detail::codegen_matmul(c);
     }
     throw std::logic_error("codegen: bad kernel kind");
 }
 
-}  // namespace tc
+} // namespace tc

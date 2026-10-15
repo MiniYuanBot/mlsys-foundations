@@ -45,8 +45,16 @@ impl BatchInput {
     /// Build a batch from (tokens of this step, first position, block table) per sequence.
     /// The last token of each entry is sampled if `sample[i]` is true.
     pub fn build(items: &[(&[u32], usize, &[u32], bool)], block_size: usize) -> Self {
-        let max_blocks = items.iter().map(|(_, _, bt, _)| bt.len()).max().unwrap_or(1).max(1);
-        let mut b = BatchInput { max_blocks, ..Default::default() };
+        let max_blocks = items
+            .iter()
+            .map(|(_, _, bt, _)| bt.len())
+            .max()
+            .unwrap_or(1)
+            .max(1);
+        let mut b = BatchInput {
+            max_blocks,
+            ..Default::default()
+        };
         for (s, (toks, start, table, sample)) in items.iter().enumerate() {
             for (k, &tok) in toks.iter().enumerate() {
                 let pos = start + k;
@@ -105,7 +113,11 @@ impl DeviceBatch {
             num_tokens: b.tokens.len(),
             num_samples: b.sample_rows.len(),
             max_blocks: b.max_blocks,
-            tree_mask: if b.tree_mask.is_empty() { None } else { Some(gpu.upload(&b.tree_mask)?) },
+            tree_mask: if b.tree_mask.is_empty() {
+                None
+            } else {
+                Some(gpu.upload(&b.tree_mask)?)
+            },
             prefix_len: b.prefix_len,
         })
     }

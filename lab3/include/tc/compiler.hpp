@@ -28,28 +28,28 @@ struct HostTensor {
     std::vector<double> data;
     double at(int64_t r, int64_t c) const { return data[r * shape.cols + c]; }
 };
-using Feeds = std::map<std::string, HostTensor>;  // input name -> value
+using Feeds = std::map<std::string, HostTensor>; // input name -> value
 
 // A2: evaluate the graph on the CPU in double precision.
 HostTensor evaluate(const Graph& g, const Feeds& feeds);
 
 // --------------------------------------------------------- Part B: plans ----
 enum class KernelKind {
-    Elementwise,  // only elementwise nodes; one thread per output element
-    Row,          // contains >= 1 reduction; one thread block per row
-    MatMul,       // one MatMul + elementwise prologue on A + elementwise epilogue
+    Elementwise, // only elementwise nodes; one thread per output element
+    Row,         // contains >= 1 reduction; one thread block per row
+    MatMul,      // one MatMul + elementwise prologue on A + elementwise epilogue
 };
 const char* kind_name(KernelKind k);
 
 struct Kernel {
     KernelKind kind = KernelKind::Elementwise;
-    int output = -1;         // the node this kernel materialises
-    std::vector<int> nodes;  // nodes computed inside, topological order, ends with output
-    std::vector<int> reads;  // materialised operands it loads (Inputs or other kernels' outputs)
+    int output = -1;        // the node this kernel materialises
+    std::vector<int> nodes; // nodes computed inside, topological order, ends with output
+    std::vector<int> reads; // materialised operands it loads (Inputs or other kernels' outputs)
 };
 
 struct Plan {
-    std::vector<Kernel> kernels;  // execution order
+    std::vector<Kernel> kernels; // execution order
     std::string to_string(const Graph& g) const;
 };
 
@@ -95,9 +95,10 @@ std::vector<Graph> rewrite_once(const Graph& g);
 bool probably_equivalent(const Graph& a, const Graph& b, int trials = 3, unsigned seed = 1);
 // C3: analytical cost of a plan.
 struct Device {
-    double bandwidth_gbps = 200;  // achievable DRAM bandwidth (lab1: cudaMemcpy)
-    double flops_tflops = 5;      // achievable FP32 rate of the tinycomp GEMM template (bench_fusion: ~5.3 on a 4060 Laptop)
-    double launch_us = 4;         // per-kernel overhead
+    double bandwidth_gbps = 200; // achievable DRAM bandwidth (lab1: cudaMemcpy)
+    double flops_tflops =
+        5; // achievable FP32 rate of the tinycomp GEMM template (bench_fusion: ~5.3 on a 4060 Laptop)
+    double launch_us = 4; // per-kernel overhead
 };
 struct Cost {
     double bytes = 0, flops = 0, ms = 0;
@@ -112,4 +113,4 @@ struct Candidate {
 };
 std::vector<Candidate> search(const Graph& g, const Device& dev, int depth = 3);
 
-}  // namespace tc
+} // namespace tc

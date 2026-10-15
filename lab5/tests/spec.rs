@@ -54,13 +54,28 @@ fn c1_tree_attention_matches_causal_attention_on_paths() {
     }
     let blocks: Vec<u32> = (0..8).collect();
     let cache_n = blocks.len() * bs * hk * 128;
-    let (kc, vc) = (gpu.upload(&randn(cache_n, 1)).unwrap(), gpu.upload(&randn(cache_n, 2)).unwrap());
+    let (kc, vc) = (
+        gpu.upload(&randn(cache_n, 1)).unwrap(),
+        gpu.upload(&randn(cache_n, 2)).unwrap(),
+    );
     let q = gpu.upload(&randn(n * hq * 128, 3)).unwrap();
-    let tables = gpu.upload(&blocks.iter().map(|&b| b as i32).collect::<Vec<_>>()).unwrap();
+    let tables = gpu
+        .upload(&blocks.iter().map(|&b| b as i32).collect::<Vec<_>>())
+        .unwrap();
     let dmask = gpu.upload(&masks).unwrap();
     let dummy = gpu.upload(&vec![0i32; n]).unwrap();
     let mut tree_out = gpu.alloc::<bf16>(n * hq * 128).unwrap();
-    let args = AttnArgs { block_tables: &tables, token_seq: &dummy, token_pos: &dummy, t: n, heads: hq, kv_heads: hk, max_blocks: blocks.len(), block_size: bs, tree: Some((&dmask, prefix)) };
+    let args = AttnArgs {
+        block_tables: &tables,
+        token_seq: &dummy,
+        token_pos: &dummy,
+        t: n,
+        heads: hq,
+        kv_heads: hk,
+        max_blocks: blocks.len(),
+        block_size: bs,
+        tree: Some((&dmask, prefix)),
+    };
     ops::paged_attention(&gpu, AttnImpl::Fast, &q, &kc, &vc, &mut tree_out, &args).unwrap();
     let tree_out = gpu.download(&tree_out).unwrap();
 
@@ -84,13 +99,37 @@ fn c1_tree_attention_matches_causal_attention_on_paths() {
         }
         let b = BatchInput::build(&[(&[0], prefix + path.len() - 1, &blocks, true)], bs);
         let db = DeviceBatch::upload(&gpu, &b).unwrap();
-        let qi = gpu.upload(&gpu.download(&q).unwrap()[i * hq * 128..(i + 1) * hq * 128].to_vec()).unwrap();
+        let qi = gpu
+            .upload(&gpu.download(&q).unwrap()[i * hq * 128..(i + 1) * hq * 128].to_vec())
+            .unwrap();
         let mut out = gpu.alloc::<bf16>(hq * 128).unwrap();
-        let a = AttnArgs { block_tables: &db.block_tables, token_seq: &db.token_seq, token_pos: &db.positions, t: 1, heads: hq, kv_heads: hk, max_blocks: db.max_blocks, block_size: bs, tree: None };
-        ops::paged_attention(&gpu, AttnImpl::Fast, &qi, &gpu.upload(&k2).unwrap(), &gpu.upload(&v2).unwrap(), &mut out, &a).unwrap();
+        let a = AttnArgs {
+            block_tables: &db.block_tables,
+            token_seq: &db.token_seq,
+            token_pos: &db.positions,
+            t: 1,
+            heads: hq,
+            kv_heads: hk,
+            max_blocks: db.max_blocks,
+            block_size: bs,
+            tree: None,
+        };
+        ops::paged_attention(
+            &gpu,
+            AttnImpl::Fast,
+            &qi,
+            &gpu.upload(&k2).unwrap(),
+            &gpu.upload(&v2).unwrap(),
+            &mut out,
+            &a,
+        )
+        .unwrap();
         let want = gpu.download(&out).unwrap();
         for (x, y) in tree_out[i * hq * 128..(i + 1) * hq * 128].iter().zip(&want) {
-            assert!((x.to_f32() - y.to_f32()).abs() <= 1e-2, "node {i}: tree attention differs from causal attention over its path");
+            assert!(
+                (x.to_f32() - y.to_f32()).abs() <= 1e-2,
+                "node {i}: tree attention differs from causal attention over its path"
+            );
         }
     }
 }
@@ -106,11 +145,19 @@ fn models() -> &'static Models {
     static M: OnceLock<Models> = OnceLock::new();
     M.get_or_init(|| {
         let gpu = ops5::gpu().unwrap();
-        let target = Qwen3::load(&gpu, &model_dir("Qwen3-1.7B")).expect("Qwen3-1.7B (run tools/setup_wsl.sh)");
+        let target = Qwen3::load(&gpu, &model_dir("Qwen3-1.7B"))
+            .expect("Qwen3-1.7B (run tools/setup_wsl.sh)");
         let draft = Qwen3::load(&gpu, &model_dir("Qwen3-0.6B")).unwrap();
         let text = Text::load(&model_dir("Qwen3-1.7B")).unwrap();
-        let prompt = text.chat_prompt("List the steps of a TCP handshake, then explain each in one sentence.").unwrap();
-        Models { gpu, target, draft, prompt }
+        let prompt = text
+            .chat_prompt("List the steps of a TCP handshake, then explain each in one sentence.")
+            .unwrap();
+        Models {
+            gpu,
+            target,
+            draft,
+            prompt,
+        }
     })
 }
 
@@ -129,8 +176,14 @@ fn check_greedy(method: Method) {
         spec.acceptance_rate(), spec.output.len() as f64 / spec.target_calls as f64);
     // Verifying k+1 tokens in one GEMM rounds differently from k+1 single
     // steps, so a bf16 near-tie may flip late; the bulk must agree.
-    assert!(same >= 32, "{method:?}: only {same} leading tokens agree with plain greedy decoding");
-    assert!(spec.target_calls < plain.target_calls, "{method:?}: no target calls were saved");
+    assert!(
+        same >= 32,
+        "{method:?}: only {same} leading tokens agree with plain greedy decoding"
+    );
+    assert!(
+        spec.target_calls < plain.target_calls,
+        "{method:?}: no target calls were saved"
+    );
 }
 
 #[test]
@@ -145,16 +198,39 @@ fn a3_draft_greedy_is_lossless() {
 
 #[test]
 fn c_tree_greedy_is_lossless() {
-    check_greedy(Method::Tree { widths: vec![2, 2, 1] });
+    check_greedy(Method::Tree {
+        widths: vec![2, 2, 1],
+    });
 }
 
 #[test]
 fn b2_sampling_runs_and_accepts() {
     let _g = lock();
     let m = models();
-    let r = generate(&m.gpu, &m.target, Some(&m.draft), &m.prompt, 48, &Method::Sample { k: 3, temp: 0.8, seed: 3 }).unwrap();
-    eprintln!("sampling: acceptance {:.2}, {} target calls for {} tokens", r.acceptance_rate(), r.target_calls, r.output.len());
+    let r = generate(
+        &m.gpu,
+        &m.target,
+        Some(&m.draft),
+        &m.prompt,
+        48,
+        &Method::Sample {
+            k: 3,
+            temp: 0.8,
+            seed: 3,
+        },
+    )
+    .unwrap();
+    eprintln!(
+        "sampling: acceptance {:.2}, {} target calls for {} tokens",
+        r.acceptance_rate(),
+        r.target_calls,
+        r.output.len()
+    );
     assert_eq!(r.output.len(), 48);
-    assert!(r.acceptance_rate() > 0.2, "acceptance rate {:.2} is suspiciously low", r.acceptance_rate());
+    assert!(
+        r.acceptance_rate() > 0.2,
+        "acceptance rate {:.2} is suspiciously low",
+        r.acceptance_rate()
+    );
     assert!(r.target_calls < 48);
 }

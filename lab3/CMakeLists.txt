@@ -12,9 +12,18 @@ endif()
 # compilation) and the driver API, so no nvcc is needed to build this lab.
 find_package(CUDAToolkit REQUIRED)
 
-add_library(tinycomp STATIC
-  src/ir.cpp src/plan_core.cpp src/codegen_core.cpp src/runtime.cpp
-  src/interp_student.cpp src/codegen_student.cpp src/fusion_student.cpp src/search_student.cpp)
+add_library(
+  tinycomp
+  STATIC
+  src/ir.cpp
+  src/plan_core.cpp
+  src/codegen_core.cpp
+  src/runtime.cpp
+  src/interp_student.cpp
+  src/codegen_student.cpp
+  src/fusion_student.cpp
+  src/search_student.cpp
+)
 target_include_directories(tinycomp PUBLIC include)
 target_link_libraries(tinycomp PUBLIC CUDA::cudart CUDA::cuda_driver CUDA::nvrtc)
 target_compile_options(tinycomp PRIVATE -Wall -Wextra)

@@ -1,5 +1,6 @@
 """Part C1 tests (CUDA, ctypes):  python -m pytest lab2/tests/test_c_cuda.py -v
 Build first:  cmake -S lab2 -B build/lab2 && cmake --build build/lab2 -j"""
+
 import pytest
 import torch
 
@@ -12,7 +13,9 @@ ATOL = RTOL = 2e-3
 
 
 def check(out, lse, ref_out, ref_lse):
-    assert torch.isfinite(out).all(), "non-finite output (an unwritten row, or a NaN in the softmax state)"
+    assert torch.isfinite(out).all(), (
+        "non-finite output (an unwritten row, or a NaN in the softmax state)"
+    )
     torch.testing.assert_close(out.float(), ref_out, atol=ATOL, rtol=RTOL)
     torch.testing.assert_close(lse, ref_lse, atol=1e-3, rtol=1e-4)
 

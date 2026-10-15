@@ -7,6 +7,7 @@ Read lecture L2 sections 1-2 first. Inputs are 2-D fp32 tensors [rows, cols],
 softmax is over the last dim. Triton tutorial for reference:
 https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html
 """
+
 import torch
 import triton
 import triton.language as tl
@@ -36,11 +37,15 @@ def softmax_fused(x: torch.Tensor) -> torch.Tensor:
     assert x.ndim == 2 and x.is_cuda and x.dtype == torch.float32
     rows, cols = x.shape
     if cols > MAX_FUSED_COLS:
-        raise ValueError(f"softmax_fused handles at most {MAX_FUSED_COLS} columns; use softmax_online")
+        raise ValueError(
+            f"softmax_fused handles at most {MAX_FUSED_COLS} columns; use softmax_online"
+        )
     y = torch.empty_like(x)
     block = triton.next_power_of_2(cols)
     num_warps = 4 if block <= 2048 else 8 if block <= 8192 else 16
-    softmax_row_kernel[(rows,)](x, y, x.stride(0), y.stride(0), cols, BLOCK=block, num_warps=num_warps)
+    softmax_row_kernel[(rows,)](
+        x, y, x.stride(0), y.stride(0), cols, BLOCK=block, num_warps=num_warps
+    )
     return y
 
 
@@ -74,5 +79,7 @@ def softmax_online(x: torch.Tensor, block: int = 1024):
     rows, cols = x.shape
     y = torch.empty_like(x)
     lse = torch.empty(rows, device=x.device, dtype=torch.float32)
-    softmax_online_kernel[(rows,)](x, y, lse, x.stride(0), y.stride(0), cols, BLOCK=block, num_warps=4)
+    softmax_online_kernel[(rows,)](
+        x, y, lse, x.stride(0), y.stride(0), cols, BLOCK=block, num_warps=4
+    )
     return y, lse

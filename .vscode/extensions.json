@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "EditorConfig.EditorConfig",
+    "ms-vscode.cpptools",
+    "ms-vscode.cmake-tools",
+    "loopj.vscode-gersemi",
+    "charliermarsh.ruff",
+    "mkhl.shfmt",
+    "esbenp.prettier-vscode"
+  ]
+}

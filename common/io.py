@@ -1,4 +1,5 @@
 """Small, dependency-free artifact helpers. No lab answers here."""
+
 import csv
 import json
 from pathlib import Path
@@ -11,8 +12,9 @@ def read_json(path):
 def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
-                    encoding="utf-8")
+    path.write_text(
+        json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8"
+    )
 
 
 def write_csv(path, rows):
@@ -25,4 +27,3 @@ def write_csv(path, rows):
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-

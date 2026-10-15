@@ -33,23 +33,35 @@ pub fn randn(n: usize, seed: u64, scale: f32) -> Vec<f32> {
 
 pub fn max_abs_diff(a: &[f32], b: &[f32]) -> f32 {
     assert_eq!(a.len(), b.len());
-    a.iter().zip(b).map(|(x, y)| (x - y).abs()).fold(0.0, f32::max)
+    a.iter()
+        .zip(b)
+        .map(|(x, y)| (x - y).abs())
+        .fold(0.0, f32::max)
 }
 
 /// Elements of `got` that differ from `want` by more than `atol + rtol*|want|`.
 pub fn assert_close(what: &str, got: &[f32], want: &[f32], atol: f32, rtol: f32) {
     assert_eq!(got.len(), want.len(), "{what}: length");
     for (i, (g, w)) in got.iter().zip(want).enumerate() {
-        assert!(g.is_finite() && (g - w).abs() <= atol + rtol * w.abs(), "{what}: element {i}: got {g}, want {w}");
+        assert!(
+            g.is_finite() && (g - w).abs() <= atol + rtol * w.abs(),
+            "{what}: element {i}: got {g}, want {w}"
+        );
     }
 }
 
 pub fn repo_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf()
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .unwrap()
+        .to_path_buf()
 }
 
 pub fn ref_dir(model: &str) -> PathBuf {
-    std::env::var("MLSYS_LAB4_REF").map(PathBuf::from).unwrap_or_else(|_| repo_root().join("build/lab4/ref")).join(model)
+    std::env::var("MLSYS_LAB4_REF")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| repo_root().join("build/lab4/ref"))
+        .join(model)
 }
 
 /// GPU tests that load the model take this lock: cargo runs tests in parallel

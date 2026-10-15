@@ -1,5 +1,7 @@
-# Editor settings are personal (e.g. CMake Tools' source directory)
-.vscode/
+# Share formatter settings; other VS Code files remain personal.
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Environments, caches, local secrets
 .venv*/
@@ -31,3 +33,28 @@ external/
 *.log
 .DS_Store
 Thumbs.db
+
+# Build/generated files and tool environments (also used by gersemi discovery).
+build-*/
+cmake-build-*/
+CMakeFiles/
+out/
+dist/
+target/
+_deps/
+third_party/
+third-party/
+vendor/
+node_modules/
+env/
+.tox/
+.nox/
+generated/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+compile_commands.json
+*.generated.*
+*.min.*

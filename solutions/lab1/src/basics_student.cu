@@ -18,7 +18,8 @@ namespace l1 {
 // A grid-stride loop works for any n with any grid size, so the launcher can
 // pick a grid that just fills the GPU instead of one thread per element.
 __global__ void vector_add_kernel(const float* a, const float* b, float* c, int n) {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) c[i] = a[i] + b[i];
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+        c[i] = a[i] + b[i];
 }
 
 // Provided launcher: ~8 blocks per SM is enough to fill the GPU; the
@@ -61,7 +62,8 @@ constexpr int REDUCE_MAX_BLOCKS = 1024;
 __global__ void reduce_kernel(const float* x, int n, float* partial) {
     __shared__ float warp_sums[32];
     float v = 0.f;
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) v += x[i];
+    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x)
+        v += x[i];
     v = warp_reduce_sum(v);
     const int lane = threadIdx.x % 32, warp = threadIdx.x / 32;
     if (lane == 0) warp_sums[warp] = v;
@@ -73,7 +75,9 @@ __global__ void reduce_kernel(const float* x, int n, float* partial) {
     }
 }
 
-int reduce_scratch_size() { return REDUCE_MAX_BLOCKS; }
+int reduce_scratch_size() {
+    return REDUCE_MAX_BLOCKS;
+}
 
 // Provided: pass 1 writes one partial per block, pass 2 reduces the partials
 // with a single block. Two launches, no atomics, deterministic result.
@@ -110,7 +114,7 @@ __global__ void transpose_tiled_kernel(const float* in, float* out, int M, int N
     }
     __syncthreads();
     for (int j = 0; j < TILE; j += ROWS) {
-        const int r = col0 + threadIdx.y + j, c = row0 + threadIdx.x;  // row/col of `out`
+        const int r = col0 + threadIdx.y + j, c = row0 + threadIdx.x; // row/col of `out`
         if (r < N && c < M) out[r * M + c] = tile[threadIdx.x][threadIdx.y + j];
     }
 }
@@ -131,8 +135,8 @@ __global__ void transpose_padded_kernel(const float* in, float* out, int M, int 
     }
 }
 
-static void launch_transpose(void (*kernel)(const float*, float*, int, int), const float* in, float* out, int M,
-                             int N) {
+static void launch_transpose(void (*kernel)(const float*, float*, int, int), const float* in,
+                             float* out, int M, int N) {
     const dim3 block(TILE, ROWS);
     const dim3 grid(ceil_div(N, TILE), ceil_div(M, TILE));
     kernel<<<grid, block>>>(in, out, M, N);
@@ -152,4 +156,4 @@ void transpose_padded(const float* in, float* out, int M, int N) {
     launch_transpose(transpose_padded_kernel, in, out, M, N);
 }
 
-}  // namespace l1
+} // namespace l1

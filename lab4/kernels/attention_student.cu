@@ -31,16 +31,28 @@
 typedef __nv_bfloat16 bf16;
 constexpr int HEAD_DIM = 128;
 
-extern "C" __global__ void paged_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
-                                           const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
-                                           const int* __restrict__ token_seq, const int* __restrict__ token_pos,
-                                           bf16* __restrict__ out, int T, int num_heads, int num_kv_heads,
-                                           int max_blocks, int block_size, float scale) {
+extern "C" __global__ void
+paged_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
+                const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
+                const int* __restrict__ token_seq, const int* __restrict__ token_pos,
+                bf16* __restrict__ out, int T, int num_heads, int num_kv_heads, int max_blocks,
+                int block_size, float scale) {
     const int warp_global = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
     const int lane = threadIdx.x % 32;
-    if (warp_global >= T * num_heads) return;  // whole warps exit together
+    if (warp_global >= T * num_heads) return; // whole warps exit together
     const int t = warp_global / num_heads, h = warp_global % num_heads;
     const int kvh = h / (num_heads / num_kv_heads);
-    (void)q; (void)k_cache; (void)v_cache; (void)block_tables; (void)token_seq; (void)token_pos;
-    (void)out; (void)max_blocks; (void)block_size; (void)scale; (void)lane; (void)t; (void)kvh;
+    (void)q;
+    (void)k_cache;
+    (void)v_cache;
+    (void)block_tables;
+    (void)token_seq;
+    (void)token_pos;
+    (void)out;
+    (void)max_blocks;
+    (void)block_size;
+    (void)scale;
+    (void)lane;
+    (void)t;
+    (void)kvh;
 }

@@ -24,9 +24,10 @@ static std::vector<int> parse_list(const std::string& s) {
 }
 
 template <class T, class Fn>
-static void run_family(const char* dtype, const std::vector<std::pair<const char*, Fn>>& kernels, Fn ref, int n,
-                       int repeats, int naive_max) {
-    const auto Af = make_input(static_cast<size_t>(n) * n, 1), Bf = make_input(static_cast<size_t>(n) * n, 2);
+static void run_family(const char* dtype, const std::vector<std::pair<const char*, Fn>>& kernels,
+                       Fn ref, int n, int repeats, int naive_max) {
+    const auto Af = make_input(static_cast<size_t>(n) * n, 1),
+               Bf = make_input(static_cast<size_t>(n) * n, 2);
     DeviceBuffer<T> A(Af.size()), B(Bf.size());
     if constexpr (std::is_same_v<T, float>) {
         A.upload(Af);
@@ -42,7 +43,8 @@ static void run_family(const char* dtype, const std::vector<std::pair<const char
 
     auto emit = [&](const char* name, int r, float ms) {
         const double tflops = 2.0 * n * n * n / (ms * 1e9);
-        std::printf("%s,%s,%d,%d,%.4f,%.2f,%.1f\n", name, dtype, n, r, ms, tflops, 100.0 * ref_ms / ms);
+        std::printf("%s,%s,%d,%d,%.4f,%.2f,%.1f\n", name, dtype, n, r, ms, tflops,
+                    100.0 * ref_ms / ms);
         std::fflush(stdout);
     };
     for (int r = 1; r <= repeats; ++r) {
@@ -68,10 +70,12 @@ static void run_family(const char* dtype, const std::vector<std::pair<const char
             worst = std::isfinite(got[i]) ? std::max(worst, d) : INFINITY;
         }
         if (!(worst <= 1e-2 * std::sqrt(n))) {
-            std::fprintf(stderr, "# %s is WRONG at n=%d (max |err| = %g); not timing it\n", name, n, worst);
+            std::fprintf(stderr, "# %s is WRONG at n=%d (max |err| = %g); not timing it\n", name, n,
+                         worst);
             continue;
         }
-        for (int r = 1; r <= repeats; ++r) emit(name, r, time_ms([&] { fn(n, n, n, A.get(), B.get(), C.get()); }));
+        for (int r = 1; r <= repeats; ++r)
+            emit(name, r, time_ms([&] { fn(n, n, n, A.get(), B.get(), C.get()); }));
     }
 }
 
@@ -85,18 +89,24 @@ int main(int argc, char** argv) {
             if (i + 1 >= argc) throw std::invalid_argument("missing value for " + a);
             return argv[++i];
         };
-        if (a == "--sizes") sizes = parse_list(next());
-        else if (a == "--only") only = next();
-        else if (a == "--repeats") repeats = std::stoi(next());
-        else if (a == "--naive-max") naive_max = std::stoi(next());
+        if (a == "--sizes")
+            sizes = parse_list(next());
+        else if (a == "--only")
+            only = next();
+        else if (a == "--repeats")
+            repeats = std::stoi(next());
+        else if (a == "--naive-max")
+            naive_max = std::stoi(next());
         else {
-            std::fprintf(stderr, "usage: bench_gemm [--only sgemm|hgemm] [--sizes a,b] [--repeats r] [--naive-max n]\n");
+            std::fprintf(stderr, "usage: bench_gemm [--only sgemm|hgemm] [--sizes a,b] [--repeats "
+                                 "r] [--naive-max n]\n");
             return 2;
         }
     }
     cudaDeviceProp p{};
     CUDA_CHECK(cudaGetDeviceProperties(&p, 0));
-    std::fprintf(stderr, "# %s, sm_%d%d, %d SMs\n", p.name, p.major, p.minor, p.multiProcessorCount);
+    std::fprintf(stderr, "# %s, sm_%d%d, %d SMs\n", p.name, p.major, p.minor,
+                 p.multiProcessorCount);
     std::printf("kernel,dtype,n,repeat,ms,tflops,pct_of_cublas\n");
 
     using S = void (*)(int, int, int, const float*, const float*, float*);
@@ -108,8 +118,10 @@ int main(int argc, char** argv) {
                                                         {"blocktile_2d", sgemm_blocktile_2d}};
     const std::vector<std::pair<const char*, H>> hgemms{{"wmma", hgemm_wmma}, {"mma", hgemm_mma}};
     for (int n : sizes) {
-        if (only.empty() || only == "sgemm") run_family<float, S>("fp32", sgemms, sgemm_cublas, n, repeats, naive_max);
-        if (only.empty() || only == "hgemm") run_family<__half, H>("fp16", hgemms, hgemm_cublas, n, repeats, naive_max);
+        if (only.empty() || only == "sgemm")
+            run_family<float, S>("fp32", sgemms, sgemm_cublas, n, repeats, naive_max);
+        if (only.empty() || only == "hgemm")
+            run_family<__half, H>("fp16", hgemms, hgemm_cublas, n, repeats, naive_max);
     }
     return 0;
 }

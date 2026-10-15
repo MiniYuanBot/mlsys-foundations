@@ -12,7 +12,7 @@ set -euo pipefail
 
 VENV="$HOME/venvs/mlsys"
 MODELS="$HOME/models"
-TORCH_INDEX="https://download.pytorch.org/whl/cu126"  # matches driver 566.x (CUDA <= 12.7)
+TORCH_INDEX="https://download.pytorch.org/whl/cu126" # matches driver 566.x (CUDA <= 12.7)
 WITH_MODELS=1
 [[ "${1:-}" == "--no-models" ]] && WITH_MODELS=0
 
@@ -35,7 +35,7 @@ fi
 "$VENV/bin/python" -m pip install numpy matplotlib pytest transformers safetensors "huggingface_hub[cli]"
 
 step "3/5 Rust toolchain (rustup, stable)"
-if ! command -v "$HOME/.cargo/bin/cargo" >/dev/null 2>&1; then
+if ! command -v "$HOME/.cargo/bin/cargo" > /dev/null 2>&1; then
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --component clippy,rustfmt
 fi
 "$HOME/.cargo/bin/rustup" update stable

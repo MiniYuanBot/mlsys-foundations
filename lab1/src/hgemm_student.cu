@@ -16,8 +16,8 @@ namespace l1 {
 
 static void require_multiple_c(int value, int of, const char* what) {
     if (value % of != 0)
-        throw std::invalid_argument(std::string(what) + " = " + std::to_string(value) + " must be a multiple of " +
-                                    std::to_string(of));
+        throw std::invalid_argument(std::string(what) + " = " + std::to_string(value) +
+                                    " must be a multiple of " + std::to_string(of));
 }
 
 // ================================================================ C1 ====
@@ -34,16 +34,25 @@ static void require_multiple_c(int value, int of, const char* what) {
 // Requires M % 64 == N % 64 == K % 16 == 0.
 using namespace nvcuda;
 
-__global__ void __launch_bounds__(128) hgemm_wmma_kernel(int M, int N, int K, const __half* A, const __half* B,
-                                                         float* C) {
+__global__ void __launch_bounds__(128)
+    hgemm_wmma_kernel(int M, int N, int K, const __half* A, const __half* B, float* C) {
     const int warp = threadIdx.x / 32;
     const int row0 = blockIdx.y * C1_BM + (warp / 2) * 32;
     const int col0 = blockIdx.x * C1_BN + (warp % 2) * 32;
     wmma::fragment<wmma::matrix_a, 16, 16, 16, __half, wmma::row_major> a_frag[2];
     wmma::fragment<wmma::matrix_b, 16, 16, 16, __half, wmma::row_major> b_frag[2];
     wmma::fragment<wmma::accumulator, 16, 16, 16, float> acc[2][2];
-    (void)M; (void)N; (void)K; (void)A; (void)B; (void)C; (void)row0; (void)col0;
-    (void)a_frag; (void)b_frag; (void)acc;
+    (void)M;
+    (void)N;
+    (void)K;
+    (void)A;
+    (void)B;
+    (void)C;
+    (void)row0;
+    (void)col0;
+    (void)a_frag;
+    (void)b_frag;
+    (void)acc;
 }
 
 void hgemm_wmma(int M, int N, int K, const __half* A, const __half* B, float* C) {
@@ -71,9 +80,9 @@ void hgemm_wmma(int M, int N, int K, const __half* A, const __half* B, float* C)
 // 3 stages need 56.8 KB, more than the 48 KB static limit, so the buffer is
 // dynamic shared memory (the launcher raises the per-kernel limit).
 constexpr int C2_THREADS = 256;
-constexpr int C2_APAD = C2_BK + 8;  // 40
-constexpr int C2_BPAD = C2_BN + 8;  // 136
-constexpr int C2_A_STAGE = C2_BM * C2_APAD;  // halves per stage
+constexpr int C2_APAD = C2_BK + 8;          // 40
+constexpr int C2_BPAD = C2_BN + 8;          // 136
+constexpr int C2_A_STAGE = C2_BM * C2_APAD; // halves per stage
 constexpr int C2_B_STAGE = C2_BK * C2_BPAD;
 constexpr size_t C2_SMEM_BYTES = size_t(C2_STAGES) * (C2_A_STAGE + C2_B_STAGE) * sizeof(__half);
 
@@ -85,9 +94,18 @@ constexpr size_t C2_SMEM_BYTES = size_t(C2_STAGES) * (C2_A_STAGE + C2_B_STAGE) *
 //   B tile 32 x 128 = 512 chunks; chunk c:
 //       row = c / 16, col = (c % 16) * 8
 //       smem &Bs[row * C2_BPAD + col]  <-  gmem &B[(k0 + row) * N + n0 + col]
-__device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __half* A, const __half* B, int N,
-                                             int K, int m0, int n0, int k0) {
-    (void)As; (void)Bs; (void)A; (void)B; (void)N; (void)K; (void)m0; (void)n0; (void)k0;
+__device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __half* A,
+                                             const __half* B, int N, int K, int m0, int n0,
+                                             int k0) {
+    (void)As;
+    (void)Bs;
+    (void)A;
+    (void)B;
+    (void)N;
+    (void)K;
+    (void)m0;
+    (void)n0;
+    (void)k0;
 }
 
 // TODO(C2b) one BK = 32 slice of math on one stage: two k16 steps. For kk = 0, 16:
@@ -99,10 +117,15 @@ __device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __hal
 //   then acc[i][j] += a[i] * b[j] for all 4 x 4 (i, j) with mma_16816.
 // wm / wn are the warp's row / column offsets inside the block tile.
 // Lecture L1 section 4.3 derives these addresses from the fragment layout.
-__device__ __forceinline__ void c2_compute_stage(const __half* As, const __half* Bs, float (&acc)[4][4][4], int wm,
-                                                 int wn) {
+__device__ __forceinline__ void c2_compute_stage(const __half* As, const __half* Bs,
+                                                 float (&acc)[4][4][4], int wm, int wn) {
     const int lane = threadIdx.x % 32;
-    (void)As; (void)Bs; (void)acc; (void)wm; (void)wn; (void)lane;
+    (void)As;
+    (void)Bs;
+    (void)acc;
+    (void)wm;
+    (void)wn;
+    (void)lane;
 }
 
 // TODO(C2c) the multi-stage pipeline. With S = C2_STAGES and KT = K / BK tiles:
@@ -122,18 +145,23 @@ __device__ __forceinline__ void c2_compute_stage(const __half* As, const __half*
 // Epilogue (provided below): fragment acc[i][j] holds C rows
 //   m0 + wm + i*16 + g  (d[0], d[1])  and  m0 + wm + i*16 + g + 8  (d[2], d[3])
 // at columns n0 + wn + j*8 + 2t, +1, with g = lane / 4, t = lane % 4.
-__global__ void __launch_bounds__(C2_THREADS) hgemm_mma_kernel(int M, int N, int K, const __half* A,
-                                                               const __half* B, float* C) {
+__global__ void __launch_bounds__(C2_THREADS)
+    hgemm_mma_kernel(int M, int N, int K, const __half* A, const __half* B, float* C) {
     extern __shared__ __align__(16) unsigned char c2_smem[];
     __half* As = reinterpret_cast<__half*>(c2_smem);
     __half* Bs = As + C2_STAGES * C2_A_STAGE;
     const int warp = threadIdx.x / 32, lane = threadIdx.x % 32;
-    const int wm = (warp / 4) * 64;  // 2 warps along m
-    const int wn = (warp % 4) * 32;  // 4 warps along n
+    const int wm = (warp / 4) * 64; // 2 warps along m
+    const int wn = (warp % 4) * 32; // 4 warps along n
     const int m0 = blockIdx.y * C2_BM, n0 = blockIdx.x * C2_BN;
     float acc[4][4][4] = {};
     const int KT = K / C2_BK;
-    (void)As[0]; (void)Bs[0]; (void)KT; (void)A; (void)B; (void)K;
+    (void)As[0];
+    (void)Bs[0];
+    (void)KT;
+    (void)A;
+    (void)B;
+    (void)K;
     // Epilogue (provided).
     const int g = lane / 4, t = lane % 4;
 #pragma unroll
@@ -142,7 +170,8 @@ __global__ void __launch_bounds__(C2_THREADS) hgemm_mma_kernel(int M, int N, int
         for (int j = 0; j < 4; ++j) {
             const int row = m0 + wm + i * 16 + g, col = n0 + wn + j * 8 + 2 * t;
             *reinterpret_cast<float2*>(&C[row * N + col]) = make_float2(acc[i][j][0], acc[i][j][1]);
-            *reinterpret_cast<float2*>(&C[(row + 8) * N + col]) = make_float2(acc[i][j][2], acc[i][j][3]);
+            *reinterpret_cast<float2*>(&C[(row + 8) * N + col]) =
+                make_float2(acc[i][j][2], acc[i][j][3]);
         }
     (void)M;
 }
@@ -154,7 +183,8 @@ void hgemm_mma(int M, int N, int K, const __half* A, const __half* B, float* C) 
     require_multiple_c(N, C2_BN, "N");
     require_multiple_c(K, C2_BK, "K");
     static bool configured = [] {
-        CUDA_CHECK(cudaFuncSetAttribute(hgemm_mma_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize,
+        CUDA_CHECK(cudaFuncSetAttribute(hgemm_mma_kernel,
+                                        cudaFuncAttributeMaxDynamicSharedMemorySize,
                                         static_cast<int>(C2_SMEM_BYTES)));
         return true;
     }();
@@ -164,4 +194,4 @@ void hgemm_mma(int M, int N, int K, const __half* A, const __half* B, float* C) 
     CUDA_CHECK_LAUNCH();
 }
 
-}  // namespace l1
+} // namespace l1

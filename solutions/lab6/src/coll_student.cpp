@@ -28,8 +28,8 @@ void ring_shift(const float* send, float* recv, size_t n, const Comm& c) {
         std::copy(send, send + n, recv);
         return;
     }
-    MPI_Sendrecv(send, static_cast<int>(n), MPI_FLOAT, c.right(), TAG, recv, static_cast<int>(n), MPI_FLOAT, c.left(),
-                 TAG, c.comm, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(send, static_cast<int>(n), MPI_FLOAT, c.right(), TAG, recv, static_cast<int>(n),
+                 MPI_FLOAT, c.left(), TAG, c.comm, MPI_STATUS_IGNORE);
 }
 
 // ------------------------------------------------------------------- A2 ----
@@ -63,13 +63,14 @@ void allreduce_star(float* buf, size_t n, const Comm& c) {
 void reduce_scatter_ring(float* buf, size_t n, const Comm& c) {
     const int P = c.size;
     if (P == 1) return;
-    std::vector<float> tmp(chunk_range(n, P, 0).second);  // chunk 0 is the largest
+    std::vector<float> tmp(chunk_range(n, P, 0).second); // chunk 0 is the largest
     for (int s = 0; s < P - 1; ++s) {
         const int si = ((c.rank - s - 1) % P + P) % P, ri = ((c.rank - s - 2) % P + P) % P;
         const auto [sb, se] = chunk_range(n, P, si);
         const auto [rb, re] = chunk_range(n, P, ri);
         MPI_Sendrecv(buf + sb, static_cast<int>(se - sb), MPI_FLOAT, c.right(), TAG + s, tmp.data(),
-                     static_cast<int>(re - rb), MPI_FLOAT, c.left(), TAG + s, c.comm, MPI_STATUS_IGNORE);
+                     static_cast<int>(re - rb), MPI_FLOAT, c.left(), TAG + s, c.comm,
+                     MPI_STATUS_IGNORE);
         for (size_t i = rb; i < re; ++i) buf[i] += tmp[i - rb];
     }
 }
@@ -84,8 +85,9 @@ void allgather_ring(float* buf, size_t n, const Comm& c) {
         const int si = ((c.rank - s) % P + P) % P, ri = ((c.rank - s - 1) % P + P) % P;
         const auto [sb, se] = chunk_range(n, P, si);
         const auto [rb, re] = chunk_range(n, P, ri);
-        MPI_Sendrecv(buf + sb, static_cast<int>(se - sb), MPI_FLOAT, c.right(), TAG + 100 + s, buf + rb,
-                     static_cast<int>(re - rb), MPI_FLOAT, c.left(), TAG + 100 + s, c.comm, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(buf + sb, static_cast<int>(se - sb), MPI_FLOAT, c.right(), TAG + 100 + s,
+                     buf + rb, static_cast<int>(re - rb), MPI_FLOAT, c.left(), TAG + 100 + s,
+                     c.comm, MPI_STATUS_IGNORE);
     }
 }
 
@@ -104,14 +106,16 @@ void allreduce_ring(float* buf, size_t n, const Comm& c) {
 // Latency log2(P) * alpha instead of the ring's 2(P-1) * alpha, but every step
 // moves the whole buffer: log2(P) * n floats instead of the ring's ~2n.
 void allreduce_rd(float* buf, size_t n, const Comm& c) {
-    if (c.size & (c.size - 1)) throw std::invalid_argument("allreduce_rd: P must be a power of two");
+    if (c.size & (c.size - 1))
+        throw std::invalid_argument("allreduce_rd: P must be a power of two");
     std::vector<float> tmp(n);
     for (int mask = 1; mask < c.size; mask <<= 1) {
         const int partner = c.rank ^ mask;
-        MPI_Sendrecv(buf, static_cast<int>(n), MPI_FLOAT, partner, TAG + 200 + mask, tmp.data(), static_cast<int>(n),
-                     MPI_FLOAT, partner, TAG + 200 + mask, c.comm, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(buf, static_cast<int>(n), MPI_FLOAT, partner, TAG + 200 + mask, tmp.data(),
+                     static_cast<int>(n), MPI_FLOAT, partner, TAG + 200 + mask, c.comm,
+                     MPI_STATUS_IGNORE);
         for (size_t i = 0; i < n; ++i) buf[i] += tmp[i];
     }
 }
 
-}  // namespace coll
+} // namespace coll

@@ -60,7 +60,8 @@ int64_t Tensor::offset_of(const Index& index) const {
         throw std::out_of_range("offset_of: wrong number of indices");
     int64_t pos = offset_;
     for (size_t d = 0; d < index.size(); ++d) {
-        if (index[d] < 0 || index[d] >= shape_[d]) throw std::out_of_range("offset_of: index out of range");
+        if (index[d] < 0 || index[d] >= shape_[d])
+            throw std::out_of_range("offset_of: index out of range");
         pos += index[d] * strides_[d];
     }
     return pos;
@@ -88,13 +89,15 @@ bool Tensor::is_contiguous() const {
 // order must be a permutation of 0..ndim-1 (else std::invalid_argument).
 // transpose(a, b) is permute with dims a and b swapped; accept negative dims.
 Tensor Tensor::permute(const std::vector<int64_t>& order) const {
-    if (static_cast<int64_t>(order.size()) != ndim()) throw std::invalid_argument("permute: wrong rank");
+    if (static_cast<int64_t>(order.size()) != ndim())
+        throw std::invalid_argument("permute: wrong rank");
     std::vector<bool> seen(order.size(), false);
     Shape shape(order.size());
     Strides strides(order.size());
     for (size_t i = 0; i < order.size(); ++i) {
         int64_t d = order[i];
-        if (d < 0 || d >= ndim() || seen[d]) throw std::invalid_argument("permute: not a permutation");
+        if (d < 0 || d >= ndim() || seen[d])
+            throw std::invalid_argument("permute: not a permutation");
         seen[d] = true;
         shape[i] = shape_[d];
         strides[i] = strides_[d];
@@ -146,7 +149,8 @@ Shape broadcast_shapes(const Shape& a, const Shape& b) {
     for (size_t i = 0; i < n; ++i) {
         const int64_t x = i < n - a.size() ? 1 : a[i - (n - a.size())];
         const int64_t y = i < n - b.size() ? 1 : b[i - (n - b.size())];
-        if (x != y && x != 1 && y != 1) throw std::invalid_argument("broadcast_shapes: incompatible");
+        if (x != y && x != 1 && y != 1)
+            throw std::invalid_argument("broadcast_shapes: incompatible");
         out[i] = x == 1 ? y : x;
     }
     return out;
@@ -159,14 +163,18 @@ Shape broadcast_shapes(const Shape& a, const Shape& b) {
 // * A dim that already matches keeps its stride.
 // * Anything else -> std::invalid_argument.
 Tensor Tensor::broadcast_to(const Shape& target) const {
-    if (target.size() < shape_.size()) throw std::invalid_argument("broadcast_to: target rank too small");
+    if (target.size() < shape_.size())
+        throw std::invalid_argument("broadcast_to: target rank too small");
     const size_t lead = target.size() - shape_.size();
     Strides strides(target.size(), 0);
     for (size_t i = 0; i < shape_.size(); ++i) {
         const int64_t have = shape_[i], want = target[lead + i];
-        if (have == want) strides[lead + i] = strides_[i];
-        else if (have == 1) strides[lead + i] = 0;
-        else throw std::invalid_argument("broadcast_to: incompatible shape");
+        if (have == want)
+            strides[lead + i] = strides_[i];
+        else if (have == 1)
+            strides[lead + i] = 0;
+        else
+            throw std::invalid_argument("broadcast_to: incompatible shape");
     }
     return Tensor(storage_, target, strides, offset_);
 }
@@ -227,4 +235,4 @@ Tensor sum(const Tensor& x, int64_t dim, bool keepdim) {
     return out.view(squeezed);
 }
 
-}  // namespace mt
+} // namespace mt

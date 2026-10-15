@@ -8,6 +8,7 @@ and attach a bootstrap confidence interval, and we decide a hypothesis by
 comparing that interval with a PRE-REGISTERED minimal effect. Lecture L7 §3.
 Pure Python (random, statistics); no numpy needed.
 """
+
 import random
 import statistics
 
@@ -41,7 +42,8 @@ def ratio_ci(base, treat, n_boot=10000, alpha=0.05, seed=0):
     rng = random.Random(seed)
     point = statistics.median(treat) / statistics.median(base)
     res = sorted(
-        statistics.median(rng.choices(treat, k=len(treat))) / statistics.median(rng.choices(base, k=len(base)))
+        statistics.median(rng.choices(treat, k=len(treat)))
+        / statistics.median(rng.choices(base, k=len(base)))
         for _ in range(n_boot)
     )
     return point, res[int(alpha / 2 * n_boot)], res[int((1 - alpha / 2) * n_boot) - 1]

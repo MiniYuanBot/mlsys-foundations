@@ -1,4 +1,5 @@
 """Execute a user-selected command with configuration, environment and combined output."""
+
 import argparse
 import subprocess
 from common.io import read_json
@@ -16,9 +17,17 @@ def main():
         parser.error("provide a command after --")
     with run_directory(args.out, read_json(args.config)) as out:
         from common.io import write_json
+
         write_json(out / "executed_argv.json", command)
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                   text=True, encoding="utf-8", errors="replace", bufsize=1)
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+        )
         try:
             for line in process.stdout:
                 print(line, end="", flush=True)
@@ -39,4 +48,3 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

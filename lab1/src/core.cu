@@ -59,14 +59,16 @@ void sgemm_cublas(int M, int N, int K, const float* A, const float* B, float* C)
     const float one = 1.f, zero = 0.f;
     // Pedantic math: real FP32 FMAs, no silent TF32 down-conversion.
     CUBLAS_CHECK(cublasSetMathMode(cublas_handle(), CUBLAS_PEDANTIC_MATH));
-    CUBLAS_CHECK(cublasSgemm(cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &one, B, N, A, K, &zero, C, N));
+    CUBLAS_CHECK(cublasSgemm(cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &one, B, N, A, K,
+                             &zero, C, N));
 }
 
 void hgemm_cublas(int M, int N, int K, const __half* A, const __half* B, float* C) {
     const float one = 1.f, zero = 0.f;
     CUBLAS_CHECK(cublasSetMathMode(cublas_handle(), CUBLAS_DEFAULT_MATH));
-    CUBLAS_CHECK(cublasGemmEx(cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &one, B, CUDA_R_16F, N, A,
-                              CUDA_R_16F, K, &zero, C, CUDA_R_32F, N, CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT));
+    CUBLAS_CHECK(cublasGemmEx(cublas_handle(), CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &one, B,
+                              CUDA_R_16F, N, A, CUDA_R_16F, K, &zero, C, CUDA_R_32F, N,
+                              CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT));
 }
 
-}  // namespace l1
+} // namespace l1

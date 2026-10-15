@@ -1,4 +1,5 @@
 """Version-independent request schema. Native vLLM JSON is always preserved separately."""
+
 import math
 
 
@@ -69,4 +70,3 @@ def validate_design(design):
         raise ValueError("long input >512; heldout input must be strictly longer")
     if design["output_len"] != 64 or design["heldout_input"] + 64 > design["max_model_len"]:
         raise ValueError("check output length and context limit")
-

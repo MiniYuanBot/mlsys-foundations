@@ -37,8 +37,9 @@ std::vector<int> toposort(const Graph& g) {
 //   MatMul   -> out(i, j) = sum over k of A(i, k) * B(k, j)
 // Return the value of g.output().
 HostTensor evaluate(const Graph& g, const Feeds& feeds) {
-    (void)g; (void)feeds;
+    (void)g;
+    (void)feeds;
     throw todo("A2 evaluate");
 }
 
-}  // namespace tc
+} // namespace tc

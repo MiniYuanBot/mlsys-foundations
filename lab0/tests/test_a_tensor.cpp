@@ -35,7 +35,8 @@ TEST(A2_offset_of_checks_bounds) {
 
 TEST(A2_offset_of_uses_strides_and_offset) {
     // A padded 2x3 matrix stored with row stride 4, starting at element 1.
-    auto storage = std::make_shared<std::vector<float>>(std::vector<float>{9, 1, 2, 3, 9, 4, 5, 6, 9});
+    auto storage =
+        std::make_shared<std::vector<float>>(std::vector<float>{9, 1, 2, 3, 9, 4, 5, 6, 9});
     Tensor t(storage, {2, 3}, {4, 1}, 1);
     CHECK_EQ(t.at({0, 0}), 1.0f);
     CHECK_EQ(t.at({1, 2}), 6.0f);
@@ -46,10 +47,10 @@ TEST(A3_is_contiguous) {
     CHECK(iota({2, 3, 4}).is_contiguous());
     CHECK(Tensor::zeros({}).is_contiguous());
     auto s = std::make_shared<std::vector<float>>(12);
-    CHECK(!Tensor(s, {2, 3}, {4, 1}, 0).is_contiguous());   // padded rows
-    CHECK(!Tensor(s, {3, 2}, {1, 3}, 0).is_contiguous());   // transposed
-    CHECK(Tensor(s, {1, 3}, {99, 1}, 0).is_contiguous());   // size-1 dim: stride irrelevant
-    CHECK(Tensor(s, {0, 3}, {7, 7}, 0).is_contiguous());    // empty
+    CHECK(!Tensor(s, {2, 3}, {4, 1}, 0).is_contiguous()); // padded rows
+    CHECK(!Tensor(s, {3, 2}, {1, 3}, 0).is_contiguous()); // transposed
+    CHECK(Tensor(s, {1, 3}, {99, 1}, 0).is_contiguous()); // size-1 dim: stride irrelevant
+    CHECK(Tensor(s, {0, 3}, {7, 7}, 0).is_contiguous());  // empty
 }
 
 TEST(A4_transpose_is_a_view) {
@@ -60,7 +61,7 @@ TEST(A4_transpose_is_a_view) {
     CHECK(tt.shares_storage_with(t));
     CHECK(!tt.is_contiguous());
     CHECK_EQ(tt.at({2, 1}), 5.0f);
-    tt.at({2, 1}) = 42.0f;  // write through the view
+    tt.at({2, 1}) = 42.0f; // write through the view
     CHECK_EQ(t.at({1, 2}), 42.0f);
     CHECK_EQ(t.transpose(-1, -2).shape(), (Shape{3, 2}));
 }
@@ -85,12 +86,12 @@ TEST(A5_slice_with_step) {
 
 TEST(A5_slice_columns_of_matrix) {
     Tensor t = iota({3, 4});
-    Tensor c = t.slice(1, 1, 3);  // columns 1..2
+    Tensor c = t.slice(1, 1, 3); // columns 1..2
     CHECK_EQ(c.shape(), (Shape{3, 2}));
     CHECK_EQ(c.to_vector(), (std::vector<float>{1, 2, 5, 6, 9, 10}));
     CHECK(!c.is_contiguous());
     CHECK(c.shares_storage_with(t));
-    Tensor r = t.slice(-2, 1, 100);  // dim -2 = rows, stop clamped
+    Tensor r = t.slice(-2, 1, 100); // dim -2 = rows, stop clamped
     CHECK_EQ(r.shape(), (Shape{2, 4}));
     CHECK(r.is_contiguous());
 }
@@ -102,7 +103,8 @@ TEST(A5_slice_edge_cases) {
     CHECK_THROWS(t.slice(0, 0, 5, 0), std::invalid_argument);
     CHECK_THROWS(t.slice(1, 0, 5), std::out_of_range);
     // slice of a slice composes offsets and strides
-    CHECK_EQ(Tensor::arange(20).slice(0, 1, 20, 2).slice(0, 2, 8, 3).to_vector(), (std::vector<float>{5, 11}));
+    CHECK_EQ(Tensor::arange(20).slice(0, 1, 20, 2).slice(0, 2, 8, 3).to_vector(),
+             (std::vector<float>{5, 11}));
 }
 
 TEST(A6_broadcast_shapes) {
@@ -158,7 +160,7 @@ TEST(A8_zip_broadcasts) {
 
 TEST(A8_zip_on_views_does_not_mutate_inputs) {
     Tensor a = iota({3, 2});
-    Tensor at = a.transpose(0, 1);  // 2x3, non-contiguous
+    Tensor at = a.transpose(0, 1); // 2x3, non-contiguous
     Tensor out = at + at;
     CHECK(out.is_contiguous());
     CHECK_EQ(out.to_vector(), (std::vector<float>{0, 4, 8, 2, 6, 10}));
@@ -195,4 +197,6 @@ TEST(A_capstone_softmax_from_views) {
     CHECK_NEAR(sum(sum(p, -1), 0).at({}), 2.0, 1e-5);
 }
 
-int main(int argc, char** argv) { return run_tests(argc, argv); }
+int main(int argc, char** argv) {
+    return run_tests(argc, argv);
+}

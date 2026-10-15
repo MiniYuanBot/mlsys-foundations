@@ -46,7 +46,8 @@ int main() {
         {"softmax", "8192x4096", models::softmax(8192, 4096), 0},
         {"layernorm", "8192x4096", models::layernorm(8192, 4096), 0},
         {"rmsnorm", "8192x4096", models::rmsnorm(8192, 4096), 0},
-        {"matmul_bias_gelu", "4096x1024x4096", models::matmul_bias_gelu(4096, 1024, 4096), 2.0 * 4096 * 1024 * 4096},
+        {"matmul_bias_gelu", "4096x1024x4096", models::matmul_bias_gelu(4096, 1024, 4096),
+         2.0 * 4096 * 1024 * 4096},
     };
     for (auto& c : cases) {
         const Feeds f = feeds_for(c.g);
@@ -54,8 +55,9 @@ int main() {
             try {
                 const Plan p = std::string(which) == "fused" ? plan_fused(c.g) : plan_unfused(c.g);
                 const double ms = rt.time_ms(c.g, p, f);
-                std::printf("%s,%s,%s,%zu,%.4f,%.1f,%.2f\n", c.name, c.shape.c_str(), which, p.kernels.size(), ms,
-                            min_bytes(c.g) / (ms * 1e6), c.flops / (ms * 1e9));
+                std::printf("%s,%s,%s,%zu,%.4f,%.1f,%.2f\n", c.name, c.shape.c_str(), which,
+                            p.kernels.size(), ms, min_bytes(c.g) / (ms * 1e6),
+                            c.flops / (ms * 1e9));
                 std::fflush(stdout);
             } catch (const std::logic_error& e) {
                 std::fprintf(stderr, "# skip %s/%s: %s\n", c.name, which, e.what());

@@ -1,4 +1,5 @@
 """Read-only smoke checks; never installs packages or downloads a model."""
+
 import argparse
 import importlib
 import sys
@@ -12,6 +13,7 @@ def inspect(require):
     if require != "none":
         try:
             import torch
+
             x = torch.randn(8, 8, requires_grad=True)
             (x @ x.T).sum().backward()
             checks["torch"] = bool(torch.isfinite(x.grad).all())
@@ -34,16 +36,26 @@ def inspect(require):
             except Exception as exc:
                 checks[require] = False
                 checks[require + "_error"] = str(exc)
-    required = {"none": [], "torch": ["torch"], "cuda": ["torch", "cuda"],
-                "triton": ["torch", "cuda", "triton"], "vllm": ["torch", "cuda", "vllm"]}[require]
-    report.update(checks=checks, required=require,
-                  status="ready" if all(checks.get(k) is True for k in required) else "blocked")
+    required = {
+        "none": [],
+        "torch": ["torch"],
+        "cuda": ["torch", "cuda"],
+        "triton": ["torch", "cuda", "triton"],
+        "vllm": ["torch", "cuda", "vllm"],
+    }[require]
+    report.update(
+        checks=checks,
+        required=require,
+        status="ready" if all(checks.get(k) is True for k in required) else "blocked",
+    )
     return report
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--require", choices=["none", "torch", "cuda", "triton", "vllm"], default="none")
+    parser.add_argument(
+        "--require", choices=["none", "torch", "cuda", "triton", "vllm"], default="none"
+    )
     parser.add_argument("--out", default="results/environment/doctor.json")
     args = parser.parse_args()
     result = inspect(args.require)
@@ -54,4 +66,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

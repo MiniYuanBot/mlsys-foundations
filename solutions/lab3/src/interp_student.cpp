@@ -56,7 +56,8 @@ HostTensor evaluate(const Graph& g, const Feeds& feeds) {
         if (n.op == Op::Input) {
             auto it = feeds.find(n.name);
             if (it == feeds.end()) throw std::invalid_argument("missing feed '" + n.name + "'");
-            if (it->second.shape != n.shape) throw std::invalid_argument("feed '" + n.name + "' has the wrong shape");
+            if (it->second.shape != n.shape)
+                throw std::invalid_argument("feed '" + n.name + "' has the wrong shape");
             out = it->second;
         } else if (n.op == Op::Const) {
             out.data[0] = n.value;
@@ -65,12 +66,23 @@ HostTensor evaluate(const Graph& g, const Feeds& feeds) {
             for (size_t i = 0; i < a.size(); ++i) {
                 const double x = a[i];
                 switch (n.op) {
-                    case Op::Neg: out.data[i] = -x; break;
-                    case Op::Exp: out.data[i] = std::exp(x); break;
-                    case Op::Tanh: out.data[i] = std::tanh(x); break;
-                    case Op::Relu: out.data[i] = x > 0 ? x : 0; break;
-                    case Op::Rsqrt: out.data[i] = 1.0 / std::sqrt(x); break;
-                    default: throw std::logic_error("unary");
+                case Op::Neg:
+                    out.data[i] = -x;
+                    break;
+                case Op::Exp:
+                    out.data[i] = std::exp(x);
+                    break;
+                case Op::Tanh:
+                    out.data[i] = std::tanh(x);
+                    break;
+                case Op::Relu:
+                    out.data[i] = x > 0 ? x : 0;
+                    break;
+                case Op::Rsqrt:
+                    out.data[i] = 1.0 / std::sqrt(x);
+                    break;
+                default:
+                    throw std::logic_error("unary");
                 }
             }
         } else if (is_binary(n.op)) {
@@ -79,12 +91,23 @@ HostTensor evaluate(const Graph& g, const Feeds& feeds) {
                     const double x = bget(n.srcs[0], r, c), y = bget(n.srcs[1], r, c);
                     double z = 0;
                     switch (n.op) {
-                        case Op::Add: z = x + y; break;
-                        case Op::Sub: z = x - y; break;
-                        case Op::Mul: z = x * y; break;
-                        case Op::Div: z = x / y; break;
-                        case Op::Max: z = std::max(x, y); break;
-                        default: throw std::logic_error("binary");
+                    case Op::Add:
+                        z = x + y;
+                        break;
+                    case Op::Sub:
+                        z = x - y;
+                        break;
+                    case Op::Mul:
+                        z = x * y;
+                        break;
+                    case Op::Div:
+                        z = x / y;
+                        break;
+                    case Op::Max:
+                        z = std::max(x, y);
+                        break;
+                    default:
+                        throw std::logic_error("binary");
                     }
                     out.data[r * n.shape.cols + c] = z;
                 }
@@ -110,4 +133,4 @@ HostTensor evaluate(const Graph& g, const Feeds& feeds) {
     return val[g.output()];
 }
 
-}  // namespace tc
+} // namespace tc

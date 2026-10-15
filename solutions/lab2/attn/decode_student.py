@@ -11,6 +11,7 @@ most of it idle. FlashDecoding splits the KEYS into NSPLIT chunks, processes
 them in parallel, then merges the partial results with their log-sum-exps.
 Blog with animations: https://crfm.stanford.edu/2023/10/12/flashdecoding.html
 """
+
 import math
 
 import torch
@@ -33,8 +34,9 @@ LN2 = tl.constexpr(0.6931471805599453)  # used inside kernels: must be constexpr
 #   Opart[bh, split, :]  (fp32)  and its lse (natural log) to Lpart[bh, split].
 # A chunk is never empty (the launcher guarantees chunk * (NSPLIT - 1) < S).
 @triton.jit
-def decode_split_kernel(Q, K, V, Opart, Lpart, qk_scale, S, chunk, NSPLIT,
-                        D: tl.constexpr, BN: tl.constexpr):
+def decode_split_kernel(
+    Q, K, V, Opart, Lpart, qk_scale, S, chunk, NSPLIT, D: tl.constexpr, BN: tl.constexpr
+):
     bh = tl.program_id(0)
     split = tl.program_id(1)
     offs_d = tl.arange(0, D)
@@ -48,14 +50,18 @@ def decode_split_kernel(Q, K, V, Opart, Lpart, qk_scale, S, chunk, NSPLIT,
     for start in range(lo, hi, BN):
         offs_n = start + tl.arange(0, BN)
         mask = offs_n < hi
-        k = tl.load(K + kv_base + offs_n[:, None] * D + offs_d[None, :], mask=mask[:, None], other=0.0)
+        k = tl.load(
+            K + kv_base + offs_n[:, None] * D + offs_d[None, :], mask=mask[:, None], other=0.0
+        )
         s = tl.sum(q[None, :] * k.to(tl.float32), axis=1)
         s = tl.where(mask, s, -float("inf"))
         m_new = tl.maximum(m_i, tl.max(s, 0))
         alpha = tl.exp2(m_i - m_new)
         p = tl.exp2(s - m_new)
         l_i = l_i * alpha + tl.sum(p, 0)
-        v = tl.load(V + kv_base + offs_n[:, None] * D + offs_d[None, :], mask=mask[:, None], other=0.0)
+        v = tl.load(
+            V + kv_base + offs_n[:, None] * D + offs_d[None, :], mask=mask[:, None], other=0.0
+        )
         acc = acc * alpha + tl.sum(p[:, None] * v.to(tl.float32), axis=0)
         m_i = m_new
     tl.store(Opart + (bh * NSPLIT + split) * D + offs_d, acc / l_i)
@@ -79,7 +85,11 @@ def decode_combine_kernel(Opart, Lpart, O, L, NSPLIT, D: tl.constexpr, SPLIT_BLO
     m = tl.max(lse_s, 0)
     w = tl.exp(lse_s - m)
     total = tl.sum(w, 0)
-    o_s = tl.load(Opart + (bh * NSPLIT + offs_s[:, None]) * D + offs_d[None, :], mask=smask[:, None], other=0.0)
+    o_s = tl.load(
+        Opart + (bh * NSPLIT + offs_s[:, None]) * D + offs_d[None, :],
+        mask=smask[:, None],
+        other=0.0,
+    )
     out = tl.sum(w[:, None] * o_s, axis=0) / total
     tl.store(O + bh * D + offs_d, out.to(tl.float16))
     tl.store(L + bh, m + tl.log(total))
@@ -102,17 +112,27 @@ def flash_decode(q, k, v, num_splits=None, sm_scale=None, block_n=64):
     assert q.shape == (B, H, D) and v.shape == k.shape and q.dtype == torch.float16
     q, k, v = q.contiguous(), k.contiguous(), v.contiguous()
     if num_splits is None:
-        num_splits = default_num_splits(B, H, S, torch.cuda.get_device_properties(q.device).multi_processor_count,
-                                        block_n)
+        num_splits = default_num_splits(
+            B, H, S, torch.cuda.get_device_properties(q.device).multi_processor_count, block_n
+        )
     chunk = triton.cdiv(triton.cdiv(S, num_splits), block_n) * block_n
     num_splits = triton.cdiv(S, chunk)  # no empty chunk
     sm_scale = sm_scale if sm_scale is not None else 1.0 / math.sqrt(D)
     opart = torch.empty(B * H, num_splits, D, device=q.device, dtype=torch.float32)
     lpart = torch.empty(B * H, num_splits, device=q.device, dtype=torch.float32)
-    decode_split_kernel[(B * H, num_splits)](q, k, v, opart, lpart, sm_scale * LOG2E, S, chunk, num_splits, D=D,
-                                             BN=block_n, num_warps=4)
+    decode_split_kernel[(B * H, num_splits)](
+        q, k, v, opart, lpart, sm_scale * LOG2E, S, chunk, num_splits, D=D, BN=block_n, num_warps=4
+    )
     out = torch.empty(B, H, D, device=q.device, dtype=torch.float16)
     lse = torch.empty(B, H, device=q.device, dtype=torch.float32)
-    decode_combine_kernel[(B * H,)](opart, lpart, out, lse, num_splits, D=D,
-                                    SPLIT_BLOCK=max(2, triton.next_power_of_2(num_splits)), num_warps=4)
+    decode_combine_kernel[(B * H,)](
+        opart,
+        lpart,
+        out,
+        lse,
+        num_splits,
+        D=D,
+        SPLIT_BLOCK=max(2, triton.next_power_of_2(num_splits)),
+        num_warps=4,
+    )
     return out, lse

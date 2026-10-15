@@ -52,7 +52,12 @@ pub fn greedy_accept(draft: &[u32], target_next: &[u32]) -> (usize, u32) {
 // If all k were accepted, emit one more sample from p[k].
 // Return the emitted tokens (length a + 1 for a accepted drafts).
 // Lecture L5 section 3 proves the output is distributed exactly as the target.
-pub fn speculative_sample(draft: &[u32], q: &[Vec<f32>], p: &[Vec<f32>], rng: &mut Rng) -> Vec<u32> {
+pub fn speculative_sample(
+    draft: &[u32],
+    q: &[Vec<f32>],
+    p: &[Vec<f32>],
+    rng: &mut Rng,
+) -> Vec<u32> {
     let _ = (draft, q, p, rng);
     todo!("B1 speculative_sample")
 }
@@ -67,7 +72,11 @@ pub fn speculative_sample(draft: &[u32], q: &[Vec<f32>], p: &[Vec<f32>], rng: &m
 // Return (path of node indices starting with 0, bonus = target_next[last node]).
 // The accepted tokens are tree_tokens[path[1..]], then the bonus.
 // (If two children carry the same token, take the first one.)
-pub fn tree_accept(tree_tokens: &[u32], parents: &[usize], target_next: &[u32]) -> (Vec<usize>, u32) {
+pub fn tree_accept(
+    tree_tokens: &[u32],
+    parents: &[usize],
+    target_next: &[u32],
+) -> (Vec<usize>, u32) {
     let _ = (tree_tokens, parents, target_next);
     todo!("C2 tree_accept")
 }

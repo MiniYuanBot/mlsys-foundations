@@ -9,11 +9,11 @@ $$\text{out} = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d}}\right)V$$
 
 直接照公式计算，要把 S×S 的分数矩阵写进显存。S=8192 时，每个 head 就要 256 MB，而且 8 GB 显存只能“读一遍、写一遍”地来回搬它。FlashAttention 的核心想法是：**把 softmax 改写成可以分块、在线计算的形式，让分数矩阵永远只存在于片上存储里**。这个 lab 带你一步步推导并写出它。
 
-| 部分 | 你要写什么 | 难度梯度 | 对应的真实系统 |
-|---|---|---|---|
-| **A** Softmax | 融合的行 softmax；任意长度的 online softmax（同时求 log-sum-exp） | ① 填空，熟悉 Triton | PyTorch `softmax` kernel、Triton 教程 02 |
-| **B** FlashAttention-2（Triton） | 单 tile 版 → 分块循环 + online 重缩放 → causal mask + 跳过空块 → 调参 | ② 核心实现 + 性能目标 | [FlashAttention-2](https://arxiv.org/abs/2307.08691)、Triton 教程 06 |
-| **C** 手写 Tensor Core + 推理解码 | C1：用 `mma.sync` 写 CUDA 版 FA2 前向（P 留在寄存器里）；C2：FlashDecoding split-KV | ③ 前沿设计的精简复现 | FlashAttention-2 的 CUDA 内循环、[FlashDecoding](https://crfm.stanford.edu/2023/10/12/flashdecoding.html)、FlashInfer |
+| 部分                              | 你要写什么                                                                          | 难度梯度              | 对应的真实系统                                                                                                        |
+| --------------------------------- | ----------------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **A** Softmax                     | 融合的行 softmax；任意长度的 online softmax（同时求 log-sum-exp）                   | ① 填空，熟悉 Triton   | PyTorch `softmax` kernel、Triton 教程 02                                                                              |
+| **B** FlashAttention-2（Triton）  | 单 tile 版 → 分块循环 + online 重缩放 → causal mask + 跳过空块 → 调参               | ② 核心实现 + 性能目标 | [FlashAttention-2](https://arxiv.org/abs/2307.08691)、Triton 教程 06                                                  |
+| **C** 手写 Tensor Core + 推理解码 | C1：用 `mma.sync` 写 CUDA 版 FA2 前向（P 留在寄存器里）；C2：FlashDecoding split-KV | ③ 前沿设计的精简复现  | FlashAttention-2 的 CUDA 内循环、[FlashDecoding](https://crfm.stanford.edu/2023/10/12/flashdecoding.html)、FlashInfer |
 
 做完后你应当能回答：
 
@@ -71,10 +71,10 @@ lab2/
 
 读讲义 §1（为什么要减去最大值）和 §2（online softmax 的推导）。
 
-| TODO | 内容 | 要点 |
-|---|---|---|
-| A1 | `softmax_row_kernel` | 一个 program 处理一整行；padding 位置填 `-inf` |
-| A2 | `softmax_online_kernel` | 第一遍维护 (m, l) 并重缩放，第二遍写出结果；同时写出 `lse` |
+| TODO | 内容                    | 要点                                                       |
+| ---- | ----------------------- | ---------------------------------------------------------- |
+| A1   | `softmax_row_kernel`    | 一个 program 处理一整行；padding 位置填 `-inf`             |
+| A2   | `softmax_online_kernel` | 第一遍维护 (m, l) 并重缩放，第二遍写出结果；同时写出 `lse` |
 
 ```bash
 python lab2/bench/bench_softmax.py > results/lab2/softmax.csv
@@ -92,12 +92,12 @@ python lab2/bench/bench_softmax.py > results/lab2/softmax.csv
 
 读讲义 §3。四个 TODO 一级比一级难，**请按顺序做**：
 
-| TODO | 内容 | 要点 | 测试 |
-|---|---|---|---|
-| B1 | 单 tile 版本（S ≤ 64） | 不需要 online：一次算完 `softmax(QKᵀ)V`；熟悉 `tl.dot` 和 mask | `B1_*` |
-| B2 | 分块循环 + online 重缩放 | 维护 `m_i`、`l_i`、`acc`；每个块都用 `alpha` 重缩放旧结果 | `B2_*` |
-| B3 | causal | 先加 mask，确认正确后，再把循环上界改成对角线所在的块 | `B3_*` |
-| B4 | 调参（无需写新代码） | 为 D=128 找到一组 `block_m/block_n/num_warps` | 见下 |
+| TODO | 内容                     | 要点                                                           | 测试   |
+| ---- | ------------------------ | -------------------------------------------------------------- | ------ |
+| B1   | 单 tile 版本（S ≤ 64）   | 不需要 online：一次算完 `softmax(QKᵀ)V`；熟悉 `tl.dot` 和 mask | `B1_*` |
+| B2   | 分块循环 + online 重缩放 | 维护 `m_i`、`l_i`、`acc`；每个块都用 `alpha` 重缩放旧结果      | `B2_*` |
+| B3   | causal                   | 先加 mask，确认正确后，再把循环上界改成对角线所在的块          | `B3_*` |
+| B4   | 调参（无需写新代码）     | 为 D=128 找到一组 `block_m/block_n/num_warps`                  | 见下   |
 
 调试技巧：`test_B2_peaky_scores_need_rescaling` 专门检查 alpha 重缩放（分数很尖锐时，每个块的最大值都不同）。B2 中如果只有这一个测试失败，说明重缩放写错了。
 
@@ -122,11 +122,11 @@ python lab2/bench/bench_attention.py --D 128 --seqs 1024,4096 > results/lab2/att
 
 读讲义 §5。这一步把 lab1 Part C（`ldmatrix`、`mma.sync`、fragment 布局）和 Part B 的 online softmax 结合起来，全部在**寄存器**上完成。范围限定为 D=64、S 为 64 的倍数，每个 block 由 4 个 warp 负责 64 行 query。
 
-| TODO | 内容 | 关键 |
-|---|---|---|
-| C1a | S = QKᵀ | K 在 shared memory 中按 `[key][d]` 存放，正好就是 mma B 操作数需要的布局，不需要转置；一条 `ldmatrix_x4` 覆盖两个 n-tile |
-| C1b | 寄存器上的 online softmax | 每个线程持有两行（g 和 g+8）的部分元素；行最大值和行和都要在 quad（4 个线程）之间用 `__shfl_xor_sync` 归约 |
-| C1c | O += PV | **FA2 的关键技巧**：两个相邻 m16n8 累加器的布局，恰好等于一个 m16k16 的 A fragment，所以 P 直接在寄存器里转成 fp16，不经过 shared memory |
+| TODO | 内容                      | 关键                                                                                                                                     |
+| ---- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| C1a  | S = QKᵀ                   | K 在 shared memory 中按 `[key][d]` 存放，正好就是 mma B 操作数需要的布局，不需要转置；一条 `ldmatrix_x4` 覆盖两个 n-tile                 |
+| C1b  | 寄存器上的 online softmax | 每个线程持有两行（g 和 g+8）的部分元素；行最大值和行和都要在 quad（4 个线程）之间用 `__shfl_xor_sync` 归约                               |
+| C1c  | O += PV                   | **FA2 的关键技巧**：两个相邻 m16n8 累加器的布局，恰好等于一个 m16k16 的 A fragment，所以 P 直接在寄存器里转成 fp16，不经过 shared memory |
 
 ```bash
 cmake --build build/lab2 -j && python -m pytest lab2/tests/test_c_cuda.py -v
@@ -138,10 +138,10 @@ cmake --build build/lab2 -j && python -m pytest lab2/tests/test_c_cuda.py -v
 
 读讲义 §6。decode 阶段每个序列只有一个新 token，`B×H` 个 program 远远填不满 GPU。把 KV 切成 `NSPLIT` 段并行处理，再用 log-sum-exp 合并结果。
 
-| TODO | 内容 |
-|---|---|
-| C2a | `decode_split_kernel`：在一段 KV 上做 online softmax，写出这一段的部分输出和 lse |
-| C2b | `decode_combine_kernel`：用 lse 加权合并各段结果 |
+| TODO | 内容                                                                             |
+| ---- | -------------------------------------------------------------------------------- |
+| C2a  | `decode_split_kernel`：在一段 KV 上做 online softmax，写出这一段的部分输出和 lse |
+| C2b  | `decode_combine_kernel`：用 lse 加权合并各段结果                                 |
 
 ```bash
 python lab2/bench/bench_decode.py > results/lab2/decode.csv

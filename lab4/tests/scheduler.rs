@@ -14,11 +14,18 @@ struct Sim {
 
 impl Sim {
     fn new(cfg: SchedulerConfig, blocks: usize, prefix: bool) -> Self {
-        Self { sched: Scheduler::new(cfg), kv: BlockManager::new(blocks, 4, prefix), seqs: HashMap::new() }
+        Self {
+            sched: Scheduler::new(cfg),
+            kv: BlockManager::new(blocks, 4, prefix),
+            seqs: HashMap::new(),
+        }
     }
     fn add(&mut self, id: usize, prompt_len: usize, max_new: usize) {
-        let toks = (0..prompt_len as u32).map(|x| x + 1000 * id as u32).collect();
-        self.seqs.insert(id, Sequence::new(id, toks, max_new, vec![]));
+        let toks = (0..prompt_len as u32)
+            .map(|x| x + 1000 * id as u32)
+            .collect();
+        self.seqs
+            .insert(id, Sequence::new(id, toks, max_new, vec![]));
         self.sched.add(id);
     }
     /// One step as the engine would do it: advance num_computed, sample token 7
@@ -28,7 +35,10 @@ impl Sim {
         for it in &out.items {
             let s = self.seqs.get_mut(&it.seq_id).unwrap();
             assert!(it.num_tokens >= 1 && s.num_computed + it.num_tokens <= s.len());
-            assert!(s.block_table.len() * 4 >= s.num_computed + it.num_tokens, "blocks must cover the scheduled tokens");
+            assert!(
+                s.block_table.len() * 4 >= s.num_computed + it.num_tokens,
+                "blocks must cover the scheduled tokens"
+            );
             s.num_computed += it.num_tokens;
             self.kv.register_full_blocks(s);
             if s.num_computed == s.len() {
@@ -54,16 +64,39 @@ impl Sim {
 }
 
 fn cfg(max_seqs: usize, budget: usize, chunked: bool) -> SchedulerConfig {
-    SchedulerConfig { max_num_seqs: max_seqs, max_batched_tokens: budget, chunked_prefill: chunked, static_batching: false }
+    SchedulerConfig {
+        max_num_seqs: max_seqs,
+        max_batched_tokens: budget,
+        chunked_prefill: chunked,
+        static_batching: false,
+    }
 }
 
 #[test]
 fn b3_prefill_then_decode() {
     let mut s = Sim::new(cfg(8, 64, false), 64, false);
     s.add(0, 10, 3);
-    assert_eq!(s.step(), vec![Scheduled { seq_id: 0, num_tokens: 10 }]);
-    assert_eq!(s.step(), vec![Scheduled { seq_id: 0, num_tokens: 1 }]);
-    assert_eq!(s.step(), vec![Scheduled { seq_id: 0, num_tokens: 1 }]);
+    assert_eq!(
+        s.step(),
+        vec![Scheduled {
+            seq_id: 0,
+            num_tokens: 10
+        }]
+    );
+    assert_eq!(
+        s.step(),
+        vec![Scheduled {
+            seq_id: 0,
+            num_tokens: 1
+        }]
+    );
+    assert_eq!(
+        s.step(),
+        vec![Scheduled {
+            seq_id: 0,
+            num_tokens: 1
+        }]
+    );
     assert!(!s.sched.has_work());
     assert_eq!(s.seqs[&0].output(), &[7, 7, 7]);
 }
@@ -76,7 +109,19 @@ fn b3_continuous_batching_admits_while_others_decode() {
     s.add(1, 20, 5);
     let items = s.step();
     // running decode first, then the new prefill joins the SAME step
-    assert_eq!(items, vec![Scheduled { seq_id: 0, num_tokens: 1 }, Scheduled { seq_id: 1, num_tokens: 20 }]);
+    assert_eq!(
+        items,
+        vec![
+            Scheduled {
+                seq_id: 0,
+                num_tokens: 1
+            },
+            Scheduled {
+                seq_id: 1,
+                num_tokens: 20
+            }
+        ]
+    );
 }
 
 #[test]
@@ -96,7 +141,13 @@ fn b3_respects_max_num_seqs_and_budget() {
 fn b3_long_prompt_without_chunking_still_runs() {
     let mut s = Sim::new(cfg(4, 16, false), 64, false);
     s.add(0, 40, 1); // longer than the budget: runs alone, whole
-    assert_eq!(s.step(), vec![Scheduled { seq_id: 0, num_tokens: 40 }]);
+    assert_eq!(
+        s.step(),
+        vec![Scheduled {
+            seq_id: 0,
+            num_tokens: 40
+        }]
+    );
 }
 
 #[test]
@@ -112,7 +163,10 @@ fn b3_preemption_when_out_of_blocks() {
         let out = s.sched.schedule(&mut s.seqs, &mut s.kv);
         preempted += out.preempted.len();
         for p in &out.preempted {
-            assert_eq!(*p, 1, "the most recently admitted sequence is preempted first");
+            assert_eq!(
+                *p, 1,
+                "the most recently admitted sequence is preempted first"
+            );
             assert_eq!(s.seqs[p].num_computed, 0);
             assert!(s.seqs[p].block_table.is_empty());
         }
@@ -132,7 +186,10 @@ fn b3_preemption_when_out_of_blocks() {
         assert!(steps < 1000);
     }
     assert!(preempted >= 1);
-    assert!(s.seqs.values().all(|q| q.status == Status::Finished && q.num_generated() == 12));
+    assert!(s
+        .seqs
+        .values()
+        .all(|q| q.status == Status::Finished && q.num_generated() == 12));
 }
 
 #[test]
@@ -146,7 +203,10 @@ fn b3_static_batching_waits_for_the_whole_batch() {
     s.step(); // 0 and 1 prefill; 0 finishes
     for _ in 0..4 {
         let items = s.step();
-        assert!(items.iter().all(|x| x.seq_id == 1), "static batching must not admit 2 while 1 runs");
+        assert!(
+            items.iter().all(|x| x.seq_id == 1),
+            "static batching must not admit 2 while 1 runs"
+        );
     }
     s.run();
     assert_eq!(s.seqs[&2].status, Status::Finished);
@@ -169,8 +229,19 @@ fn c1_decode_is_not_stalled_by_a_long_prefill() {
     s.add(1, 100, 1);
     for _ in 0..5 {
         let items = s.step();
-        assert_eq!(items[0], Scheduled { seq_id: 0, num_tokens: 1 }, "the decode runs every step");
-        assert_eq!(items.iter().map(|x| x.num_tokens).sum::<usize>(), 16, "the prefill fills the rest of the budget");
+        assert_eq!(
+            items[0],
+            Scheduled {
+                seq_id: 0,
+                num_tokens: 1
+            },
+            "the decode runs every step"
+        );
+        assert_eq!(
+            items.iter().map(|x| x.num_tokens).sum::<usize>(),
+            16,
+            "the prefill fills the rest of the budget"
+        );
     }
 }
 
@@ -187,6 +258,13 @@ fn c2_scheduler_uses_the_prefix_cache() {
     s.step();
     s.sched.add(1);
     let items = s.step();
-    assert_eq!(items, vec![Scheduled { seq_id: 1, num_tokens: 2 }], "12 of 14 tokens come from the cache");
+    assert_eq!(
+        items,
+        vec![Scheduled {
+            seq_id: 1,
+            num_tokens: 2
+        }],
+        "12 of 14 tokens come from the cache"
+    );
     assert_eq!(s.seqs[&1].num_cached_tokens, 12);
 }

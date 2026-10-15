@@ -23,10 +23,18 @@ pub struct Qwen3Config {
 impl Qwen3Config {
     pub fn load(model_dir: &Path) -> Result<Self> {
         let path = model_dir.join("config.json");
-        let text = std::fs::read_to_string(&path).with_context(|| format!("reading {}", path.display()))?;
+        let text = std::fs::read_to_string(&path)
+            .with_context(|| format!("reading {}", path.display()))?;
         let cfg: Self = serde_json::from_str(&text)?;
-        anyhow::ensure!(cfg.head_dim == 128, "kernels assume head_dim == 128, got {}", cfg.head_dim);
-        anyhow::ensure!(cfg.num_attention_heads % cfg.num_key_value_heads == 0, "bad GQA head counts");
+        anyhow::ensure!(
+            cfg.head_dim == 128,
+            "kernels assume head_dim == 128, got {}",
+            cfg.head_dim
+        );
+        anyhow::ensure!(
+            cfg.num_attention_heads % cfg.num_key_value_heads == 0,
+            "bad GQA head counts"
+        );
         Ok(cfg)
     }
 
@@ -46,6 +54,7 @@ impl Qwen3Config {
 
 /// Default model directory: $MLSYS_MODELS/<name> (set by tools/setup_wsl.sh).
 pub fn model_dir(name: &str) -> std::path::PathBuf {
-    let root = std::env::var("MLSYS_MODELS").unwrap_or_else(|_| format!("{}/models", std::env::var("HOME").unwrap_or_default()));
+    let root = std::env::var("MLSYS_MODELS")
+        .unwrap_or_else(|_| format!("{}/models", std::env::var("HOME").unwrap_or_default()));
     std::path::PathBuf::from(root).join(name)
 }

@@ -81,10 +81,16 @@ impl Engine {
         })
     }
 
-    pub fn add_request(&mut self, prompt: Vec<u32>, max_new_tokens: usize, stop_tokens: Vec<u32>) -> usize {
+    pub fn add_request(
+        &mut self,
+        prompt: Vec<u32>,
+        max_new_tokens: usize,
+        stop_tokens: Vec<u32>,
+    ) -> usize {
         let id = self.next_id;
         self.next_id += 1;
-        self.seqs.insert(id, Sequence::new(id, prompt, max_new_tokens, stop_tokens));
+        self.seqs
+            .insert(id, Sequence::new(id, prompt, max_new_tokens, stop_tokens));
         self.sched.add(id);
         id
     }
@@ -98,7 +104,10 @@ impl Engine {
         let out = self.sched.schedule(&mut self.seqs, &mut self.kv);
         self.stats.preemptions += out.preempted.len();
         if out.items.is_empty() {
-            anyhow::ensure!(!self.sched.has_work(), "nothing could be scheduled: is the KV cache too small for the next request?");
+            anyhow::ensure!(
+                !self.sched.has_work(),
+                "nothing could be scheduled: is the KV cache too small for the next request?"
+            );
             return Ok(Vec::new());
         }
         let bs = self.cache.block_size;
@@ -108,18 +117,36 @@ impl Engine {
             .map(|it| {
                 let s = &self.seqs[&it.seq_id];
                 let end = s.num_computed + it.num_tokens;
-                (&s.tokens[s.num_computed..end], s.num_computed, s.block_table.as_slice(), end == s.len())
+                (
+                    &s.tokens[s.num_computed..end],
+                    s.num_computed,
+                    s.block_table.as_slice(),
+                    end == s.len(),
+                )
             })
             .collect();
         let batch = BatchInput::build(&items, bs);
-        let sampled_seqs: Vec<usize> =
-            out.items.iter().filter(|it| { let s = &self.seqs[&it.seq_id]; s.num_computed + it.num_tokens == s.len() }).map(|it| it.seq_id).collect();
+        let sampled_seqs: Vec<usize> = out
+            .items
+            .iter()
+            .filter(|it| {
+                let s = &self.seqs[&it.seq_id];
+                s.num_computed + it.num_tokens == s.len()
+            })
+            .map(|it| it.seq_id)
+            .collect();
         let t0 = Instant::now();
         let db = DeviceBatch::upload(&self.gpu, &batch)?;
         let logits = self.model.forward(&self.gpu, &db, &mut self.cache)?;
         let mut next = self.gpu.alloc::<i32>(db.num_samples)?;
         if db.num_samples > 0 {
-            ops::argmax_rows(&self.gpu, &logits, &mut next, db.num_samples, self.model.cfg.vocab_size)?;
+            ops::argmax_rows(
+                &self.gpu,
+                &logits,
+                &mut next,
+                db.num_samples,
+                self.model.cfg.vocab_size,
+            )?;
         }
         let next = self.gpu.download(&next)?;
         self.stats.forward_secs += t0.elapsed().as_secs_f64();
@@ -131,7 +158,10 @@ impl Engine {
             s.num_computed += it.num_tokens;
             self.kv.register_full_blocks(s);
         }
-        self.stats.peak_blocks_used = self.stats.peak_blocks_used.max(self.kv.num_blocks - self.kv.num_free_blocks());
+        self.stats.peak_blocks_used = self
+            .stats
+            .peak_blocks_used
+            .max(self.kv.num_blocks - self.kv.num_free_blocks());
         let now = Instant::now();
         let mut produced = Vec::new();
         for (&id, &tok) in sampled_seqs.iter().zip(next.iter().take(db.num_samples)) {
@@ -159,7 +189,12 @@ impl Engine {
     }
 
     /// Greedy generation for one prompt, from scratch (convenience for tests and the CLI).
-    pub fn generate(&mut self, prompt: &[u32], max_new_tokens: usize, stop: &[u32]) -> Result<Vec<u32>> {
+    pub fn generate(
+        &mut self,
+        prompt: &[u32],
+        max_new_tokens: usize,
+        stop: &[u32],
+    ) -> Result<Vec<u32>> {
         let id = self.add_request(prompt.to_vec(), max_new_tokens, stop.to_vec());
         while self.seqs[&id].status != Status::Finished {
             self.step()?;

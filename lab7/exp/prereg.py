@@ -19,12 +19,25 @@ Locking: `lock(path)` records the SHA-256 of the file. Held-out runs refuse to
 start unless the file still has that hash, so the hypothesis, margin and
 held-out set cannot be quietly adjusted after seeing results.
 """
+
 import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-REQUIRED = ["name", "question", "hypothesis", "metric", "direction", "min_effect", "repeats", "command", "arms", "dev", "heldout"]
+REQUIRED = [
+    "name",
+    "question",
+    "hypothesis",
+    "metric",
+    "direction",
+    "min_effect",
+    "repeats",
+    "command",
+    "arms",
+    "dev",
+    "heldout",
+]
 
 
 def load(path):
@@ -63,8 +76,10 @@ def lock(path):
     if lp.exists():
         old = json.loads(lp.read_text(encoding="utf-8"))
         if old["sha256"] != digest(p):
-            raise RuntimeError(f"{p} changed after it was locked at {old['locked_at']}: make a NEW pre-registration "
-                               "(e.g. name-v2) instead of editing a locked one")
+            raise RuntimeError(
+                f"{p} changed after it was locked at {old['locked_at']}: make a NEW pre-registration "
+                "(e.g. name-v2) instead of editing a locked one"
+            )
         return old
     rec = {"sha256": digest(p), "locked_at": datetime.now(timezone.utc).isoformat()}
     lp.write_text(json.dumps(rec, indent=2), encoding="utf-8")
@@ -74,8 +89,12 @@ def lock(path):
 def check_locked(path):
     lp = lock_path(path)
     if not lp.exists():
-        raise RuntimeError(f"{path} is not locked: run `python -m lab7.exp.run {path} --lock` before held-out runs")
+        raise RuntimeError(
+            f"{path} is not locked: run `python -m lab7.exp.run {path} --lock` before held-out runs"
+        )
     rec = json.loads(lp.read_text(encoding="utf-8"))
     if rec["sha256"] != digest(path):
-        raise RuntimeError(f"{path} was modified after locking ({rec['locked_at']}); held-out results would not be honest")
+        raise RuntimeError(
+            f"{path} was modified after locking ({rec['locked_at']}); held-out results would not be honest"
+        )
     return rec

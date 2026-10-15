@@ -5,11 +5,11 @@
 
 lab0 在 CPU 上把矩阵乘从 1 GFLOP/s 做到了接近 BLAS。这个 lab 把同一件事搬到 GPU 上做，但 GPU 的规则不同：几万个线程同时运行，32 个线程组成一个 warp，按同一条指令执行；内存要“合并”访问才快；shared memory 是你自己管理的缓存；Tensor Core 一条指令能完成一整块矩阵乘。
 
-| 部分 | 你要写什么 | 难度梯度 | 对应的真实系统 |
-|---|---|---|---|
-| **A** CUDA 基础 | grid-stride 向量加、warp shuffle 归约、shared memory 转置（含 bank conflict） | ① 代码填空（每个 5–20 行） | CUDA 编程的三个基本模式 |
-| **B** SGEMM 阶梯 | 合并访存 → shared memory 分块 → 1D 寄存器分块 → 2D 寄存器分块 + float4 | ② 核心实现 + 性能目标 | [siboehm 的 CUDA matmul](https://siboehm.com/articles/22/CUDA-MMM)、[MIT 6.S894](https://accelerated-computing.academy/fall25/labs/) lab 4–5 |
-| **C** Tensor Core HGEMM | WMMA；再用 `ldmatrix` + `mma.sync` + `cp.async` 写一个三级流水线 kernel | ③ 前沿设计的精简复现 | CUTLASS Ampere GEMM、FlashAttention-2 的内循环 |
+| 部分                    | 你要写什么                                                                    | 难度梯度                   | 对应的真实系统                                                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** CUDA 基础         | grid-stride 向量加、warp shuffle 归约、shared memory 转置（含 bank conflict） | ① 代码填空（每个 5–20 行） | CUDA 编程的三个基本模式                                                                                                                      |
+| **B** SGEMM 阶梯        | 合并访存 → shared memory 分块 → 1D 寄存器分块 → 2D 寄存器分块 + float4        | ② 核心实现 + 性能目标      | [siboehm 的 CUDA matmul](https://siboehm.com/articles/22/CUDA-MMM)、[MIT 6.S894](https://accelerated-computing.academy/fall25/labs/) lab 4–5 |
+| **C** Tensor Core HGEMM | WMMA；再用 `ldmatrix` + `mma.sync` + `cp.async` 写一个三级流水线 kernel       | ③ 前沿设计的精简复现       | CUTLASS Ampere GEMM、FlashAttention-2 的内循环                                                                                               |
 
 做完后你应当能回答：
 
@@ -74,13 +74,13 @@ lab1/
 
 先读讲义 L1 §1（SIMT、warp、block、SM）和 §2（合并访存、shared memory 与 bank）。
 
-| TODO | 内容 | 要点 | 测试 |
-|---|---|---|---|
-| A1 | `vector_add` | grid-stride 循环；启动约 8×SM 个 block，而不是每个元素一个线程 | `A1_*` |
-| A2a | `warp_reduce_sum` | `__shfl_down_sync`，偏移依次为 16、8、4、2、1 | `A2_*` |
-| A2b | `reduce_kernel` | 线程 → warp → block 三级归约；`__syncthreads()` 不能放进分支 | `A2_*` |
-| A3a | `transpose_tiled` | 32×32 tile；读、写都沿着行进行 | `A3a_*` |
-| A3b | `transpose_padded` | `tile[32][33]`：只改这一处 | `A3b_*` |
+| TODO | 内容               | 要点                                                           | 测试    |
+| ---- | ------------------ | -------------------------------------------------------------- | ------- |
+| A1   | `vector_add`       | grid-stride 循环；启动约 8×SM 个 block，而不是每个元素一个线程 | `A1_*`  |
+| A2a  | `warp_reduce_sum`  | `__shfl_down_sync`，偏移依次为 16、8、4、2、1                  | `A2_*`  |
+| A2b  | `reduce_kernel`    | 线程 → warp → block 三级归约；`__syncthreads()` 不能放进分支   | `A2_*`  |
+| A3a  | `transpose_tiled`  | 32×32 tile；读、写都沿着行进行                                 | `A3a_*` |
+| A3b  | `transpose_padded` | `tile[32][33]`：只改这一处                                     | `A3b_*` |
 
 **测量**：
 
@@ -103,13 +103,13 @@ build/lab1/bench_basics > results/lab1/basics.csv
 
 先读讲义 L1 §3。每一步都对应 [siboehm 的文章](https://siboehm.com/articles/22/CUDA-MMM) 中的一个 kernel，文章里有很好的图，**强烈建议**每写一步就对照着读一节。
 
-| 步骤 | TODO | 做什么 | siboehm 对应 | 参考实现，RTX 4060 Laptop，n=2048（TFLOP/s，占 cuBLAS 的 %） |
-|---|---|---|---|---|
-| B0 | 已提供 | `threadIdx.x` 走行：完全不合并 | kernel 1 | 0.12（1.5%） |
-| B1 | `sgemm_coalesced` | 交换 x/y：`threadIdx.x` 走列 | kernel 2 | 0.98（13%）：只改了一行，快 8 倍 |
-| B2 | `sgemm_smem` | 32×32 shared memory 分块 | kernel 3 | 1.23（16%）：提升不大，见讲义 §3.2 |
-| B3 | `sgemm_blocktile_1d` | 每个线程算 8 行（1D 寄存器分块） | kernel 4 | 3.9（50%） |
-| B4 | `sgemm_blocktile_2d` | 每个线程算 8×8 + float4 访存 + A 转置存入 shared memory | kernels 5–6 | 7.8（~100%）；cuBLAS 为 7.8 |
+| 步骤 | TODO                 | 做什么                                                  | siboehm 对应 | 参考实现，RTX 4060 Laptop，n=2048（TFLOP/s，占 cuBLAS 的 %） |
+| ---- | -------------------- | ------------------------------------------------------- | ------------ | ------------------------------------------------------------ |
+| B0   | 已提供               | `threadIdx.x` 走行：完全不合并                          | kernel 1     | 0.12（1.5%）                                                 |
+| B1   | `sgemm_coalesced`    | 交换 x/y：`threadIdx.x` 走列                            | kernel 2     | 0.98（13%）：只改了一行，快 8 倍                             |
+| B2   | `sgemm_smem`         | 32×32 shared memory 分块                                | kernel 3     | 1.23（16%）：提升不大，见讲义 §3.2                           |
+| B3   | `sgemm_blocktile_1d` | 每个线程算 8 行（1D 寄存器分块）                        | kernel 4     | 3.9（50%）                                                   |
+| B4   | `sgemm_blocktile_2d` | 每个线程算 8×8 + float4 访存 + A 转置存入 shared memory | kernels 5–6  | 7.8（~100%）；cuBLAS 为 7.8                                  |
 
 每一步都按这个循环走：**写 kernel → 改 `implemented` → `test_b_sgemm Bx` → `bench_gemm --only sgemm` → 记录数字 → 用讲义里的 “每次 FMA 需要几次访存” 来解释**。
 
@@ -138,11 +138,11 @@ python lab1/scripts/plot_gemm.py results/lab1/sgemm.csv --fp32-peak <your FP32 p
 
 **C2 `mma.sync` 三级流水线（约 4 小时，本 lab 的最高一级）**：这一级把 CUTLASS 的结构拆成三个 TODO：
 
-| TODO | 函数 | 做什么 |
-|---|---|---|
-| C2a | `c2_load_tile` | 用 `cp.async` 把 A、B 的一个 K-tile 异步搬进 shared memory，不经过寄存器 |
-| C2b | `c2_compute_stage` | 用 `ldmatrix` 把 shared memory 中的数据按 Tensor Core 的 fragment 布局装进寄存器，再执行 16 条 `mma.sync` |
-| C2c | 主循环 | 3 级流水线：计算第 k 块时，第 k+1、k+2 块正在搬运 |
+| TODO | 函数               | 做什么                                                                                                    |
+| ---- | ------------------ | --------------------------------------------------------------------------------------------------------- |
+| C2a  | `c2_load_tile`     | 用 `cp.async` 把 A、B 的一个 K-tile 异步搬进 shared memory，不经过寄存器                                  |
+| C2b  | `c2_compute_stage` | 用 `ldmatrix` 把 shared memory 中的数据按 Tensor Core 的 fragment 布局装进寄存器，再执行 16 条 `mma.sync` |
+| C2c  | 主循环             | 3 级流水线：计算第 k 块时，第 k+1、k+2 块正在搬运                                                         |
 
 `ptx.cuh` 已经封装好 PTX 指令，注释里写明了每个 lane 拿到哪些元素。难点在于**地址计算**：讲义 §4.3 会一步步从 fragment 布局推导出 `ldmatrix` 的地址公式。建议先画图，再写代码。
 

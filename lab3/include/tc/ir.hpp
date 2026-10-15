@@ -27,25 +27,35 @@ struct Shape {
 };
 
 enum class Op {
-    Input, Const,
-    Neg, Exp, Tanh, Relu, Rsqrt,          // unary elementwise
-    Add, Sub, Mul, Div, Max,              // binary elementwise (broadcasting)
-    RowSum, RowMax,                       // [R,C] -> [R,1]
-    MatMul,                               // [M,K] x [K,N] -> [M,N]
+    Input,
+    Const,
+    Neg,
+    Exp,
+    Tanh,
+    Relu,
+    Rsqrt, // unary elementwise
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Max, // binary elementwise (broadcasting)
+    RowSum,
+    RowMax, // [R,C] -> [R,1]
+    MatMul, // [M,K] x [K,N] -> [M,N]
 };
 
 bool is_unary(Op op);
 bool is_binary(Op op);
-bool is_elementwise(Op op);  // unary or binary
+bool is_elementwise(Op op); // unary or binary
 bool is_reduction(Op op);
 const char* op_name(Op op);
 
 struct Node {
     Op op;
-    std::vector<int> srcs;  // operand node ids
+    std::vector<int> srcs; // operand node ids
     Shape shape;
-    std::string name;       // Input only
-    double value = 0;       // Const only
+    std::string name; // Input only
+    double value = 0; // Const only
 };
 
 class Graph {
@@ -72,7 +82,7 @@ public:
     int output() const { return output_; }
     const Node& node(int id) const { return nodes_.at(id); }
     int size() const { return static_cast<int>(nodes_.size()); }
-    std::vector<int> inputs() const;  // ids of Input nodes, in creation order
+    std::vector<int> inputs() const; // ids of Input nodes, in creation order
 
     // Consumers of each node, counting every edge (x*x lists the mul twice).
     std::vector<std::vector<int>> consumers() const;
@@ -94,4 +104,4 @@ private:
 // Shape of a broadcasting binary op; throws std::invalid_argument if incompatible.
 Shape broadcast(Shape a, Shape b);
 
-}  // namespace tc
+} // namespace tc

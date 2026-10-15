@@ -6,20 +6,46 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
 use cudarc::cublas::CudaBlas;
-use cudarc::driver::{CudaContext, CudaFunction, CudaModule, CudaSlice, CudaStream, DeviceRepr, ValidAsZeroBits};
+use cudarc::driver::{
+    CudaContext, CudaFunction, CudaModule, CudaSlice, CudaStream, DeviceRepr, ValidAsZeroBits,
+};
 use cudarc::nvrtc::{compile_ptx_with_opts, CompileOptions};
 
 /// Kernel sources, embedded at compile time. Each file is compiled separately.
 const SOURCES: &[(&str, &str)] = &[
     ("provided.cu", include_str!("../kernels/provided.cu")),
-    ("basic_student.cu", include_str!("../kernels/basic_student.cu")),
-    ("attention_student.cu", include_str!("../kernels/attention_student.cu")),
+    (
+        "basic_student.cu",
+        include_str!("../kernels/basic_student.cu"),
+    ),
+    (
+        "attention_student.cu",
+        include_str!("../kernels/attention_student.cu"),
+    ),
 ];
 
 /// Every `extern "C" __global__` function the engine launches, by file.
 const FUNCTIONS: &[(&str, &[&str])] = &[
-    ("provided.cu", &["reshape_and_cache", "paged_attention_naive", "gather_rows", "bf16_to_f32"]),
-    ("basic_student.cu", &["embedding", "rmsnorm", "fused_add_rmsnorm", "rope", "silu_mul", "argmax_rows"]),
+    (
+        "provided.cu",
+        &[
+            "reshape_and_cache",
+            "paged_attention_naive",
+            "gather_rows",
+            "bf16_to_f32",
+        ],
+    ),
+    (
+        "basic_student.cu",
+        &[
+            "embedding",
+            "rmsnorm",
+            "fused_add_rmsnorm",
+            "rope",
+            "silu_mul",
+            "argmax_rows",
+        ],
+    ),
     ("attention_student.cu", &["paged_attention"]),
 ];
 
@@ -41,19 +67,31 @@ impl Gpu {
     }
 
     pub fn with_extra_kernels(extra: ExtraKernels) -> Result<Self> {
-        let ctx = CudaContext::new(0).context("no CUDA device (are you inside WSL with the driver visible?)")?;
+        let ctx = CudaContext::new(0)
+            .context("no CUDA device (are you inside WSL with the driver visible?)")?;
         // One stream only: cudarc's cross-stream event tracking is pure overhead here.
         unsafe { ctx.disable_event_tracking() };
         let stream = ctx.default_stream();
         let blas = CudaBlas::new(stream.clone())?;
         let (major, minor) = ctx.compute_capability()?;
         let arch: &'static str = Box::leak(format!("sm_{major}{minor}").into_boxed_str());
-        let cuda_home = std::env::var("CUDA_HOME").unwrap_or_else(|_| "/usr/local/cuda".to_string());
+        let cuda_home =
+            std::env::var("CUDA_HOME").unwrap_or_else(|_| "/usr/local/cuda".to_string());
         let mut functions = HashMap::new();
         let mut modules = Vec::new();
         let all = SOURCES
             .iter()
-            .map(|(f, s)| (*f, *s, FUNCTIONS.iter().find(|(g, _)| g == f).map(|(_, n)| *n).unwrap_or(&[])))
+            .map(|(f, s)| {
+                (
+                    *f,
+                    *s,
+                    FUNCTIONS
+                        .iter()
+                        .find(|(g, _)| g == f)
+                        .map(|(_, n)| *n)
+                        .unwrap_or(&[]),
+                )
+            })
             .chain(extra.iter().copied());
         for (file, src, names) in all {
             let opts = CompileOptions {
@@ -63,19 +101,30 @@ impl Gpu {
                 name: Some(file.to_string()),
                 ..Default::default()
             };
-            let ptx = compile_ptx_with_opts(src, opts).map_err(|e| anyhow!("NVRTC failed on kernels/{file}:\n{e:?}"))?;
+            let ptx = compile_ptx_with_opts(src, opts)
+                .map_err(|e| anyhow!("NVRTC failed on kernels/{file}:\n{e:?}"))?;
             let module = ctx.load_module(ptx)?;
             for name in names {
-                let f = module.load_function(name).with_context(|| format!("kernel `{name}` missing from kernels/{file}"))?;
+                let f = module
+                    .load_function(name)
+                    .with_context(|| format!("kernel `{name}` missing from kernels/{file}"))?;
                 functions.insert(*name, f);
             }
             modules.push(module);
         }
-        Ok(Self { ctx, stream, blas, functions, _modules: modules })
+        Ok(Self {
+            ctx,
+            stream,
+            blas,
+            functions,
+            _modules: modules,
+        })
     }
 
     pub fn func(&self, name: &str) -> &CudaFunction {
-        self.functions.get(name).unwrap_or_else(|| panic!("unknown kernel {name} (not registered with Gpu::with_extra_kernels?)"))
+        self.functions.get(name).unwrap_or_else(|| {
+            panic!("unknown kernel {name} (not registered with Gpu::with_extra_kernels?)")
+        })
     }
 
     pub fn upload<T: DeviceRepr>(&self, host: &[T]) -> Result<CudaSlice<T>> {

@@ -23,8 +23,8 @@ use crate::sequence::Sequence;
 
 #[derive(Debug, Default, Clone)]
 pub struct KvStats {
-    pub prefix_queries: usize,  // blocks looked up in the prefix table
-    pub prefix_hits: usize,     // of which were found
+    pub prefix_queries: usize, // blocks looked up in the prefix table
+    pub prefix_hits: usize,    // of which were found
     pub evictions: usize,
 }
 
@@ -33,12 +33,12 @@ pub struct BlockManager {
     pub num_blocks: usize,
     pub prefix_caching: bool,
     pub stats: KvStats,
-    free: VecDeque<u32>,         // never-used or forgotten blocks, FIFO
+    free: VecDeque<u32>, // never-used or forgotten blocks, FIFO
     refcount: Vec<u32>,
     // ---- C2 ----
     block_hash: Vec<Option<u64>>, // hash of the content of a full, registered block
     #[allow(dead_code)] // used once you implement C2
-    cached: HashMap<u64, u32>,    // hash -> block
+    cached: HashMap<u64, u32>, // hash -> block
     evictable: VecDeque<u32>,     // refcount 0 but still cached; front = least recently freed
 }
 

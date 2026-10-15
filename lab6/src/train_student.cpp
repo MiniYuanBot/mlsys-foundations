@@ -31,8 +31,8 @@ namespace coll {
 // With a tiny cap every layer is its own bucket; with a huge cap there is one
 // bucket, submitted only after backward is done (= no overlap at all).
 Bucketer::Bucketer(MLP& model, size_t bucket_bytes, CommThread& comm, int world_size)
-    : m_(model), cap_floats_(std::max<size_t>(1, bucket_bytes / sizeof(float))), comm_(comm), P_(world_size),
-      expect_(model.num_layers() - 1) {}
+    : m_(model), cap_floats_(std::max<size_t>(1, bucket_bytes / sizeof(float))), comm_(comm),
+      P_(world_size), expect_(model.num_layers() - 1) {}
 
 void Bucketer::on_layer_ready(int layer) {
     (void)layer;
@@ -55,12 +55,14 @@ void Bucketer::finish() {
 // Communication volume equals a plain allreduce (RS + AG), but optimizer
 // state per rank drops from 2N to 2N/P floats.
 Zero1Adam::Zero1Adam(size_t num_params, const Comm& c, Adam h) : c_(c), h_(h) {
-    (void)num_params; begin_ = end_ = 0;
+    (void)num_params;
+    begin_ = end_ = 0;
 }
 
 void Zero1Adam::step(std::vector<float>& params, std::vector<float>& grads) {
-    (void)params; (void)grads;
+    (void)params;
+    (void)grads;
     throw todo("C2 Zero1Adam::step");
 }
 
-}  // namespace coll
+} // namespace coll

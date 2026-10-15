@@ -40,7 +40,11 @@ impl Qwen3 {
     pub fn load(gpu: &Gpu, dir: &Path) -> Result<Self> {
         let cfg = Qwen3Config::load(dir)?;
         let w = Weights::load(gpu, dir, &cfg)?;
-        Ok(Self { cfg, w, attn: AttnImpl::Fast })
+        Ok(Self {
+            cfg,
+            w,
+            attn: AttnImpl::Fast,
+        })
     }
 
     /// Run one step. Returns logits [num_samples, vocab] (bf16, on the GPU).
@@ -51,7 +55,7 @@ impl Qwen3 {
         let (h, inter, qd, kvd) = (c.hidden_size, c.intermediate_size, c.q_dim(), c.kv_dim());
         let (heads, kv_heads, eps) = (c.num_attention_heads, c.num_key_value_heads, c.rms_norm_eps);
         // Activation buffers for this step (stream-ordered allocations, cheap).
-        let mut hidden = gpu.alloc::<bf16>(t * h)?;   // h: the sub-layer output / next input
+        let mut hidden = gpu.alloc::<bf16>(t * h)?; // h: the sub-layer output / next input
         let mut residual = gpu.alloc::<bf16>(t * h)?; // the residual stream
         let mut q_raw = gpu.alloc::<bf16>(t * qd)?;
         let mut k_raw = gpu.alloc::<bf16>(t * kvd)?;
@@ -85,17 +89,67 @@ impl Qwen3 {
         // cache.k[l], &mut cache.v[l], &b.slots, ..) BEFORE attention, then
         // ops::paged_attention(gpu, self.attn, &q, &cache.k[l], &cache.v[l], &mut attn_out, &attn_args).
         for (l, lw) in self.w.layers.iter().enumerate() {
-            ops::fused_add_rmsnorm(gpu, &mut hidden, &mut residual, &lw.input_layernorm, t, h, eps)?;
+            ops::fused_add_rmsnorm(
+                gpu,
+                &mut hidden,
+                &mut residual,
+                &lw.input_layernorm,
+                t,
+                h,
+                eps,
+            )?;
             ops::linear(gpu, &hidden, &lw.q_proj, &mut q_raw, t, h, qd)?;
             ops::linear(gpu, &hidden, &lw.k_proj, &mut k_raw, t, h, kvd)?;
             ops::linear(gpu, &hidden, &lw.v_proj, &mut v, t, h, kvd)?;
             ops::rmsnorm(gpu, &q_raw, &lw.q_norm, &mut q, t * heads, c.head_dim, eps)?;
-            ops::rmsnorm(gpu, &k_raw, &lw.k_norm, &mut k, t * kv_heads, c.head_dim, eps)?;
-            ops::rope(gpu, &mut q, &mut k, &b.positions, t, heads, kv_heads, c.rope_theta)?;
-            ops::reshape_and_cache(gpu, &k, &v, &mut cache.k[l], &mut cache.v[l], &b.slots, t, kv_heads)?;
-            ops::paged_attention(gpu, self.attn, &q, &cache.k[l], &cache.v[l], &mut attn_out, &attn_args)?;
+            ops::rmsnorm(
+                gpu,
+                &k_raw,
+                &lw.k_norm,
+                &mut k,
+                t * kv_heads,
+                c.head_dim,
+                eps,
+            )?;
+            ops::rope(
+                gpu,
+                &mut q,
+                &mut k,
+                &b.positions,
+                t,
+                heads,
+                kv_heads,
+                c.rope_theta,
+            )?;
+            ops::reshape_and_cache(
+                gpu,
+                &k,
+                &v,
+                &mut cache.k[l],
+                &mut cache.v[l],
+                &b.slots,
+                t,
+                kv_heads,
+            )?;
+            ops::paged_attention(
+                gpu,
+                self.attn,
+                &q,
+                &cache.k[l],
+                &cache.v[l],
+                &mut attn_out,
+                &attn_args,
+            )?;
             ops::linear(gpu, &attn_out, &lw.o_proj, &mut hidden, t, qd, h)?;
-            ops::fused_add_rmsnorm(gpu, &mut hidden, &mut residual, &lw.post_attention_layernorm, t, h, eps)?;
+            ops::fused_add_rmsnorm(
+                gpu,
+                &mut hidden,
+                &mut residual,
+                &lw.post_attention_layernorm,
+                t,
+                h,
+                eps,
+            )?;
             ops::linear(gpu, &hidden, &lw.gate_proj, &mut gate, t, h, inter)?;
             ops::linear(gpu, &hidden, &lw.up_proj, &mut up, t, h, inter)?;
             ops::silu_mul(gpu, &gate, &up, &mut act, t * inter)?;
@@ -108,7 +162,15 @@ impl Qwen3 {
         let mut picked = gpu.alloc::<bf16>(n * h)?;
         ops::gather_rows(gpu, &hidden, &b.sample_rows, &mut picked, n, h)?;
         let mut logits = gpu.alloc::<bf16>(n * c.vocab_size)?;
-        ops::linear(gpu, &picked, &self.w.lm_head, &mut logits, n, h, c.vocab_size)?;
+        ops::linear(
+            gpu,
+            &picked,
+            &self.w.lm_head,
+            &mut logits,
+            n,
+            h,
+            c.vocab_size,
+        )?;
         Ok(logits)
     }
 }

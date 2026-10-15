@@ -69,9 +69,14 @@ Program compile(const Kernel& kernel) {
 // Finally copy the single remaining tile into out[0..n).
 // Write the inner loops so the compiler can vectorise them: switch on the
 // op OUTSIDE the element loop, e.g. case Op::Add: for (t..) a[t] += b[t];
-void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n, float* out) {
-    (void)p; (void)inputs; (void)begin; (void)n; (void)out;
+void eval_tile(const Program& p, const std::vector<const float*>& inputs, int64_t begin, int n,
+               float* out) {
+    (void)p;
+    (void)inputs;
+    (void)begin;
+    (void)n;
+    (void)out;
     throw not_implemented("C4 eval_tile");
 }
 
-}  // namespace mt::lazy
+} // namespace mt::lazy

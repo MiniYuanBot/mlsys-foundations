@@ -14,7 +14,7 @@ TEST(A0_device_is_visible) {
     CUDA_CHECK(cudaGetDeviceProperties(&p, 0));
     std::printf("         device 0: %s, sm_%d%d, %d SMs, %.1f GiB\n", p.name, p.major, p.minor,
                 p.multiProcessorCount, p.totalGlobalMem / double(1 << 30));
-    CHECK(p.major * 10 + p.minor >= 80);  // Part C needs sm_80+ (Ampere or newer)
+    CHECK(p.major * 10 + p.minor >= 80); // Part C needs sm_80+ (Ampere or newer)
 }
 
 TEST(A1_vector_add) {
@@ -99,4 +99,6 @@ TEST(A3b_transpose_padded) {
     for (const auto& s : shapes) check_transpose(transpose_padded, s[0], s[1]);
 }
 
-int main(int argc, char** argv) { return run_tests(argc, argv); }
+int main(int argc, char** argv) {
+    return run_tests(argc, argv);
+}

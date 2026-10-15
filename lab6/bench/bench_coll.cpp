@@ -18,7 +18,7 @@ using namespace coll;
 
 static double median_time(const std::function<void()>& fn, const Comm& c, int reps) {
     std::vector<double> t;
-    fn();  // warm-up
+    fn(); // warm-up
     for (int r = 0; r < reps; ++r) {
         MPI_Barrier(c.comm);
         const double t0 = MPI_Wtime();
@@ -45,15 +45,19 @@ int main(int argc, char** argv) {
         for (size_t bytes = 4; bytes <= (size_t(64) << 20); bytes *= 4) {
             std::vector<char> buf(bytes);
             const int reps = bytes > (1 << 20) ? 20 : 200;
-            const double t = median_time([&] {
-                if (c.rank == 0) {
-                    MPI_Send(buf.data(), static_cast<int>(bytes), MPI_BYTE, 1, 0, c.comm);
-                    MPI_Recv(buf.data(), static_cast<int>(bytes), MPI_BYTE, 1, 0, c.comm, MPI_STATUS_IGNORE);
-                } else {
-                    MPI_Recv(buf.data(), static_cast<int>(bytes), MPI_BYTE, 0, 0, c.comm, MPI_STATUS_IGNORE);
-                    MPI_Send(buf.data(), static_cast<int>(bytes), MPI_BYTE, 0, 0, c.comm);
-                }
-            }, c, reps);
+            const double t = median_time(
+                [&] {
+                    if (c.rank == 0) {
+                        MPI_Send(buf.data(), static_cast<int>(bytes), MPI_BYTE, 1, 0, c.comm);
+                        MPI_Recv(buf.data(), static_cast<int>(bytes), MPI_BYTE, 1, 0, c.comm,
+                                 MPI_STATUS_IGNORE);
+                    } else {
+                        MPI_Recv(buf.data(), static_cast<int>(bytes), MPI_BYTE, 0, 0, c.comm,
+                                 MPI_STATUS_IGNORE);
+                        MPI_Send(buf.data(), static_cast<int>(bytes), MPI_BYTE, 0, 0, c.comm);
+                    }
+                },
+                c, reps);
             if (c.rank == 0) std::printf("%zu,%.3f\n", bytes, t / 2 * 1e6);
         }
         MPI_Finalize();
@@ -63,7 +67,8 @@ int main(int argc, char** argv) {
         const char* name;
         AllreduceFn fn;
     };
-    std::vector<Algo> algos = {{"mpi", allreduce_mpi}, {"ring", allreduce_ring}, {"star", allreduce_star}};
+    std::vector<Algo> algos = {
+        {"mpi", allreduce_mpi}, {"ring", allreduce_ring}, {"star", allreduce_star}};
     if ((c.size & (c.size - 1)) == 0) algos.push_back({"rd", allreduce_rd});
     if (c.rank == 0) std::printf("algo,P,bytes,us,algbw_GBps,busbw_GBps\n");
     for (size_t bytes = 4; bytes <= (size_t(64) << 20); bytes *= 4) {
@@ -74,7 +79,8 @@ int main(int argc, char** argv) {
             try {
                 t = median_time([&] { a.fn(buf.data(), n, c); }, c, bytes > (4 << 20) ? 10 : 50);
             } catch (const NotImplemented& e) {
-                if (c.rank == 0 && bytes == 4) std::fprintf(stderr, "# skip %s: %s\n", a.name, e.what());
+                if (c.rank == 0 && bytes == 4)
+                    std::fprintf(stderr, "# skip %s: %s\n", a.name, e.what());
                 continue;
             }
             const double alg = bytes / t / 1e9;

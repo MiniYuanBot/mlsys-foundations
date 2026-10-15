@@ -42,9 +42,15 @@ impl Tree {
 
 /// Build a draft tree whose root is the last committed token.
 pub fn build_tree(gpu: &Gpu, draft: &mut Session, widths: &[usize]) -> Result<Tree> {
-    anyhow::ensure!(Tree::size_for(widths) <= 64, "tree too large (max 64 nodes)");
+    anyhow::ensure!(
+        Tree::size_for(widths) <= 64,
+        "tree too large (max 64 nodes)"
+    );
     draft.sync_prefix(gpu)?;
-    let mut tree = Tree { tokens: vec![*draft.tokens.last().unwrap()], parents: vec![0] };
+    let mut tree = Tree {
+        tokens: vec![*draft.tokens.last().unwrap()],
+        parents: vec![0],
+    };
     let mut frontier = vec![0usize];
     for &w in widths {
         let logits = draft.feed_tree(gpu, &tree.tokens, &tree.parents)?;
@@ -63,9 +69,16 @@ pub fn build_tree(gpu: &Gpu, draft: &mut Session, widths: &[usize]) -> Result<Tr
 }
 
 /// One tree round: draft builds the tree, target verifies it in one pass.
-pub fn tree_round(gpu: &Gpu, target: &mut Session, draft: &mut Session, widths: &[usize]) -> Result<RoundStats> {
+pub fn tree_round(
+    gpu: &Gpu,
+    target: &mut Session,
+    draft: &mut Session,
+    widths: &[usize],
+) -> Result<RoundStats> {
     let tree = build_tree(gpu, draft, widths)?;
-    let next = target.feed_tree(gpu, &tree.tokens, &tree.parents)?.argmax(gpu)?;
+    let next = target
+        .feed_tree(gpu, &tree.tokens, &tree.parents)?
+        .argmax(gpu)?;
     let (path, bonus) = tree_accept(&tree.tokens, &tree.parents, &next);
     target.commit_tree_path(gpu, &path)?;
     for &v in &path[1..] {
@@ -76,5 +89,8 @@ pub fn tree_round(gpu: &Gpu, target: &mut Session, draft: &mut Session, widths: 
     let committed = draft.tokens.len() - 1;
     draft.tokens.clone_from(&target.tokens);
     draft.truncate(committed);
-    Ok(RoundStats { proposed: tree.tokens.len() - 1, accepted: path.len() - 1 })
+    Ok(RoundStats {
+        proposed: tree.tokens.len() - 1,
+        accepted: path.len() - 1,
+    })
 }

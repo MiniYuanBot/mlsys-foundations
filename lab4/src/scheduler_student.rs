@@ -51,7 +51,12 @@ pub struct SchedulerConfig {
 
 impl Default for SchedulerConfig {
     fn default() -> Self {
-        Self { max_num_seqs: 64, max_batched_tokens: 2048, chunked_prefill: true, static_batching: false }
+        Self {
+            max_num_seqs: 64,
+            max_batched_tokens: 2048,
+            chunked_prefill: true,
+            static_batching: false,
+        }
     }
 }
 
@@ -75,7 +80,11 @@ pub struct Scheduler {
 
 impl Scheduler {
     pub fn new(cfg: SchedulerConfig) -> Self {
-        Self { cfg, waiting: VecDeque::new(), running: Vec::new() }
+        Self {
+            cfg,
+            waiting: VecDeque::new(),
+            running: Vec::new(),
+        }
     }
 
     pub fn add(&mut self, id: usize) {
@@ -93,7 +102,13 @@ impl Scheduler {
 
     /// Provided: preempt `id` (recompute policy).
     #[allow(dead_code)]
-    fn preempt(&mut self, id: usize, seqs: &mut HashMap<usize, Sequence>, kv: &mut BlockManager, out: &mut SchedulerOutput) {
+    fn preempt(
+        &mut self,
+        id: usize,
+        seqs: &mut HashMap<usize, Sequence>,
+        kv: &mut BlockManager,
+        out: &mut SchedulerOutput,
+    ) {
         let seq = seqs.get_mut(&id).expect("unknown sequence");
         kv.free_sequence(seq);
         seq.status = Status::Waiting;
@@ -105,7 +120,11 @@ impl Scheduler {
 
     // TODO(B3 + C1) implement the policy described at the top of this file.
     #[allow(unreachable_code, unused_mut)]
-    pub fn schedule(&mut self, seqs: &mut HashMap<usize, Sequence>, kv: &mut BlockManager) -> SchedulerOutput {
+    pub fn schedule(
+        &mut self,
+        seqs: &mut HashMap<usize, Sequence>,
+        kv: &mut BlockManager,
+    ) -> SchedulerOutput {
         let mut out = SchedulerOutput::default();
         let _ = (seqs, kv, &mut out);
         todo!("B3 schedule");

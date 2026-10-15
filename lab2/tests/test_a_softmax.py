@@ -1,4 +1,5 @@
 """Part A tests:  python -m pytest lab2/tests/test_a_softmax.py -v"""
+
 import pytest
 import torch
 

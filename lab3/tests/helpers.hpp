@@ -24,7 +24,8 @@ inline Feeds random_feeds(const Graph& g, unsigned seed = 7) {
     return f;
 }
 
-inline void expect_close(const HostTensor& got, const HostTensor& want, double tol, const std::string& what) {
+inline void expect_close(const HostTensor& got, const HostTensor& want, double tol,
+                         const std::string& what) {
     if (got.shape != want.shape) throw check::Failure(what + ": shape mismatch");
     double worst = 0;
     size_t at = 0;
@@ -44,8 +45,8 @@ inline void expect_close(const HostTensor& got, const HostTensor& want, double t
 }
 
 // Run `plan` on the GPU and compare with the CPU interpreter.
-inline void expect_plan_matches(Runtime& rt, const Graph& g, const Plan& plan, const std::string& what,
-                                double tol = 2e-4, unsigned seed = 7) {
+inline void expect_plan_matches(Runtime& rt, const Graph& g, const Plan& plan,
+                                const std::string& what, double tol = 2e-4, unsigned seed = 7) {
     const Feeds f = random_feeds(g, seed);
     expect_close(rt.run(g, plan, f), evaluate(g, f), tol, what);
 }
@@ -56,4 +57,4 @@ inline int count_kind(const Plan& p, KernelKind k) {
     return n;
 }
 
-}  // namespace tc::test
+} // namespace tc::test

@@ -1,4 +1,5 @@
 """Part C2 tests:  python -m pytest lab2/tests/test_c_decode.py -v"""
+
 import pytest
 import torch
 
@@ -19,7 +20,9 @@ def test_C2_decode_matches_reference(S, splits):
     q, k, v = make(2, 4, S, 64)
     out, lse = flash_decode(q, k, v, num_splits=splits)
     torch.testing.assert_close(out.float(), decode_ref(q, k, v), atol=2e-3, rtol=2e-3)
-    ref_lse = torch.logsumexp((q.float()[:, :, None, :] @ k.float().transpose(-1, -2))[:, :, 0] / 8.0, dim=-1)
+    ref_lse = torch.logsumexp(
+        (q.float()[:, :, None, :] @ k.float().transpose(-1, -2))[:, :, 0] / 8.0, dim=-1
+    )
     torch.testing.assert_close(lse, ref_lse, atol=1e-3, rtol=1e-4)
 
 

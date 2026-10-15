@@ -24,7 +24,10 @@ namespace coll {
 
 // ------------------------------------------------------------------- A1 ----
 void ring_shift(const float* send, float* recv, size_t n, const Comm& c) {
-    (void)send; (void)recv; (void)n; (void)c;
+    (void)send;
+    (void)recv;
+    (void)n;
+    (void)c;
     throw todo("A1 ring_shift");
 }
 
@@ -34,7 +37,9 @@ void ring_shift(const float* send, float* recv, size_t n, const Comm& c) {
 // MPI_Send buf to 0, then MPI_Recv the result into buf.
 // Cost: rank 0 moves 2(P-1)n floats by itself -- the bottleneck the ring removes.
 void allreduce_star(float* buf, size_t n, const Comm& c) {
-    (void)buf; (void)n; (void)c;
+    (void)buf;
+    (void)n;
+    (void)c;
     throw todo("A2 allreduce_star");
 }
 
@@ -47,7 +52,9 @@ void allreduce_star(float* buf, size_t n, const Comm& c) {
 // (Check with P = 2: rank 0 sends chunk 1, receives chunk 0 -> owns chunk 0.)
 // Chunks can have different sizes (chunk_range): size each message by its chunk.
 void reduce_scatter_ring(float* buf, size_t n, const Comm& c) {
-    (void)buf; (void)n; (void)c;
+    (void)buf;
+    (void)n;
+    (void)c;
     throw todo("B1a reduce_scatter_ring");
 }
 
@@ -55,13 +62,17 @@ void reduce_scatter_ring(float* buf, size_t n, const Comm& c) {
 //   sends    chunk (r - s) mod P       to the right,
 //   receives chunk (r - s - 1) mod P   from the left, straight into buf (no add).
 void allgather_ring(float* buf, size_t n, const Comm& c) {
-    (void)buf; (void)n; (void)c;
+    (void)buf;
+    (void)n;
+    (void)c;
     throw todo("B1b allgather_ring");
 }
 
 // TODO(B1c) two lines.
 void allreduce_ring(float* buf, size_t n, const Comm& c) {
-    (void)buf; (void)n; (void)c;
+    (void)buf;
+    (void)n;
+    (void)c;
     throw todo("B1c allreduce_ring");
 }
 
@@ -74,8 +85,10 @@ void allreduce_ring(float* buf, size_t n, const Comm& c) {
 // Latency log2(P) * alpha instead of the ring's 2(P-1) * alpha, but every step
 // moves the whole buffer: log2(P) * n floats instead of the ring's ~2n.
 void allreduce_rd(float* buf, size_t n, const Comm& c) {
-    (void)buf; (void)n; (void)c;
+    (void)buf;
+    (void)n;
+    (void)c;
     throw todo("B2 allreduce_rd");
 }
 
-}  // namespace coll
+} // namespace coll

@@ -23,12 +23,26 @@ fn main() -> Result<()> {
         }
         args.drain(..2);
     }
-    let prompt = if args.is_empty() { "What is a KV cache? Answer briefly.".to_string() } else { args.join(" ") };
+    let prompt = if args.is_empty() {
+        "What is a KV cache? Answer briefly.".to_string()
+    } else {
+        args.join(" ")
+    };
     let dir = model_dir(&model);
     let text = Text::load(&dir)?;
     let t0 = Instant::now();
-    let mut engine = Engine::new(&dir, EngineConfig { kv_cache_bytes: 1 << 30, ..Default::default() })?;
-    eprintln!("# loaded {model} ({:.2} GB weights) in {:.1}s", engine.model.w.bytes as f64 / 1e9, t0.elapsed().as_secs_f64());
+    let mut engine = Engine::new(
+        &dir,
+        EngineConfig {
+            kv_cache_bytes: 1 << 30,
+            ..Default::default()
+        },
+    )?;
+    eprintln!(
+        "# loaded {model} ({:.2} GB weights) in {:.1}s",
+        engine.model.w.bytes as f64 / 1e9,
+        t0.elapsed().as_secs_f64()
+    );
     let ids = text.chat_prompt(&prompt)?;
     let id = engine.add_request(ids.clone(), max_tokens, text.eos.clone());
     let t1 = Instant::now();
@@ -50,7 +64,11 @@ fn main() -> Result<()> {
     let n = engine.seqs[&id].num_generated();
     let total = t1.elapsed().as_secs_f64();
     println!();
-    eprintln!("# prompt {} tokens, generated {n}; TTFT {:.1} ms; decode {:.1} tok/s",
-        ids.len(), first.unwrap_or(0.0) * 1e3, (n.saturating_sub(1)) as f64 / (total - first.unwrap_or(0.0)).max(1e-9));
+    eprintln!(
+        "# prompt {} tokens, generated {n}; TTFT {:.1} ms; decode {:.1} tok/s",
+        ids.len(),
+        first.unwrap_or(0.0) * 1e3,
+        (n.saturating_sub(1)) as f64 / (total - first.unwrap_or(0.0)).max(1e-9)
+    );
     Ok(())
 }

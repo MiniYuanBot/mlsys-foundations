@@ -52,7 +52,14 @@ impl Report {
 
 /// Generate `max_new` tokens after `prompt` (never stops early, so every
 /// method does the same amount of work). `draft` is needed for Draft, Sample, Tree.
-pub fn generate(gpu: &Gpu, target: &Qwen3, draft: Option<&Qwen3>, prompt: &[u32], max_new: usize, method: &Method) -> Result<Report> {
+pub fn generate(
+    gpu: &Gpu,
+    target: &Qwen3,
+    draft: Option<&Qwen3>,
+    prompt: &[u32],
+    max_new: usize,
+    method: &Method,
+) -> Result<Report> {
     let cap = prompt.len() + max_new + 80;
     let mut t = Session::new(gpu, target, prompt, cap)?;
     let mut d = match draft {
@@ -70,7 +77,10 @@ pub fn generate(gpu: &Gpu, target: &Qwen3, draft: Option<&Qwen3>, prompt: &[u32]
     }
     gpu.sync()?;
     let (t_calls0, d_calls0) = (t.forward_calls, d.as_ref().map_or(0, |d| d.forward_calls));
-    let mut rng = Rng::new(match method { Method::Sample { seed, .. } => *seed, _ => 0 });
+    let mut rng = Rng::new(match method {
+        Method::Sample { seed, .. } => *seed,
+        _ => 0,
+    });
     let start = Instant::now();
     let mut rep = Report::default();
     while t.tokens.len() < prompt.len() + max_new {
@@ -87,7 +97,9 @@ pub fn generate(gpu: &Gpu, target: &Qwen3, draft: Option<&Qwen3>, prompt: &[u32]
                 sync_draft(d, &t);
                 st
             }
-            Method::Sample { k, temp, .. } => sampling_round(gpu, &mut t, d.as_mut().unwrap(), *k, *temp, &mut rng)?,
+            Method::Sample { k, temp, .. } => {
+                sampling_round(gpu, &mut t, d.as_mut().unwrap(), *k, *temp, &mut rng)?
+            }
             Method::Tree { widths } => tree_round(gpu, &mut t, d.as_mut().unwrap(), widths)?,
         };
         rep.rounds += 1;

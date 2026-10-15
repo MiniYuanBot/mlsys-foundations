@@ -4,8 +4,8 @@
 //   https://docs.nvidia.com/cuda/parallel-thread-execution/index.html
 #pragma once
 
-#include <cuda_fp16.h>
 #include <cstdint>
+#include <cuda_fp16.h>
 
 namespace l1::ptx {
 
@@ -20,9 +20,10 @@ __device__ __forceinline__ uint32_t smem_addr(const void* p) {
 __device__ __forceinline__ void cp_async_16(void* smem, const void* gmem) {
     asm volatile("cp.async.cg.shared.global [%0], [%1], 16;\n" ::"r"(smem_addr(smem)), "l"(gmem));
 }
-__device__ __forceinline__ void cp_async_commit() { asm volatile("cp.async.commit_group;\n" ::); }
-template <int N>
-__device__ __forceinline__ void cp_async_wait() {
+__device__ __forceinline__ void cp_async_commit() {
+    asm volatile("cp.async.commit_group;\n" ::);
+}
+template <int N> __device__ __forceinline__ void cp_async_wait() {
     asm volatile("cp.async.wait_group %0;\n" ::"n"(N));
 }
 
@@ -52,12 +53,12 @@ __device__ __forceinline__ void ldmatrix_x4_trans(uint32_t (&r)[4], const void* 
 //   a[2] = A[g   ][2t+8..+9]   a[3] = A[g+8][2t+8..+9]
 //   b[0] = B[2t..2t+1  ][g]    b[1] = B[2t+8..2t+9][g]
 //   d[0..1] = D[g][2t..2t+1]   d[2..3] = D[g+8][2t..2t+1]
-__device__ __forceinline__ void mma_16816(float (&d)[4], const uint32_t (&a)[4], const uint32_t (&b)[2]) {
-    asm volatile(
-        "mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 "
-        "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%0,%1,%2,%3};\n"
-        : "+f"(d[0]), "+f"(d[1]), "+f"(d[2]), "+f"(d[3])
-        : "r"(a[0]), "r"(a[1]), "r"(a[2]), "r"(a[3]), "r"(b[0]), "r"(b[1]));
+__device__ __forceinline__ void mma_16816(float (&d)[4], const uint32_t (&a)[4],
+                                          const uint32_t (&b)[2]) {
+    asm volatile("mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 "
+                 "{%0,%1,%2,%3}, {%4,%5,%6,%7}, {%8,%9}, {%0,%1,%2,%3};\n"
+                 : "+f"(d[0]), "+f"(d[1]), "+f"(d[2]), "+f"(d[3])
+                 : "r"(a[0]), "r"(a[1]), "r"(a[2]), "r"(a[3]), "r"(b[0]), "r"(b[1]));
 }
 
-}  // namespace l1::ptx
+} // namespace l1::ptx

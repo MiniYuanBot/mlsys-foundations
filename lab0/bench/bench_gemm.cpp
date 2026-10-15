@@ -40,17 +40,24 @@ int main(int argc, char** argv) {
             if (i + 1 >= argc) throw std::invalid_argument("missing value for " + a);
             return argv[++i];
         };
-        if (a == "--sizes") sizes = parse_list(next());
-        else if (a == "--repeats") repeats = std::stoi(next());
-        else if (a == "--threads") threads = std::stoi(next());
-        else if (a == "--naive-max") naive_max = std::stoi(next());
+        if (a == "--sizes")
+            sizes = parse_list(next());
+        else if (a == "--repeats")
+            repeats = std::stoi(next());
+        else if (a == "--threads")
+            threads = std::stoi(next());
+        else if (a == "--naive-max")
+            naive_max = std::stoi(next());
         else {
-            std::fprintf(stderr, "usage: bench_gemm [--sizes a,b,c] [--repeats r] [--threads t] [--naive-max n]\n");
+            std::fprintf(
+                stderr,
+                "usage: bench_gemm [--sizes a,b,c] [--repeats r] [--threads t] [--naive-max n]\n");
             return 2;
         }
     }
     const int hw = static_cast<int>(std::thread::hardware_concurrency());
-    std::fprintf(stderr, "# hardware threads: %d, MR=%d NR=%d MC=%d KC=%d NC=%d\n", hw, MR, NR, MC, KC, NC);
+    std::fprintf(stderr, "# hardware threads: %d, MR=%d NR=%d MC=%d KC=%d NC=%d\n", hw, MR, NR, MC,
+                 KC, NC);
     std::printf("kernel,threads,n,repeat,ms,gflops\n");
 
     const GemmKernel kernels[] = {GemmKernel::Naive, GemmKernel::Reordered, GemmKernel::Blocked,
@@ -78,15 +85,17 @@ int main(int argc, char** argv) {
                     gemm(k, n, n, n, A.data(), n, B.data(), n, C.data(), n);
             };
             try {
-                run();  // warm-up + correctness
+                run(); // warm-up + correctness
             } catch (const std::logic_error& e) {
                 std::fprintf(stderr, "# skip %s: %s\n", kernel_name(k), e.what());
                 continue;
             }
             double worst = 0;
-            for (size_t i = 0; i < C.size(); ++i) worst = std::max(worst, std::fabs(double(C[i]) - ref[i]));
+            for (size_t i = 0; i < C.size(); ++i)
+                worst = std::max(worst, std::fabs(double(C[i]) - ref[i]));
             if (!(worst < 1e-2)) {
-                std::fprintf(stderr, "# %s is WRONG at n=%d (max err %g); not timing it\n", kernel_name(k), n, worst);
+                std::fprintf(stderr, "# %s is WRONG at n=%d (max err %g); not timing it\n",
+                             kernel_name(k), n, worst);
                 continue;
             }
             for (int r = 1; r <= repeats; ++r) {

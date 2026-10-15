@@ -17,8 +17,14 @@ endif()
 
 find_package(CUDAToolkit REQUIRED)
 
-add_library(l1kernels STATIC
-  src/core.cu src/basics_student.cu src/sgemm_student.cu src/hgemm_student.cu)
+add_library(
+  l1kernels
+  STATIC
+  src/core.cu
+  src/basics_student.cu
+  src/sgemm_student.cu
+  src/hgemm_student.cu
+)
 target_include_directories(l1kernels PUBLIC include)
 target_link_libraries(l1kernels PUBLIC CUDA::cudart CUDA::cublas)
 # -lineinfo maps SASS back to source lines in Nsight Compute at no runtime cost.

@@ -16,8 +16,8 @@ namespace l1 {
 
 static void require_multiple_c(int value, int of, const char* what) {
     if (value % of != 0)
-        throw std::invalid_argument(std::string(what) + " = " + std::to_string(value) + " must be a multiple of " +
-                                    std::to_string(of));
+        throw std::invalid_argument(std::string(what) + " = " + std::to_string(value) +
+                                    " must be a multiple of " + std::to_string(of));
 }
 
 // ================================================================ C1 ====
@@ -34,8 +34,8 @@ static void require_multiple_c(int value, int of, const char* what) {
 // Requires M % 64 == N % 64 == K % 16 == 0.
 using namespace nvcuda;
 
-__global__ void __launch_bounds__(128) hgemm_wmma_kernel(int M, int N, int K, const __half* A, const __half* B,
-                                                         float* C) {
+__global__ void __launch_bounds__(128)
+    hgemm_wmma_kernel(int M, int N, int K, const __half* A, const __half* B, float* C) {
     const int warp = threadIdx.x / 32;
     const int row0 = blockIdx.y * C1_BM + (warp / 2) * 32;
     const int col0 = blockIdx.x * C1_BN + (warp % 2) * 32;
@@ -45,14 +45,17 @@ __global__ void __launch_bounds__(128) hgemm_wmma_kernel(int M, int N, int K, co
     for (int i = 0; i < 2; ++i)
         for (int j = 0; j < 2; ++j) wmma::fill_fragment(acc[i][j], 0.f);
     for (int k0 = 0; k0 < K; k0 += 16) {
-        for (int i = 0; i < 2; ++i) wmma::load_matrix_sync(a_frag[i], A + (row0 + i * 16) * K + k0, K);
-        for (int j = 0; j < 2; ++j) wmma::load_matrix_sync(b_frag[j], B + k0 * N + col0 + j * 16, N);
+        for (int i = 0; i < 2; ++i)
+            wmma::load_matrix_sync(a_frag[i], A + (row0 + i * 16) * K + k0, K);
+        for (int j = 0; j < 2; ++j)
+            wmma::load_matrix_sync(b_frag[j], B + k0 * N + col0 + j * 16, N);
         for (int i = 0; i < 2; ++i)
             for (int j = 0; j < 2; ++j) wmma::mma_sync(acc[i][j], a_frag[i], b_frag[j], acc[i][j]);
     }
     for (int i = 0; i < 2; ++i)
         for (int j = 0; j < 2; ++j)
-            wmma::store_matrix_sync(C + (row0 + i * 16) * N + col0 + j * 16, acc[i][j], N, wmma::mem_row_major);
+            wmma::store_matrix_sync(C + (row0 + i * 16) * N + col0 + j * 16, acc[i][j], N,
+                                    wmma::mem_row_major);
 }
 
 void hgemm_wmma(int M, int N, int K, const __half* A, const __half* B, float* C) {
@@ -80,9 +83,9 @@ void hgemm_wmma(int M, int N, int K, const __half* A, const __half* B, float* C)
 // 3 stages need 56.8 KB, more than the 48 KB static limit, so the buffer is
 // dynamic shared memory (the launcher raises the per-kernel limit).
 constexpr int C2_THREADS = 256;
-constexpr int C2_APAD = C2_BK + 8;  // 40
-constexpr int C2_BPAD = C2_BN + 8;  // 136
-constexpr int C2_A_STAGE = C2_BM * C2_APAD;  // halves per stage
+constexpr int C2_APAD = C2_BK + 8;          // 40
+constexpr int C2_BPAD = C2_BN + 8;          // 136
+constexpr int C2_A_STAGE = C2_BM * C2_APAD; // halves per stage
 constexpr int C2_B_STAGE = C2_BK * C2_BPAD;
 constexpr size_t C2_SMEM_BYTES = size_t(C2_STAGES) * (C2_A_STAGE + C2_B_STAGE) * sizeof(__half);
 
@@ -94,8 +97,9 @@ constexpr size_t C2_SMEM_BYTES = size_t(C2_STAGES) * (C2_A_STAGE + C2_B_STAGE) *
 //   B tile 32 x 128 = 512 chunks; chunk c:
 //       row = c / 16, col = (c % 16) * 8
 //       smem &Bs[row * C2_BPAD + col]  <-  gmem &B[(k0 + row) * N + n0 + col]
-__device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __half* A, const __half* B, int N,
-                                             int K, int m0, int n0, int k0) {
+__device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __half* A,
+                                             const __half* B, int N, int K, int m0, int n0,
+                                             int k0) {
 #pragma unroll
     for (int i = 0; i < 2; ++i) {
         const int c = threadIdx.x + i * C2_THREADS;
@@ -119,8 +123,8 @@ __device__ __forceinline__ void c2_load_tile(__half* As, __half* Bs, const __hal
 //   then acc[i][j] += a[i] * b[j] for all 4 x 4 (i, j) with mma_16816.
 // wm / wn are the warp's row / column offsets inside the block tile.
 // Lecture L1 section 4.3 derives these addresses from the fragment layout.
-__device__ __forceinline__ void c2_compute_stage(const __half* As, const __half* Bs, float (&acc)[4][4][4], int wm,
-                                                 int wn) {
+__device__ __forceinline__ void c2_compute_stage(const __half* As, const __half* Bs,
+                                                 float (&acc)[4][4][4], int wm, int wn) {
     const int lane = threadIdx.x % 32;
 #pragma unroll
     for (int kk = 0; kk < C2_BK; kk += 16) {
@@ -131,7 +135,8 @@ __device__ __forceinline__ void c2_compute_stage(const __half* As, const __half*
 #pragma unroll
         for (int j = 0; j < 4; j += 2) {
             uint32_t r[4];
-            ptx::ldmatrix_x4_trans(r, &Bs[(kk + lane % 16) * C2_BPAD + wn + j * 8 + (lane / 16) * 8]);
+            ptx::ldmatrix_x4_trans(r,
+                                   &Bs[(kk + lane % 16) * C2_BPAD + wn + j * 8 + (lane / 16) * 8]);
             b[j][0] = r[0];
             b[j][1] = r[1];
             b[j + 1][0] = r[2];
@@ -161,20 +166,21 @@ __device__ __forceinline__ void c2_compute_stage(const __half* As, const __half*
 // Epilogue (provided below): fragment acc[i][j] holds C rows
 //   m0 + wm + i*16 + g  (d[0], d[1])  and  m0 + wm + i*16 + g + 8  (d[2], d[3])
 // at columns n0 + wn + j*8 + 2t, +1, with g = lane / 4, t = lane % 4.
-__global__ void __launch_bounds__(C2_THREADS) hgemm_mma_kernel(int M, int N, int K, const __half* A,
-                                                               const __half* B, float* C) {
+__global__ void __launch_bounds__(C2_THREADS)
+    hgemm_mma_kernel(int M, int N, int K, const __half* A, const __half* B, float* C) {
     extern __shared__ __align__(16) unsigned char c2_smem[];
     __half* As = reinterpret_cast<__half*>(c2_smem);
     __half* Bs = As + C2_STAGES * C2_A_STAGE;
     const int warp = threadIdx.x / 32, lane = threadIdx.x % 32;
-    const int wm = (warp / 4) * 64;  // 2 warps along m
-    const int wn = (warp % 4) * 32;  // 4 warps along n
+    const int wm = (warp / 4) * 64; // 2 warps along m
+    const int wn = (warp % 4) * 32; // 4 warps along n
     const int m0 = blockIdx.y * C2_BM, n0 = blockIdx.x * C2_BN;
     float acc[4][4][4] = {};
     const int KT = K / C2_BK;
 #pragma unroll
     for (int s = 0; s < C2_STAGES - 1; ++s) {
-        if (s < KT) c2_load_tile(As + s * C2_A_STAGE, Bs + s * C2_B_STAGE, A, B, N, K, m0, n0, s * C2_BK);
+        if (s < KT)
+            c2_load_tile(As + s * C2_A_STAGE, Bs + s * C2_B_STAGE, A, B, N, K, m0, n0, s * C2_BK);
         ptx::cp_async_commit();
     }
     for (int kt = 0; kt < KT; ++kt) {
@@ -197,7 +203,8 @@ __global__ void __launch_bounds__(C2_THREADS) hgemm_mma_kernel(int M, int N, int
         for (int j = 0; j < 4; ++j) {
             const int row = m0 + wm + i * 16 + g, col = n0 + wn + j * 8 + 2 * t;
             *reinterpret_cast<float2*>(&C[row * N + col]) = make_float2(acc[i][j][0], acc[i][j][1]);
-            *reinterpret_cast<float2*>(&C[(row + 8) * N + col]) = make_float2(acc[i][j][2], acc[i][j][3]);
+            *reinterpret_cast<float2*>(&C[(row + 8) * N + col]) =
+                make_float2(acc[i][j][2], acc[i][j][3]);
         }
     (void)M;
 }
@@ -209,7 +216,8 @@ void hgemm_mma(int M, int N, int K, const __half* A, const __half* B, float* C) 
     require_multiple_c(N, C2_BN, "N");
     require_multiple_c(K, C2_BK, "K");
     static bool configured = [] {
-        CUDA_CHECK(cudaFuncSetAttribute(hgemm_mma_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize,
+        CUDA_CHECK(cudaFuncSetAttribute(hgemm_mma_kernel,
+                                        cudaFuncAttributeMaxDynamicSharedMemorySize,
                                         static_cast<int>(C2_SMEM_BYTES)));
         return true;
     }();
@@ -219,4 +227,4 @@ void hgemm_mma(int M, int N, int K, const __half* A, const __half* B, float* C) 
     CUDA_CHECK_LAUNCH();
 }
 
-}  // namespace l1
+} // namespace l1

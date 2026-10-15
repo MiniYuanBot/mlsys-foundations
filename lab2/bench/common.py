@@ -1,4 +1,5 @@
 """Timing helpers shared by the lab2 benchmarks."""
+
 import statistics
 import sys
 from pathlib import Path

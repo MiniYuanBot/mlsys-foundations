@@ -5,11 +5,11 @@
 
 一个只有单卡的学生怎么学分布式？其实集合通信的**算法**和**代价模型**与硬件无关：ring allreduce 在 8 个 CPU 进程之间和在 8 张 GPU 之间，走的是同一套步骤；α-β 模型也同样适用。差别只在 α 和 β 的数值上。这个 lab 用 MPI 的点对点原语（Send、Recv、Sendrecv）从头写出集合通信，测出每种算法的适用范围，再用它们实现数据并行训练中最重要的两项优化：**梯度 bucket 与计算重叠**（PyTorch DDP），以及**优化器状态分片**（ZeRO-1）。
 
-| 部分 | 你要写什么 | 难度梯度 | 对应的真实系统 |
-|---|---|---|---|
-| **A** 点对点与基线 | ring shift；“星形” allreduce（全部汇到 rank 0） | ① 填空，熟悉 MPI | — |
-| **B** 集合通信算法 | ring reduce-scatter / all-gather / allreduce（支持不整除的分块）；recursive doubling；α-β 模型拟合 | ② 核心算法 + 性能目标 | NCCL、Gloo、MPI 库的 allreduce |
-| **C** 数据并行训练 | DDP 式的梯度 bucket（与反向传播重叠）；ZeRO-1（用你的 reduce-scatter + all-gather） | ③ 论文机制精简复现 | [PyTorch DDP](https://arxiv.org/abs/2006.15704)（VLDB'20）、[ZeRO](https://arxiv.org/abs/1910.02054)（SC'20） |
+| 部分               | 你要写什么                                                                                         | 难度梯度              | 对应的真实系统                                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **A** 点对点与基线 | ring shift；“星形” allreduce（全部汇到 rank 0）                                                    | ① 填空，熟悉 MPI      | —                                                                                                             |
+| **B** 集合通信算法 | ring reduce-scatter / all-gather / allreduce（支持不整除的分块）；recursive doubling；α-β 模型拟合 | ② 核心算法 + 性能目标 | NCCL、Gloo、MPI 库的 allreduce                                                                                |
+| **C** 数据并行训练 | DDP 式的梯度 bucket（与反向传播重叠）；ZeRO-1（用你的 reduce-scatter + all-gather）                | ③ 论文机制精简复现    | [PyTorch DDP](https://arxiv.org/abs/2006.15704)（VLDB'20）、[ZeRO](https://arxiv.org/abs/1910.02054)（SC'20） |
 
 做完后你应当能回答：
 
@@ -51,10 +51,10 @@ lab6/
 
 ## Part A：点对点（约 1.5 小时）
 
-| TODO | 内容 | 要点 |
-|---|---|---|
-| A1 | `ring_shift` | 用 `MPI_Sendrecv`：同时发给右邻居、收左邻居的数据 |
-| A2 | `allreduce_star` | rank 0 依次接收 P−1 份、求和，再逐个发回 |
+| TODO | 内容             | 要点                                              |
+| ---- | ---------------- | ------------------------------------------------- |
+| A1   | `ring_shift`     | 用 `MPI_Sendrecv`：同时发给右邻居、收左邻居的数据 |
+| A2   | `allreduce_star` | rank 0 依次接收 P−1 份、求和，再逐个发回          |
 
 > ⚠️ 为什么一定要用 `MPI_Sendrecv`：如果每个 rank 都先 `MPI_Send` 再 `MPI_Recv`，消息较大时 Send 会等对方开始接收才返回。所有人都卡在 Send 里，形成环形等待，也就是死锁。`B1c_allreduce_ring_large` 用 16 MB 的消息专门检查这一点。
 
@@ -62,12 +62,12 @@ lab6/
 
 读讲义 §1–§3。**动手前，先在纸上画出 P=3 时 ring reduce-scatter 每一步的分块流向**（讲义 §2.2 有 P=4 的图）。
 
-| TODO | 内容 | 要点 |
-|---|---|---|
-| B1a | `reduce_scatter_ring` | 第 s 步：发出块 (r−s−1) mod P，收到块 (r−s−2) mod P 并累加；结束后 rank r 持有块 r 的总和 |
-| B1b | `allgather_ring` | 第 s 步：发出块 (r−s) mod P，收到块 (r−s−1) mod P |
-| B1c | `allreduce_ring` | 两行：B1a + B1b |
-| B2 | `allreduce_rd` | partner = rank XOR mask，每步交换整个缓冲区；P 不是 2 的幂时抛出异常 |
+| TODO | 内容                  | 要点                                                                                      |
+| ---- | --------------------- | ----------------------------------------------------------------------------------------- |
+| B1a  | `reduce_scatter_ring` | 第 s 步：发出块 (r−s−1) mod P，收到块 (r−s−2) mod P 并累加；结束后 rank r 持有块 r 的总和 |
+| B1b  | `allgather_ring`      | 第 s 步：发出块 (r−s) mod P，收到块 (r−s−1) mod P                                         |
+| B1c  | `allreduce_ring`      | 两行：B1a + B1b                                                                           |
+| B2   | `allreduce_rd`        | partner = rank XOR mask，每步交换整个缓冲区；P 不是 2 的幂时抛出异常                      |
 
 分块大小可以不相等（`chunk_range`）：n=7、P=3 时，三块分别是 3、2、2 个元素。测试会用 1、2、3、7、65537 这些不整除的长度来检查。
 
@@ -83,12 +83,12 @@ python lab6/scripts/alpha_beta.py results/lab6/pingpong.csv results/lab6/allredu
 
 参考实现在 WSL（i9 Alder Lake，进程间走共享内存）上的结果：α ≈ 0.24 µs，β 约为 19 GB/s。P=4 时：
 
-| 消息大小 | MPI_Allreduce | ring | recursive doubling | star |
-|---|---|---|---|---|
-| 4 B | 0.6 µs | 1.7 µs | **0.6 µs** | 0.6 µs |
-| 64 KB | 15 µs | 21 µs | 22 µs | 41 µs |
-| 4 MB | 718 µs | **592 µs** | 1390 µs | 2161 µs |
-| 64 MB | 36.6 ms | **31.6 ms** | 74.0 ms | 75.9 ms |
+| 消息大小 | MPI_Allreduce | ring        | recursive doubling | star    |
+| -------- | ------------- | ----------- | ------------------ | ------- |
+| 4 B      | 0.6 µs        | 1.7 µs      | **0.6 µs**         | 0.6 µs  |
+| 64 KB    | 15 µs         | 21 µs       | 22 µs              | 41 µs   |
+| 4 MB     | 718 µs        | **592 µs**  | 1390 µs            | 2161 µs |
+| 64 MB    | 36.6 ms       | **31.6 ms** | 74.0 ms            | 75.9 ms |
 
 **通过标准**
 
@@ -101,10 +101,10 @@ python lab6/scripts/alpha_beta.py results/lab6/pingpong.csv results/lab6/allredu
 
 读讲义 §4–§5。`train.hpp` 中的 MLP 把所有梯度放在**一个连续的缓冲区**里，按反向传播完成的先后排列（最后一层在最前），所以“已就绪的梯度”总是缓冲区的一个前缀。`CommThread` 在后台线程上依次对提交的区间做 allreduce，训练线程同时继续算反向传播，这就是重叠。
 
-| TODO | 内容 |
-|---|---|
-| C1 | `Bucketer`：每当一层的梯度就绪就累加；超过 bucket 容量就提交一个区间；`finish()` 提交剩余部分、等待完成、除以 P |
-| C2 | `Zero1Adam`：reduce-scatter 梯度 → 本 rank 的块求平均 → 只在本块上做 Adam（m、v 只有 1/P 大小）→ all-gather 参数 |
+| TODO | 内容                                                                                                             |
+| ---- | ---------------------------------------------------------------------------------------------------------------- |
+| C1   | `Bucketer`：每当一层的梯度就绪就累加；超过 bucket 容量就提交一个区间；`finish()` 提交剩余部分、等待完成、除以 P  |
+| C2   | `Zero1Adam`：reduce-scatter 梯度 → 本 rank 的块求平均 → 只在本块上做 Adam（m、v 只有 1/P 大小）→ all-gather 参数 |
 
 `test_train` 用一个小 MLP 检查等价性：P 个 rank、每个 B 个样本训练出的参数，必须与单进程、P×B 个样本训练出的结果一致。
 
@@ -120,12 +120,12 @@ done
 
 参考实现（P=4，batch 16）：
 
-| 模式 | step | compute | comm_wait | optimizer | 每个 rank 的优化器状态 |
-|---|---|---|---|---|---|
-| sync | 23.1 ms | 8.0 | 6.2 | 9.6 | 24 MB |
-| overlap, 4 MB bucket | 21.4 ms | 8.8 | **3.7** | 9.8 | 24 MB |
-| overlap, 16 MB bucket（一个 bucket） | 26.8 ms | 8.0 | 9.2 | 13.1 | 24 MB |
-| zero1 | **15.3 ms** | 8.3 | — | 7.4（含 RS + AG） | **6 MB** |
+| 模式                                 | step        | compute | comm_wait | optimizer         | 每个 rank 的优化器状态 |
+| ------------------------------------ | ----------- | ------- | --------- | ----------------- | ---------------------- |
+| sync                                 | 23.1 ms     | 8.0     | 6.2       | 9.6               | 24 MB                  |
+| overlap, 4 MB bucket                 | 21.4 ms     | 8.8     | **3.7**   | 9.8               | 24 MB                  |
+| overlap, 16 MB bucket（一个 bucket） | 26.8 ms     | 8.0     | 9.2       | 13.1              | 24 MB                  |
+| zero1                                | **15.3 ms** | 8.3     | —         | 7.4（含 RS + AG） | **6 MB**               |
 
 **通过标准**
 

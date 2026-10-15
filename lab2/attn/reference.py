@@ -4,6 +4,7 @@ Shapes follow the usual multi-head layout:
     q, k, v : [B, H, S, D]      (prefill / training)
     q       : [B, H, D]         (decode: one new token per sequence)
 """
+
 import math
 
 import torch

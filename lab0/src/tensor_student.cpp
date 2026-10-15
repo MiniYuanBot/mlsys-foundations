@@ -75,7 +75,8 @@ Tensor Tensor::permute(const std::vector<int64_t>& order) const {
 }
 
 Tensor Tensor::transpose(int64_t dim0, int64_t dim1) const {
-    (void)dim0; (void)dim1;
+    (void)dim0;
+    (void)dim1;
     throw not_implemented("A4 transpose");
 }
 
@@ -90,7 +91,10 @@ Tensor Tensor::transpose(int64_t dim0, int64_t dim1) const {
 //   (For an empty result keep offset_ unchanged.)
 // Example: arange(10).slice(0, 2, 9, 3) -> elements {2, 5, 8}, stride 3, offset 2.
 Tensor Tensor::slice(int64_t dim, int64_t start, int64_t stop, int64_t step) const {
-    (void)dim; (void)start; (void)stop; (void)step;
+    (void)dim;
+    (void)start;
+    (void)stop;
+    (void)step;
     throw not_implemented("A5 slice");
 }
 
@@ -99,7 +103,8 @@ Tensor Tensor::slice(int64_t dim, int64_t start, int64_t stop, int64_t step) con
 //   x == y -> x;  x == 1 -> y;  y == 1 -> x;  else incompatible.
 // Missing leading dims count as 1.  {3,1,5} + {4,5} -> {3,4,5}.
 Shape broadcast_shapes(const Shape& a, const Shape& b) {
-    (void)a; (void)b;
+    (void)a;
+    (void)b;
     throw not_implemented("A6 broadcast_shapes");
 }
 
@@ -129,7 +134,9 @@ Tensor Tensor::contiguous() const {
 // 3. out = Tensor::zeros(shape); fill out in row-major order with fn(a[idx], b[idx]).
 // Look at map() in tensor_core.cpp for the pattern.
 Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn) {
-    (void)a; (void)b; (void)fn;
+    (void)a;
+    (void)b;
+    (void)fn;
     throw not_implemented("A8 zip");
 }
 
@@ -140,8 +147,10 @@ Tensor zip(const Tensor& a, const Tensor& b, const BinaryFn& fn) {
 // with idx[dim] set to 0), then .view() away the dim if keepdim is false.
 // Accumulate in double for accuracy, store as float. dim may be negative.
 Tensor sum(const Tensor& x, int64_t dim, bool keepdim) {
-    (void)x; (void)dim; (void)keepdim;
+    (void)x;
+    (void)dim;
+    (void)keepdim;
     throw not_implemented("A9 sum");
 }
 
-}  // namespace mt
+} // namespace mt

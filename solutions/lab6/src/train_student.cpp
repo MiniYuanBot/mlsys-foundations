@@ -31,11 +31,12 @@ namespace coll {
 // With a tiny cap every layer is its own bucket; with a huge cap there is one
 // bucket, submitted only after backward is done (= no overlap at all).
 Bucketer::Bucketer(MLP& model, size_t bucket_bytes, CommThread& comm, int world_size)
-    : m_(model), cap_floats_(std::max<size_t>(1, bucket_bytes / sizeof(float))), comm_(comm), P_(world_size),
-      expect_(model.num_layers() - 1) {}
+    : m_(model), cap_floats_(std::max<size_t>(1, bucket_bytes / sizeof(float))), comm_(comm),
+      P_(world_size), expect_(model.num_layers() - 1) {}
 
 void Bucketer::on_layer_ready(int layer) {
-    if (layer != expect_) throw std::logic_error("Bucketer: layers must become ready in backward order");
+    if (layer != expect_)
+        throw std::logic_error("Bucketer: layers must become ready in backward order");
     --expect_;
     pending_ += m_.size(layer);
     if (pending_ >= cap_floats_) {
@@ -80,8 +81,9 @@ void Zero1Adam::step(std::vector<float>& params, std::vector<float>& grads) {
     const float inv = 1.f / static_cast<float>(c_.size);
     for (size_t i = begin_; i < end_; ++i) grads[i] *= inv;
     ++t_;
-    adam_update(params.data() + begin_, grads.data() + begin_, m_.data(), v_.data(), end_ - begin_, t_, h_);
+    adam_update(params.data() + begin_, grads.data() + begin_, m_.data(), v_.data(), end_ - begin_,
+                t_, h_);
     allgather_ring(params.data(), params.size(), c_);
 }
 
-}  // namespace coll
+} // namespace coll

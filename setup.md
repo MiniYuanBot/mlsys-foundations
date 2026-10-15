@@ -4,22 +4,22 @@
 
 ## 你的机器分别做什么
 
-| 机器 | 适合 | 不适合 |
-|---|---|---|
-| Windows + RTX 4060 8 GB | 全部 CUDA lab（lab1–lab5）；建议在 **WSL2** 中做 | 多 GPU 通信、Hopper 专属特性（TMA/WGMMA） |
-| Mac mini（Apple Silicon，16 GB） | lab0（NEON 微内核）、lab6 的 MPI 多进程部分、读代码与写报告 | 任何 CUDA |
-| 北大 HPC / 组里服务器 | lab6 的 NCCL 多卡实验；H100 上的可选挑战 | 日常开发与调试（排队太慢） |
+| 机器                             | 适合                                                        | 不适合                                    |
+| -------------------------------- | ----------------------------------------------------------- | ----------------------------------------- |
+| Windows + RTX 4060 8 GB          | 全部 CUDA lab（lab1–lab5）；建议在 **WSL2** 中做            | 多 GPU 通信、Hopper 专属特性（TMA/WGMMA） |
+| Mac mini（Apple Silicon，16 GB） | lab0（NEON 微内核）、lab6 的 MPI 多进程部分、读代码与写报告 | 任何 CUDA                                 |
+| 北大 HPC / 组里服务器            | lab6 的 NCCL 多卡实验；H100 上的可选挑战                    | 日常开发与调试（排队太慢）                |
 
 ## 工具链总览
 
-| 工具 | 首次需要 | 安装 |
-|---|---|---|
-| C++17 编译器 + CMake ≥ 3.18 | lab0 | Windows：[MSYS2](https://www.msys2.org/) 的 `mingw-w64-ucrt-x86_64-gcc cmake`，或 Visual Studio 2022；WSL/Linux：`sudo apt install build-essential cmake`；macOS：`xcode-select --install && brew install cmake` |
-| Python 3.10+、NumPy、matplotlib | lab0（基线和画图） | `python -m pip install numpy -r requirements-analysis.txt` |
-| WSL2 + CUDA Toolkit 12.x | lab1 | 见下文 |
-| PyTorch + Triton | lab2 | `tools/setup_wsl.sh`（见下文） |
-| Rust（rustup） | lab4、lab5 | `tools/setup_wsl.sh` |
-| MPI（Open MPI 或 MPICH） | lab6 | WSL/Linux：`sudo apt install openmpi-bin libopenmpi-dev`；macOS：`brew install open-mpi` |
+| 工具                            | 首次需要           | 安装                                                                                                                                                                                                             |
+| ------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C++17 编译器 + CMake ≥ 3.18     | lab0               | Windows：[MSYS2](https://www.msys2.org/) 的 `mingw-w64-ucrt-x86_64-gcc cmake`，或 Visual Studio 2022；WSL/Linux：`sudo apt install build-essential cmake`；macOS：`xcode-select --install && brew install cmake` |
+| Python 3.10+、NumPy、matplotlib | lab0（基线和画图） | `python -m pip install numpy -r requirements-analysis.txt`                                                                                                                                                       |
+| WSL2 + CUDA Toolkit 12.x        | lab1               | 见下文                                                                                                                                                                                                           |
+| PyTorch + Triton                | lab2               | `tools/setup_wsl.sh`（见下文）                                                                                                                                                                                   |
+| Rust（rustup）                  | lab4、lab5         | `tools/setup_wsl.sh`                                                                                                                                                                                             |
+| MPI（Open MPI 或 MPICH）        | lab6               | WSL/Linux：`sudo apt install openmpi-bin libopenmpi-dev`；macOS：`brew install open-mpi`                                                                                                                         |
 
 ## WSL2 与 CUDA（lab1 开始前做）
 
@@ -49,15 +49,16 @@ bash tools/check_env.sh      # every required line must say OK
 
 脚本会做五件事，可以重复运行（已装好的会跳过）：
 
-| 步骤 | 内容 | 位置 |
-|---|---|---|
-| 1 | apt：`python3-venv`、`python3-dev`（Triton 运行时要编译 C 启动代码）、`libssl-dev`、Open MPI | 系统 |
-| 2 | Python 虚拟环境：PyTorch（CUDA 12.6 版，自带 Triton）、numpy、matplotlib、pytest、transformers、safetensors、`hf` 命令 | `~/venvs/mlsys` |
-| 3 | Rust stable（rustup） | `~/.cargo`、`~/.rustup` |
-| 4 | `~/.bashrc`：CUDA 路径、cargo、`MLSYS_MODELS`，以及 `mlsys` 别名（用来激活虚拟环境） | |
-| 5 | 模型：Qwen3-0.6B（lab4 主模型、lab5 草稿模型）和 Qwen3-1.7B（lab5 目标模型） | `~/models` |
+| 步骤 | 内容                                                                                                                   | 位置                    |
+| ---- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1    | apt：`python3-venv`、`python3-dev`（Triton 运行时要编译 C 启动代码）、`libssl-dev`、Open MPI                           | 系统                    |
+| 2    | Python 虚拟环境：PyTorch（CUDA 12.6 版，自带 Triton）、numpy、matplotlib、pytest、transformers、safetensors、`hf` 命令 | `~/venvs/mlsys`         |
+| 3    | Rust stable（rustup）                                                                                                  | `~/.cargo`、`~/.rustup` |
+| 4    | `~/.bashrc`：CUDA 路径、cargo、`MLSYS_MODELS`，以及 `mlsys` 别名（用来激活虚拟环境）                                   |                         |
+| 5    | 模型：Qwen3-0.6B（lab4 主模型、lab5 草稿模型）和 Qwen3-1.7B（lab5 目标模型）                                           | `~/models`              |
 
 说明：
+
 - **为什么是 CUDA 12.6 版的 PyTorch**：驱动 566.x 最高支持 CUDA 12.7，PyTorch 的 cu128 及更新版本需要更新的驱动。以后升级了 Windows 驱动，也可以换用更新的版本。
 - **不装 vLLM**：lab4 会自己实现推理引擎。如果想用 vLLM 当外部强基线，它的当前版本要求比 566.x 更新的驱动，需要先升级 Windows 驱动，再在**另一个**虚拟环境里安装。
 - 如果下载 Hugging Face 模型太慢，先 `export HF_ENDPOINT=https://hf-mirror.com`，再运行脚本。

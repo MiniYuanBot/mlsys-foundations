@@ -11,10 +11,20 @@ endif()
 find_package(MPI REQUIRED COMPONENTS CXX)
 find_package(Threads REQUIRED)
 
-add_library(coll STATIC src/coll_core.cpp src/coll_student.cpp src/train_core.cpp src/train_student.cpp)
+add_library(
+  coll
+  STATIC
+  src/coll_core.cpp
+  src/coll_student.cpp
+  src/train_core.cpp
+  src/train_student.cpp
+)
 target_include_directories(coll PUBLIC include)
 target_link_libraries(coll PUBLIC MPI::MPI_CXX Threads::Threads)
-target_compile_options(coll PUBLIC -Wall -Wextra -O3 -march=native -fopenmp-simd)
+target_compile_options(
+  coll
+  PUBLIC -Wall -Wextra -O3 -march=native -fopenmp-simd
+)
 
 # Open MPI refuses to start more ranks than cores unless told to.
 set(LAB6_MPIEXEC_FLAGS "" CACHE STRING "extra mpiexec flags")
@@ -28,14 +38,29 @@ foreach(t coll train)
   add_executable(test_${t} tests/test_${t}.cpp)
   target_link_libraries(test_${t} PRIVATE coll)
 endforeach()
-foreach(np 1 2 3 4 8)
-  add_test(NAME coll_np${np} COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${np} ${LAB6_MPIEXEC_FLAGS_LIST}
-           $<TARGET_FILE:test_coll>)
+foreach(
+  np
+  1
+  2
+  3
+  4
+  8
+)
+  add_test(
+    NAME coll_np${np}
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${np} ${LAB6_MPIEXEC_FLAGS_LIST}
+      $<TARGET_FILE:test_coll>
+  )
   set_tests_properties(coll_np${np} PROPERTIES LABELS coll TIMEOUT 120)
 endforeach()
 foreach(np 1 2 4)
-  add_test(NAME train_np${np} COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${np} ${LAB6_MPIEXEC_FLAGS_LIST}
-           $<TARGET_FILE:test_train>)
+  add_test(
+    NAME train_np${np}
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${np} ${LAB6_MPIEXEC_FLAGS_LIST}
+      $<TARGET_FILE:test_train>
+  )
   set_tests_properties(train_np${np} PROPERTIES LABELS train TIMEOUT 120)
 endforeach()
 

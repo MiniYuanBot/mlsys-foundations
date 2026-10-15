@@ -48,14 +48,15 @@ void expect_correct(GemmKernel kernel, const Problem& p) {
             const double want = ref[i * p.N + j], got = C[i * p.ldc + j];
             if (!(std::fabs(got - want) <= 1e-4 * (1.0 + std::sqrt(static_cast<double>(p.K))))) {
                 std::ostringstream os;
-                os << kernel_name(kernel) << " M=" << p.M << " N=" << p.N << " K=" << p.K << " C(" << i << ","
-                   << j << ") = " << got << ", expected " << want;
+                os << kernel_name(kernel) << " M=" << p.M << " N=" << p.N << " K=" << p.K << " C("
+                   << i << "," << j << ") = " << got << ", expected " << want;
                 throw check::Failure(os.str());
             }
         }
         // padding columns of C must be left alone
         for (int j = p.N; j < p.ldc; ++j)
-            if (!std::isnan(C[i * p.ldc + j])) throw check::Failure("kernel wrote into the padding of C");
+            if (!std::isnan(C[i * p.ldc + j]))
+                throw check::Failure("kernel wrote into the padding of C");
     }
     CHECK(p.A == A0);
     CHECK(p.B == B0);
@@ -66,24 +67,29 @@ void sweep(GemmKernel kernel) {
     // Small, odd, and not multiples of MR/NR/MC/KC: edge handling matters.
     for (int M : {1, 5, 6, 7, 13, 97})
         for (int N : {1, 15, 16, 17, 33})
-            for (int K : {1, 3, 17, 64})
-                expect_correct(kernel, make(M, N, K, 0, seed++));
-    expect_correct(kernel, make(31, 29, 23, 3, seed++));      // padded leading dims
-    expect_correct(kernel, make(130, 70, 300, 1, seed++));    // crosses MC and KC blocks
-    expect_correct(kernel, make(7, 5, 0, 0, seed++));         // K = 0 -> C must be all zeros
+            for (int K : {1, 3, 17, 64}) expect_correct(kernel, make(M, N, K, 0, seed++));
+    expect_correct(kernel, make(31, 29, 23, 3, seed++));   // padded leading dims
+    expect_correct(kernel, make(130, 70, 300, 1, seed++)); // crosses MC and KC blocks
+    expect_correct(kernel, make(7, 5, 0, 0, seed++));      // K = 0 -> C must be all zeros
 }
 
-}  // namespace
+} // namespace
 
-TEST(B0_naive_reference_sanity) { sweep(GemmKernel::Naive); }
-TEST(B1_reordered) { sweep(GemmKernel::Reordered); }
-TEST(B2_blocked) { sweep(GemmKernel::Blocked); }
+TEST(B0_naive_reference_sanity) {
+    sweep(GemmKernel::Naive);
+}
+TEST(B1_reordered) {
+    sweep(GemmKernel::Reordered);
+}
+TEST(B2_blocked) {
+    sweep(GemmKernel::Blocked);
+}
 
 TEST(B3a_pack_A_layout) {
     // 7 x 2 block, MR = 6: two panels, the second has 1 real row + 5 zero rows.
     std::vector<float> A(7 * 3);
     for (int i = 0; i < 7; ++i)
-        for (int k = 0; k < 3; ++k) A[i * 3 + k] = 10.0f * i + k;  // lda = 3, use first 2 cols
+        for (int k = 0; k < 3; ++k) A[i * 3 + k] = 10.0f * i + k; // lda = 3, use first 2 cols
     std::vector<float> Ap(2 * MR * 2, -1.0f);
     detail::pack_A(7, 2, A.data(), 3, Ap.data());
     for (int p = 0; p < 2; ++p)
@@ -129,7 +135,9 @@ TEST(B3c_micro_kernel_accumulates_and_respects_edges) {
         }
 }
 
-TEST(B3_packed) { sweep(GemmKernel::Packed); }
+TEST(B3_packed) {
+    sweep(GemmKernel::Packed);
+}
 
 TEST(B4_parallel) {
     sweep(GemmKernel::Parallel);
@@ -137,7 +145,8 @@ TEST(B4_parallel) {
     for (int threads : {1, 2, 3, 64}) {
         Problem p = make(50, 40, 30, 2, 99 + threads);
         std::vector<float> C(p.M * p.ldc);
-        gemm_parallel(p.M, p.N, p.K, p.A.data(), p.lda, p.B.data(), p.ldb, C.data(), p.ldc, threads);
+        gemm_parallel(p.M, p.N, p.K, p.A.data(), p.lda, p.B.data(), p.ldb, C.data(), p.ldc,
+                      threads);
         const auto ref = reference(p);
         for (int i = 0; i < p.M; ++i)
             for (int j = 0; j < p.N; ++j) CHECK_NEAR(C[i * p.ldc + j], ref[i * p.N + j], 1e-3);
@@ -147,9 +156,11 @@ TEST(B4_parallel) {
 TEST(B_capstone_tensor_matmul_on_views) {
     // mt::matmul makes operands contiguous, then calls the Best kernel.
     Tensor a = Tensor::arange(6).view({2, 3});
-    Tensor b = Tensor::arange(6).view({2, 3}).transpose(0, 1);  // 3x2 view
+    Tensor b = Tensor::arange(6).view({2, 3}).transpose(0, 1); // 3x2 view
     Tensor c = matmul(a, b);
     CHECK_EQ(c.to_vector(), (std::vector<float>{5, 14, 14, 50}));
 }
 
-int main(int argc, char** argv) { return run_tests(argc, argv); }
+int main(int argc, char** argv) {
+    return run_tests(argc, argv);
+}

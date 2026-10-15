@@ -33,7 +33,8 @@ inline Graph rmsnorm(int64_t R, int64_t C, double eps = 1e-6) {
     Graph g;
     int x = g.input("x", {R, C});
     int gamma = g.input("gamma", {1, C});
-    int r = g.rsqrt(g.add(g.mul(g.row_sum(g.mul(x, x)), g.constant(1.0 / static_cast<double>(C))), g.constant(eps)));
+    int r = g.rsqrt(g.add(g.mul(g.row_sum(g.mul(x, x)), g.constant(1.0 / static_cast<double>(C))),
+                          g.constant(eps)));
     g.set_output(g.mul(g.mul(x, r), gamma));
     return g;
 }
@@ -59,7 +60,8 @@ inline Graph rmsnorm_matmul(int64_t M, int64_t K, int64_t N, double eps = 1e-6) 
     int gamma = g.input("gamma", {1, K});
     int w = g.input("W", {K, N});
     int res = g.input("res", {M, N});
-    int r = g.rsqrt(g.add(g.mul(g.row_sum(g.mul(x, x)), g.constant(1.0 / static_cast<double>(K))), g.constant(eps)));
+    int r = g.rsqrt(g.add(g.mul(g.row_sum(g.mul(x, x)), g.constant(1.0 / static_cast<double>(K))),
+                          g.constant(eps)));
     int xn = g.mul(g.mul(x, r), gamma);
     g.set_output(g.add(g.matmul(xn, w), res));
     return g;
@@ -77,4 +79,4 @@ inline Graph softmax_matmul(int64_t M, int64_t K, int64_t N) {
     return g;
 }
 
-}  // namespace tc::models
+} // namespace tc::models

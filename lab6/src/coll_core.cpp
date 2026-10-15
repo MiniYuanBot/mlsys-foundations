@@ -21,4 +21,4 @@ void allreduce_mpi(float* buf, size_t n, const Comm& c) {
     MPI_Allreduce(MPI_IN_PLACE, buf, static_cast<int>(n), MPI_FLOAT, MPI_SUM, c.comm);
 }
 
-}  // namespace coll
+} // namespace coll

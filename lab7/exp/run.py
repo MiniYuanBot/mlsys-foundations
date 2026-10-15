@@ -13,6 +13,7 @@ last line that contains the metric name). Failures are recorded, not dropped.
 Output: results/lab7/<name>/<phase>/runs.csv plus provenance (config, environment,
 command lines) via common.records.run_directory.
 """
+
 import argparse
 import csv
 import json
@@ -37,7 +38,9 @@ def parse_metric(stdout, metric):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("prereg")
     ap.add_argument("--phase", choices=["dev", "heldout"])
     ap.add_argument("--lock", action="store_true", help="freeze the pre-registration")
@@ -61,7 +64,12 @@ def main():
         out = out.with_name(f"{a.phase}-{stamp}")
     workdir = ROOT / spec.get("workdir", ".")
     rng = random.Random(a.seed)
-    config = {"prereg": spec, "phase": a.phase, "seed": a.seed, "prereg_sha256": prereg.digest(a.prereg)}
+    config = {
+        "prereg": spec,
+        "phase": a.phase,
+        "seed": a.seed,
+        "prereg_sha256": prereg.digest(a.prereg),
+    }
     with run_directory(out, config) as d:
         rows = []
         for ci, cond in enumerate(conditions):
@@ -72,16 +80,38 @@ def main():
                     cmd = spec["command"].format(**{**cond, **params})
                     t0 = time.time()
                     try:
-                        p = subprocess.run(shlex.split(cmd), cwd=workdir, capture_output=True, text=True, timeout=a.timeout)
-                        value = parse_metric(p.stdout, spec["metric"]) if p.returncode == 0 else None
-                        err = "" if p.returncode == 0 else f"exit {p.returncode}: {p.stderr.strip()[-200:]}"
+                        p = subprocess.run(
+                            shlex.split(cmd),
+                            cwd=workdir,
+                            capture_output=True,
+                            text=True,
+                            timeout=a.timeout,
+                        )
+                        value = (
+                            parse_metric(p.stdout, spec["metric"]) if p.returncode == 0 else None
+                        )
+                        err = (
+                            ""
+                            if p.returncode == 0
+                            else f"exit {p.returncode}: {p.stderr.strip()[-200:]}"
+                        )
                     except (subprocess.TimeoutExpired, ValueError, OSError) as e:
                         value, err = None, f"{type(e).__name__}: {e}"
-                    row = {"condition": ci, "condition_json": json.dumps(cond, sort_keys=True), "arm": arm, "repeat": rep,
-                           "value": "" if value is None else value, "seconds": round(time.time() - t0, 2), "error": err,
-                           "command": cmd}
+                    row = {
+                        "condition": ci,
+                        "condition_json": json.dumps(cond, sort_keys=True),
+                        "arm": arm,
+                        "repeat": rep,
+                        "value": "" if value is None else value,
+                        "seconds": round(time.time() - t0, 2),
+                        "error": err,
+                        "command": cmd,
+                    }
                     rows.append(row)
-                    print(f"[{a.phase} c{ci} r{rep} {arm:>10}] {spec['metric']} = {row['value']} {err}", flush=True)
+                    print(
+                        f"[{a.phase} c{ci} r{rep} {arm:>10}] {spec['metric']} = {row['value']} {err}",
+                        flush=True,
+                    )
         with (d / "runs.csv").open("w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0]))
             w.writeheader()
@@ -89,7 +119,10 @@ def main():
     print(f"wrote {out / 'runs.csv'}")
     failed = sum(1 for r in rows if r["value"] == "")
     if failed:
-        print(f"WARNING: {failed} of {len(rows)} runs failed; they are kept in runs.csv", file=sys.stderr)
+        print(
+            f"WARNING: {failed} of {len(rows)} runs failed; they are kept in runs.csv",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

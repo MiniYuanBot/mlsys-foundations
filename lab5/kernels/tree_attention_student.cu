@@ -28,17 +28,28 @@
 typedef __nv_bfloat16 bf16;
 constexpr int HEAD_DIM = 128;
 
-
-extern "C" __global__ void tree_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
-                                          const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
-                                          const unsigned long long* __restrict__ tree_mask, int prefix_len,
-                                          bf16* __restrict__ out, int T, int num_heads, int num_kv_heads,
-                                          int max_blocks, int block_size, float scale) {
+extern "C" __global__ void
+tree_attention(const bf16* __restrict__ q, const bf16* __restrict__ k_cache,
+               const bf16* __restrict__ v_cache, const int* __restrict__ block_tables,
+               const unsigned long long* __restrict__ tree_mask, int prefix_len,
+               bf16* __restrict__ out, int T, int num_heads, int num_kv_heads, int max_blocks,
+               int block_size, float scale) {
     const int warp_global = (blockIdx.x * blockDim.x + threadIdx.x) / 32;
     const int lane = threadIdx.x % 32;
     if (warp_global >= T * num_heads) return;
     const int t = warp_global / num_heads, h = warp_global % num_heads;
     const int kvh = h / (num_heads / num_kv_heads);
-    (void)q; (void)k_cache; (void)v_cache; (void)block_tables; (void)tree_mask; (void)prefix_len;
-    (void)out; (void)max_blocks; (void)block_size; (void)scale; (void)lane; (void)t; (void)kvh;
+    (void)q;
+    (void)k_cache;
+    (void)v_cache;
+    (void)block_tables;
+    (void)tree_mask;
+    (void)prefix_len;
+    (void)out;
+    (void)max_blocks;
+    (void)block_size;
+    (void)scale;
+    (void)lane;
+    (void)t;
+    (void)kvh;
 }

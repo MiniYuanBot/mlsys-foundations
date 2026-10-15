@@ -6,7 +6,10 @@ use specdec::verify_student::{greedy_accept, ngram_propose, speculative_sample, 
 fn a1_ngram_finds_the_latest_earlier_match() {
     assert_eq!(ngram_propose(&[5, 6, 7, 8, 5, 6], 2, 3), vec![7, 8, 5]);
     // two earlier matches of [1, 2]: the latest one wins
-    assert_eq!(ngram_propose(&[1, 2, 9, 1, 2, 4, 4, 1, 2], 2, 2), vec![4, 4]);
+    assert_eq!(
+        ngram_propose(&[1, 2, 9, 1, 2, 4, 4, 1, 2], 2, 2),
+        vec![4, 4]
+    );
     // the proposal is cut at the end of the text
     assert_eq!(ngram_propose(&[3, 1, 2, 3], 1, 5), vec![1, 2, 3]);
 }
@@ -37,11 +40,20 @@ fn c2_tree_accept_follows_matching_children() {
     let toks = [0, 10, 11, 12, 20, 21, 22];
     let par = [0, 0, 0, 0, 1, 1, 3];
     // after the root the target wants c (12); after node 3 it wants z (22); after 6 it wants 99
-    assert_eq!(tree_accept(&toks, &par, &[12, 0, 0, 22, 0, 0, 99]), (vec![0, 3, 6], 99));
+    assert_eq!(
+        tree_accept(&toks, &par, &[12, 0, 0, 22, 0, 0, 99]),
+        (vec![0, 3, 6], 99)
+    );
     // the target wants something that is not in the tree
-    assert_eq!(tree_accept(&toks, &par, &[42, 0, 0, 0, 0, 0, 0]), (vec![0], 42));
+    assert_eq!(
+        tree_accept(&toks, &par, &[42, 0, 0, 0, 0, 0, 0]),
+        (vec![0], 42)
+    );
     // a chain-shaped tree behaves like greedy_accept
-    assert_eq!(tree_accept(&[0, 7, 8, 9], &[0, 0, 1, 2], &[7, 8, 4, 0]), (vec![0, 1, 2], 4));
+    assert_eq!(
+        tree_accept(&[0, 7, 8, 9], &[0, 0, 1, 2], &[7, 8, 4, 0]),
+        (vec![0, 1, 2], 4)
+    );
 }
 
 /// B1: speculative sampling must reproduce the TARGET distribution exactly.
@@ -51,8 +63,18 @@ fn c2_tree_accept_follows_matching_children() {
 #[test]
 fn b1_speculative_sampling_is_exact() {
     const V: usize = 4;
-    let p = [[0.1f32, 0.6, 0.2, 0.1], [0.5, 0.1, 0.1, 0.3], [0.25, 0.25, 0.25, 0.25], [0.7, 0.1, 0.1, 0.1]];
-    let q = [[0.4f32, 0.2, 0.2, 0.2], [0.1, 0.1, 0.7, 0.1], [0.6, 0.2, 0.1, 0.1], [0.25, 0.25, 0.25, 0.25]];
+    let p = [
+        [0.1f32, 0.6, 0.2, 0.1],
+        [0.5, 0.1, 0.1, 0.3],
+        [0.25, 0.25, 0.25, 0.25],
+        [0.7, 0.1, 0.1, 0.1],
+    ];
+    let q = [
+        [0.4f32, 0.2, 0.2, 0.2],
+        [0.1, 0.1, 0.7, 0.1],
+        [0.6, 0.2, 0.1, 0.1],
+        [0.25, 0.25, 0.25, 0.25],
+    ];
     let mut rng = Rng::new(42);
     let trials = 200_000;
     let mut counts = vec![0usize; V * V * V];
@@ -76,7 +98,11 @@ fn b1_speculative_sampling_is_exact() {
             }
             let out = speculative_sample(&draft, &qs, &ps, &mut rng);
             assert!(!out.is_empty() && out.len() <= k + 1);
-            assert_eq!(&out[..out.len() - 1], &draft[..out.len() - 1], "accepted tokens must be a prefix of the draft");
+            assert_eq!(
+                &out[..out.len() - 1],
+                &draft[..out.len() - 1],
+                "accepted tokens must be a prefix of the draft"
+            );
             proposed += k;
             accepted += out.len() - 1;
             seq.extend(out);
@@ -94,8 +120,14 @@ fn b1_speculative_sampling_is_exact() {
             }
         }
     }
-    eprintln!("max |empirical - exact| = {worst:.4}, acceptance rate {:.3}", accepted as f64 / proposed as f64);
-    assert!(worst < 0.006, "output distribution differs from the target's (max error {worst})");
+    eprintln!(
+        "max |empirical - exact| = {worst:.4}, acceptance rate {:.3}",
+        accepted as f64 / proposed as f64
+    );
+    assert!(
+        worst < 0.006,
+        "output distribution differs from the target's (max error {worst})"
+    );
 }
 
 #[test]
@@ -103,7 +135,11 @@ fn b1_identical_models_accept_everything() {
     let p = vec![vec![0.2f32, 0.3, 0.5]; 4];
     let mut rng = Rng::new(7);
     for _ in 0..1000 {
-        let draft = vec![rng.sample(&p[0]) as u32, rng.sample(&p[1]) as u32, rng.sample(&p[2]) as u32];
+        let draft = vec![
+            rng.sample(&p[0]) as u32,
+            rng.sample(&p[1]) as u32,
+            rng.sample(&p[2]) as u32,
+        ];
         let out = speculative_sample(&draft, &p[..3], &p, &mut rng);
         assert_eq!(out.len(), 4);
         assert_eq!(&out[..3], &draft[..]);

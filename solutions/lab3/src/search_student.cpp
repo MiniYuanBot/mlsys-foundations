@@ -34,7 +34,8 @@ namespace tc {
 // covers every node `target` depends on; it returns the id of the replacement.
 // Nodes downstream of target are rebuilt on top of the replacement. Nodes no
 // longer reachable from the output are simply left behind (harmless).
-static Graph rebuild(const Graph& g, int target, const std::function<int(Graph&, const std::vector<int>&)>& make) {
+static Graph rebuild(const Graph& g, int target,
+                     const std::function<int(Graph&, const std::vector<int>&)>& make) {
     Graph ng;
     std::vector<int> m(g.size(), -1);
     for (int id : toposort(g)) {
@@ -43,8 +44,10 @@ static Graph rebuild(const Graph& g, int target, const std::function<int(Graph&,
             m[id] = make(ng, m);
             continue;
         }
-        if (n.op == Op::Input) m[id] = ng.input(n.name, n.shape);
-        else if (n.op == Op::Const) m[id] = ng.constant(n.value);
+        if (n.op == Op::Input)
+            m[id] = ng.input(n.name, n.shape);
+        else if (n.op == Op::Const)
+            m[id] = ng.constant(n.value);
         else {
             std::vector<int> srcs;
             for (int s : n.srcs) srcs.push_back(m[s]);
@@ -64,8 +67,10 @@ static Graph clone_operand(const Graph& g, int c, int k) {
     std::vector<int> m(g.size(), -1);
     for (int id : toposort(g)) {
         const Node& n = g.node(id);
-        if (n.op == Op::Input) m[id] = ng.input(n.name, n.shape);
-        else if (n.op == Op::Const) m[id] = ng.constant(n.value);
+        if (n.op == Op::Input)
+            m[id] = ng.input(n.name, n.shape);
+        else if (n.op == Op::Const)
+            m[id] = ng.constant(n.value);
         else {
             std::vector<int> srcs;
             for (int s : n.srcs) srcs.push_back(m[s]);
@@ -107,13 +112,13 @@ std::vector<Graph> rewrite_once(const Graph& g) {
             const Node& L = g.node(lhs);
             if (L.op != Op::Mul && L.op != Op::Div) continue;
             for (int side = 0; side < 2; ++side) {
-                if (L.op == Op::Div && side == 1) break;  // only a / r
+                if (L.op == Op::Div && side == 1) break; // only a / r
                 const int a = L.srcs[side], s = L.srcs[1 - side];
                 const Shape ss = g.node(s).shape, as = g.node(a).shape;
                 const bool row_scale = ss.cols == 1 && ss.rows == as.rows && as.cols > 1;
-                const bool col_scale = L.op == Op::Mul && ss.rows == 1 && ss.cols == as.cols && as.cols > 1 &&
-                                       as.cols == n.shape.cols;
-                if (!row_scale && !col_scale) continue;  // R1 or R3
+                const bool col_scale = L.op == Op::Mul && ss.rows == 1 && ss.cols == as.cols &&
+                                       as.cols > 1 && as.cols == n.shape.cols;
+                if (!row_scale && !col_scale) continue; // R1 or R3
                 const Op op = L.op;
                 out.push_back(rebuild(g, t, [&](Graph& ng, const std::vector<int>& m) {
                     return ng.add_node(op, {ng.matmul(m[a], m[B]), m[s]});
@@ -144,7 +149,8 @@ std::vector<Graph> rewrite_once(const Graph& g) {
 bool probably_equivalent(const Graph& a, const Graph& b, int trials, unsigned seed) {
     auto sig = [](const Graph& g) {
         std::vector<std::pair<std::string, std::pair<int64_t, int64_t>>> s;
-        for (int id : g.inputs()) s.push_back({g.node(id).name, {g.node(id).shape.rows, g.node(id).shape.cols}});
+        for (int id : g.inputs())
+            s.push_back({g.node(id).name, {g.node(id).shape.rows, g.node(id).shape.cols}});
         std::sort(s.begin(), s.end());
         s.erase(std::unique(s.begin(), s.end()), s.end());
         return s;
@@ -190,7 +196,8 @@ Cost estimate(const Graph& g, const Plan& plan, const Device& dev) {
                 const Node& n = g.node(id);
                 flops += 2.0 * n.shape.rows * n.shape.cols * g.node(n.srcs[0]).shape.cols;
             }
-        const double ms = std::max(bytes / (dev.bandwidth_gbps * 1e6), flops / (dev.flops_tflops * 1e9));
+        const double ms =
+            std::max(bytes / (dev.bandwidth_gbps * 1e6), flops / (dev.flops_tflops * 1e9));
         c.bytes += bytes;
         c.flops += flops;
         c.ms += ms + dev.launch_us * 1e-3;
@@ -224,8 +231,9 @@ std::vector<Candidate> search(const Graph& g, const Device& dev, int depth) {
         Cost cost = estimate(k, p, dev);
         out.push_back({std::move(k), std::move(p), cost});
     }
-    std::stable_sort(out.begin(), out.end(), [](const Candidate& a, const Candidate& b) { return a.cost.ms < b.cost.ms; });
+    std::stable_sort(out.begin(), out.end(),
+                     [](const Candidate& a, const Candidate& b) { return a.cost.ms < b.cost.ms; });
     return out;
 }
 
-}  // namespace tc
+} // namespace tc

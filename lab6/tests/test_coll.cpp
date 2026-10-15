@@ -9,11 +9,13 @@ using namespace coll;
 // rank-dependent integers: sums are exact in float, so we can compare exactly
 static std::vector<float> make(size_t n, int rank) {
     std::vector<float> v(n);
-    for (size_t i = 0; i < n; ++i) v[i] = static_cast<float>((rank + 1) * static_cast<int>(i % 13) - static_cast<int>(i % 5));
+    for (size_t i = 0; i < n; ++i)
+        v[i] = static_cast<float>((rank + 1) * static_cast<int>(i % 13) - static_cast<int>(i % 5));
     return v;
 }
 static float expected_sum(size_t i, int P) {
-    return static_cast<float>(static_cast<int>(i % 13) * P * (P + 1) / 2 - P * static_cast<int>(i % 5));
+    return static_cast<float>(static_cast<int>(i % 13) * P * (P + 1) / 2 -
+                              P * static_cast<int>(i % 5));
 }
 static const size_t SIZES[] = {1, 2, 3, 7, 8, 100, 1000, 65537};
 
@@ -51,9 +53,13 @@ static void check_allreduce(AllreduceFn fn) {
     }
 }
 
-TEST(A2_allreduce_star) { check_allreduce(allreduce_star); }
+TEST(A2_allreduce_star) {
+    check_allreduce(allreduce_star);
+}
 
-TEST(B0_allreduce_mpi_provided) { check_allreduce(allreduce_mpi); }
+TEST(B0_allreduce_mpi_provided) {
+    check_allreduce(allreduce_mpi);
+}
 
 TEST(B1a_reduce_scatter_ring_owner_chunk) {
     const Comm c = Comm::world();
@@ -70,17 +76,20 @@ TEST(B1b_allgather_ring) {
     for (size_t n : SIZES) {
         std::vector<float> buf(n, -7.f);
         auto [b, e] = chunk_range(n, c.size, c.rank);
-        for (size_t i = b; i < e; ++i) buf[i] = static_cast<float>(i) * 0.5f;  // only my chunk is valid
+        for (size_t i = b; i < e; ++i)
+            buf[i] = static_cast<float>(i) * 0.5f; // only my chunk is valid
         allgather_ring(buf.data(), n, c);
         for (size_t i = 0; i < n; ++i) CHECK(buf[i] == static_cast<float>(i) * 0.5f);
     }
 }
 
-TEST(B1c_allreduce_ring) { check_allreduce(allreduce_ring); }
+TEST(B1c_allreduce_ring) {
+    check_allreduce(allreduce_ring);
+}
 
 TEST(B1c_allreduce_ring_large) {
     const Comm c = Comm::world();
-    const size_t n = (1 << 22) + 13;  // 16 MB: deadlocks if you use Send + Recv instead of Sendrecv
+    const size_t n = (1 << 22) + 13; // 16 MB: deadlocks if you use Send + Recv instead of Sendrecv
     auto buf = make(n, c.rank);
     allreduce_ring(buf.data(), n, c);
     for (size_t i = 0; i < n; i += 4097) CHECK(buf[i] == expected_sum(i, c.size));

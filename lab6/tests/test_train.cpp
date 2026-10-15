@@ -18,19 +18,24 @@ static std::vector<float> reference(int P, bool adam) {
         make_batch(DIMS.front(), DIMS.back(), static_cast<size_t>(s) * B * P, B * P, x, y);
         m.forward(x.data(), y.data(), B * P);
         m.backward();
-        if (adam) adam_update(m.params.data(), m.grads.data(), mm.data(), vv.data(), m.num_params(), s + 1, Adam{});
-        else sgd_update(m.params.data(), m.grads.data(), m.num_params(), 0.05f);
+        if (adam)
+            adam_update(m.params.data(), m.grads.data(), mm.data(), vv.data(), m.num_params(),
+                        s + 1, Adam{});
+        else
+            sgd_update(m.params.data(), m.grads.data(), m.num_params(), 0.05f);
     }
     return m.params;
 }
 
 static void local_batch(const Comm& c, int s, std::vector<float>& x, std::vector<float>& y) {
-    make_batch(DIMS.front(), DIMS.back(), static_cast<size_t>(s) * B * c.size + static_cast<size_t>(c.rank) * B, B, x, y);
+    make_batch(DIMS.front(), DIMS.back(),
+               static_cast<size_t>(s) * B * c.size + static_cast<size_t>(c.rank) * B, B, x, y);
 }
 
 static double max_rel_diff(const std::vector<float>& a, const std::vector<float>& b) {
     double worst = 0;
-    for (size_t i = 0; i < a.size(); ++i) worst = std::max(worst, std::fabs(double(a[i]) - b[i]) / (1e-3 + std::fabs(b[i])));
+    for (size_t i = 0; i < a.size(); ++i)
+        worst = std::max(worst, std::fabs(double(a[i]) - b[i]) / (1e-3 + std::fabs(b[i])));
     return worst;
 }
 
@@ -67,8 +72,12 @@ static void bucketed_run(size_t bucket_bytes, int expect_buckets) {
     CHECK(max_rel_diff(m.params, reference(c.size, false)) < 1e-4);
 }
 
-TEST(C1_bucketed_one_bucket_per_layer) { bucketed_run(4, 3); }      // tiny cap: every layer flushes
-TEST(C1_bucketed_single_bucket) { bucketed_run(1 << 30, 1); }       // huge cap: one bucket at the end
+TEST(C1_bucketed_one_bucket_per_layer) {
+    bucketed_run(4, 3);
+} // tiny cap: every layer flushes
+TEST(C1_bucketed_single_bucket) {
+    bucketed_run(1 << 30, 1);
+} // huge cap: one bucket at the end
 TEST(C1_bucketed_mixed) {
     // layer sizes in backward order: 392, 2352, 1584 floats. cap 2000 floats:
     // 392 (no), +2352 = 2744 -> flush; 1584 (no) -> flushed by finish()  => 2 buckets
@@ -82,9 +91,9 @@ TEST(C1_bucketer_rejects_out_of_order_layers) {
     Bucketer bk(m, 1 << 20, ct, c.size);
     bool threw = false;
     try {
-        bk.on_layer_ready(0);  // layer 2 must come first
+        bk.on_layer_ready(0); // layer 2 must come first
     } catch (const NotImplemented&) {
-        throw;  // "not implemented" is not the error we are looking for
+        throw; // "not implemented" is not the error we are looking for
     } catch (const std::logic_error&) {
         threw = true;
     }
@@ -116,7 +125,10 @@ int main(int argc, char** argv) {
     int provided = 0;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     if (provided < MPI_THREAD_MULTIPLE && mpitest::rank() == 0)
-        std::fprintf(stderr, "warning: MPI_THREAD_MULTIPLE not provided (%d); the comm thread may misbehave\n", provided);
+        std::fprintf(
+            stderr,
+            "warning: MPI_THREAD_MULTIPLE not provided (%d); the comm thread may misbehave\n",
+            provided);
     const int rc = run_mpi_tests(argc, argv);
     MPI_Finalize();
     return rc;

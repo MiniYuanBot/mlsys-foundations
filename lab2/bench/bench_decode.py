@@ -3,6 +3,7 @@
     python lab2/bench/bench_decode.py > results/lab2/decode.csv
 Effective GB/s counts reading K and V once: 2 * B * H * S * D * 2 bytes.
 """
+
 from common import try_time
 
 import torch
@@ -20,12 +21,17 @@ def main():
         v = torch.randn_like(k)
         nbytes = 2 * k.numel() * 2
         rows = [("sdpa", None, lambda: F.scaled_dot_product_attention(q[:, :, None], k, v))]
-        rows += [("flash_decode", 1, lambda: flash_decode(q, k, v, num_splits=1)),
-                 ("flash_decode", "auto", lambda: flash_decode(q, k, v))]
+        rows += [
+            ("flash_decode", 1, lambda: flash_decode(q, k, v, num_splits=1)),
+            ("flash_decode", "auto", lambda: flash_decode(q, k, v)),
+        ]
         for name, splits, fn in rows:
             ms = try_time(fn)
             if ms is not None:
-                print(f"{B},{H},{S},{name},{splits or ''},{ms:.4f},{nbytes / ms / 1e6:.1f}", flush=True)
+                print(
+                    f"{B},{H},{S},{name},{splits or ''},{ms:.4f},{nbytes / ms / 1e6:.1f}",
+                    flush=True,
+                )
 
 
 if __name__ == "__main__":

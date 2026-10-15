@@ -58,4 +58,4 @@ void allreduce_mpi(float* buf, size_t n, const Comm& c);
 
 using AllreduceFn = void (*)(float*, size_t, const Comm&);
 
-}  // namespace coll
+} // namespace coll

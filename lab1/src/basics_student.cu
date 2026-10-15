@@ -18,7 +18,10 @@ namespace l1 {
 // A grid-stride loop works for any n with any grid size, so the launcher can
 // pick a grid that just fills the GPU instead of one thread per element.
 __global__ void vector_add_kernel(const float* a, const float* b, float* c, int n) {
-    (void)a; (void)b; (void)c; (void)n;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)n;
 }
 
 // Provided launcher: ~8 blocks per SM is enough to fill the GPU; the
@@ -59,10 +62,15 @@ constexpr int REDUCE_MAX_BLOCKS = 1024;
 
 __global__ void reduce_kernel(const float* x, int n, float* partial) {
     __shared__ float warp_sums[32];
-    (void)x; (void)n; (void)partial; (void)warp_sums[0];
+    (void)x;
+    (void)n;
+    (void)partial;
+    (void)warp_sums[0];
 }
 
-int reduce_scratch_size() { return REDUCE_MAX_BLOCKS; }
+int reduce_scratch_size() {
+    return REDUCE_MAX_BLOCKS;
+}
 
 // Provided: pass 1 writes one partial per block, pass 2 reduces the partials
 // with a single block. Two launches, no atomics, deterministic result.
@@ -92,17 +100,24 @@ constexpr int TILE = 32, ROWS = 8;
 // same bank -> 32-way conflict. Measure it with bench_basics.
 __global__ void transpose_tiled_kernel(const float* in, float* out, int M, int N) {
     __shared__ float tile[TILE][TILE];
-    (void)in; (void)out; (void)M; (void)N; (void)tile[0][0];
+    (void)in;
+    (void)out;
+    (void)M;
+    (void)N;
+    (void)tile[0][0];
 }
 
 // TODO(A3b) identical, but declare tile[TILE][TILE + 1]. The extra column
 // shifts each row by one bank, so a column now hits 32 different banks.
 __global__ void transpose_padded_kernel(const float* in, float* out, int M, int N) {
-    (void)in; (void)out; (void)M; (void)N;
+    (void)in;
+    (void)out;
+    (void)M;
+    (void)N;
 }
 
-static void launch_transpose(void (*kernel)(const float*, float*, int, int), const float* in, float* out, int M,
-                             int N) {
+static void launch_transpose(void (*kernel)(const float*, float*, int, int), const float* in,
+                             float* out, int M, int N) {
     const dim3 block(TILE, ROWS);
     const dim3 grid(ceil_div(N, TILE), ceil_div(M, TILE));
     kernel<<<grid, block>>>(in, out, M, N);
@@ -122,4 +137,4 @@ void transpose_padded(const float* in, float* out, int M, int N) {
     launch_transpose(transpose_padded_kernel, in, out, M, N);
 }
 
-}  // namespace l1
+} // namespace l1

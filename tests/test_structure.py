@@ -2,6 +2,7 @@
 
 Run from the repository root:  python -m unittest discover -s tests -v
 """
+
 import ast
 import re
 import unittest
@@ -28,13 +29,23 @@ class Structure(unittest.TestCase):
                 folder = ROOT / lab
                 for name in ("README.md", "grade.md"):
                     self.assertTrue((folder / name).is_file(), f"{lab}/{name}")
-                builds = [folder / "CMakeLists.txt", folder / "Cargo.toml", folder / "tests" / "__init__.py"]
-                self.assertTrue(any(p.is_file() for p in builds), f"{lab} has no CMake, Cargo or Python test entry point")
+                builds = [
+                    folder / "CMakeLists.txt",
+                    folder / "Cargo.toml",
+                    folder / "tests" / "__init__.py",
+                ]
+                self.assertTrue(
+                    any(p.is_file() for p in builds),
+                    f"{lab} has no CMake, Cargo or Python test entry point",
+                )
 
     def test_student_files_contain_no_reference_solution_markers(self):
         for lab in LABS:
             for path in (ROOT / lab).rglob("*_student.*"):
-                if path.suffix not in {".py", ".cpp", ".cu", ".cuh", ".hpp", ".rs"} or "__pycache__" in path.parts:
+                if (
+                    path.suffix not in {".py", ".cpp", ".cu", ".cuh", ".hpp", ".rs"}
+                    or "__pycache__" in path.parts
+                ):
                     continue
                 text = path.read_text(encoding="utf-8")
                 with self.subTest(path=str(path.relative_to(ROOT))):
@@ -59,9 +70,13 @@ class Structure(unittest.TestCase):
                 if "://" in target or target.startswith(("#", "mailto:")):
                     continue
                 destination = (path.parent / target.split("#")[0]).resolve()
-                if destination.is_relative_to(ROOT) or (COURSE.is_dir() and destination.is_relative_to(COURSE.resolve())):
+                if destination.is_relative_to(ROOT) or (
+                    COURSE.is_dir() and destination.is_relative_to(COURSE.resolve())
+                ):
                     with self.subTest(source=str(path.relative_to(ROOT)), target=target):
-                        self.assertTrue(destination.exists(), f"{path.relative_to(ROOT)} -> {target}")
+                        self.assertTrue(
+                            destination.exists(), f"{path.relative_to(ROOT)} -> {target}"
+                        )
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 """Temporary files stay under this project, including in restricted desktop sandboxes."""
+
 from contextlib import contextmanager
 from pathlib import Path
 import tempfile

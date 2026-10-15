@@ -7,6 +7,7 @@ Left panel: TFLOP/s vs n per kernel (median of repeats, min-max band).
 Right panel: bar chart of % of cuBLAS at the largest n, the "ladder" view.
 Peaks are your computed device peaks (lecture L1 section 1.4); optional.
 """
+
 import argparse
 import csv
 import statistics
@@ -15,7 +16,9 @@ from pathlib import Path
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument("csv")
     parser.add_argument("--out", required=True)
     parser.add_argument("--fp32-peak", type=float)
@@ -23,6 +26,7 @@ def main():
     args = parser.parse_args()
 
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -44,11 +48,19 @@ def main():
         med = [statistics.median(tflops[key][n]) for n in ns]
         style = "--" if key.startswith("cublas") else "-"
         left.plot(ns, med, style, marker="o", label=key)
-        left.fill_between(ns, [min(tflops[key][n]) for n in ns], [max(tflops[key][n]) for n in ns], alpha=0.15)
+        left.fill_between(
+            ns, [min(tflops[key][n]) for n in ns], [max(tflops[key][n]) for n in ns], alpha=0.15
+        )
     for peak, label in ((args.fp32_peak, "FP32 peak"), (args.fp16_peak, "FP16 tensor peak")):
         if peak:
             left.axhline(peak, color="gray", ls=":", label=f"{label} {peak:g}")
-    left.set(xscale="log", yscale="log", xlabel="n (n x n x n)", ylabel="TFLOP/s (median)", title="GEMM throughput")
+    left.set(
+        xscale="log",
+        yscale="log",
+        xlabel="n (n x n x n)",
+        ylabel="TFLOP/s (median)",
+        title="GEMM throughput",
+    )
     left.set_xscale("log", base=2)
     left.grid(alpha=0.25, which="both")
     left.legend(fontsize=7)
