@@ -17,7 +17,7 @@ results/lab1/explicit-r1/
   correctness.json / 图 / 其他证据
 ```
 
-训练、张量 benchmark 自动记录这些元信息和相应结果；目录已存在就拒绝运行，重跑另起名称。外部命令可用：
+lab7 的 `exp.run` 会自动建立这样的目录；目录已存在就拒绝运行，重跑另起名称。其他命令可以用 capture 包一层：
 
 ```bash
 python -m tools.capture --out results/your-new-run --config path/to/config.json -- your-command arguments
@@ -29,19 +29,17 @@ capture 保存命令、环境、输出和退出码；**不会从 stdout 猜造 r
 
 环境信息用 `bash tools/check_env.sh --lab N` 和 `python -m tools.doctor` 导出，保存到 `results/environment/`。
 
-## 张量测量
+## Kernel 测量
 
-提供的计时器在输入创建后进行首调用（单列）、20 次预热、每轮 100 次 forward、前后 CUDA 同步，保留三轮。每个实现用单独命令/进程运行。同一 shape/seed 的张量生成顺序一致。显存独立采样：同步、输入驻留 baseline、reset peak、调用并保留输出、同步读取 absolute peak/increment/reserved。
+各 lab 的 bench 程序自带计时。lab0、lab1 的 GEMM bench 计时前会先和参考实现核对结果；其他 bench 不做检查，计时前先确认对应的测试已经通过。lab0、lab1 的 C++/CUDA bench 每个尺寸重复多轮，每轮输出一行；lab2 的 Python bench 预热 5 次，再用 CUDA event 计时 20 次，取中位数。改计时参数时，所有实现都要一起改。
 
-100 次内部调用不是 100 个独立实验。三轮在同一进程中按轮测量，独立保留；若怀疑热漂移可增加新进程复测并注明。profiler 单独执行。SDPA 自动后端需从 trace 核实，不能直接称其为 FlashAttention。CPU 与 CUDA 不混成同一条曲线。
+一轮里的多次内部调用不算多个独立实验。怀疑有热漂移时，换一个新进程复测，并在报告里注明。profiler 单独运行，不和计时混在一起。SDPA 的自动后端要从 trace 里核实，不能直接称为 FlashAttention。CPU 和 CUDA 的数据不要画在同一条曲线上。
 
 ## 引擎与调度数据
 
-lab4、lab5 的 `bin/bench` 自己产生请求级数据。成功/失败、实际生成长度、测量时段和分母需一一可核对。duration 应注明是否含排空阶段；TTFT 不等于纯 prefill GPU 时间，TPOT 不等于最坏 ITL。
+lab4、lab5 的 `bin/bench` 每次运行输出一行汇总：吞吐、TTFT/TPOT/端到端延迟的 p50 和 p99，以及调度统计。这些是合成负载上的结果，报告里要写明负载参数（请求数、prompt 和输出长度、`--rate`）。TTFT 不等于纯 prefill 的 GPU 时间，TPOT 也不等于最坏情况下的 token 间隔。
 
-容量阶段允许一次性发出全部请求，正式矩阵只用有限到达率。同一时刻只跑一个 benchmark，先用相同形状的请求预热，再开始测量。换 bench 参数时同步更新 `config.json`，不要把不同 token 预算的轮次混在一张表里。
-
-保存预注册、pilot、SLO、失败与重跑目录。raw 不足以还原请求级 SLO 时标待补，不能以平均值冒充。synthetic 文件只用于测试，不作实测证据。
+`--rate 0` 会在开始时一次性发出全部请求，适合测容量；对比调度策略时用有限的到达率。同一时刻只跑一个 benchmark。换 bench 参数时同步更新 `config.json`，不要把不同 token 预算的轮次混在一张表里。失败的运行和重跑的目录也要保留。
 
 ## 绘图和归档
 

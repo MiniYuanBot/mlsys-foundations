@@ -21,20 +21,16 @@ def main():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    groups, modes, devices = {}, set(), set()
+    groups, devices = {}, set()
     for path in args.inputs:
         with open(path, encoding="utf-8-sig", newline="") as stream:
             for row in csv.DictReader(stream):
-                if row.get("synthetic"):
-                    modes.add(row["synthetic"].lower())
                 if row.get("device"):
                     devices.add(row["device"])
                 key = tuple(row[column] for column in args.group)
                 groups.setdefault(key, []).append((float(row[args.x]), float(row[args.y])))
-    if len(modes) > 1 or len(devices) > 1:
-        raise ValueError(
-            "Separate synthetic/measured data and different devices into distinct figures"
-        )
+    if len(devices) > 1:
+        raise ValueError("Put measurements from different devices into distinct figures")
     figure, axis = plt.subplots(figsize=(7, 4.5), layout="constrained")
     for key, values in groups.items():
         xs, ys = zip(*sorted(values))

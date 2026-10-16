@@ -10,13 +10,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 COURSE = ROOT.parent / "mlsys-research-course"
-# Labs that have been migrated to the new layout. Extend as each lab is rebuilt.
 LABS = ["lab0", "lab1", "lab2", "lab3", "lab4", "lab5", "lab6", "lab7"]
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 
 
 def markdown_files():
-    skip = {".git", "build", "results", "legacy", "external"}
+    skip = {".git", "build", "results", "external"}
     for path in ROOT.rglob("*.md"):
         if not skip.intersection(path.relative_to(ROOT).parts):
             yield path
