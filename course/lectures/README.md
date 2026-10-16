@@ -3,6 +3,7 @@
 每讲对应两周，与同编号的 lab 配套。讲义分成若干节，每节 45–60 分钟；每读完一节就去做 lab 的对应部分。
 
 每讲的结构相同：
+
 1. **要解决的问题**：开头列出 2–3 个问题
 2. **从基础推导**：先讲原理，配图示和手算例子
 3. **对应 lab**：每节末尾说明该去做 lab 的哪一部分
@@ -11,13 +12,13 @@
 6. **研究问题种子**：可以作为后续选题的起点
 7. **可视化资料汇总**
 
-| 讲 | 主题 |
-|---|---|
-| [L0](L0-tensor-runtime.md) | 张量、内存与 CPU 性能 |
-| [L1](L1-cuda-gemm.md) | GPU 执行模型与 CUDA GEMM |
-| [L2](L2-attention.md) | Attention：从 online softmax 到 FlashAttention |
-| [L3](L3-compilers.md) | 深度学习编译器与超优化 |
-| [L4](L4-serving.md) | LLM 推理系统 |
-| [L5](L5-speculative.md) | 推测解码 |
-| [L6](L6-distributed.md) | 集合通信与并行训练 |
-| [L7](L7-research.md) | 研究方法与研究项目 |
+| 讲                         | 主题                                           |
+| -------------------------- | ---------------------------------------------- |
+| [L0](L0-tensor-runtime.md) | 张量、内存与 CPU 性能                          |
+| [L1](L1-cuda-gemm.md)      | GPU 执行模型与 CUDA GEMM                       |
+| [L2](L2-attention.md)      | Attention：从 online softmax 到 FlashAttention |
+| [L3](L3-compilers.md)      | 深度学习编译器与超优化                         |
+| [L4](L4-serving.md)        | LLM 推理系统                                   |
+| [L5](L5-speculative.md)    | 推测解码                                       |
+| [L6](L6-distributed.md)    | 集合通信与并行训练                             |
+| [L7](L7-research.md)       | 研究方法与研究项目                             |

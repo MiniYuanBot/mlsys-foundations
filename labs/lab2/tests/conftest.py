@@ -4,7 +4,9 @@ from pathlib import Path
 import pytest
 import torch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # labs/ directory, so `import lab2` works
+sys.path.insert(
+    0, str(Path(__file__).resolve().parents[2])
+)  # labs/ directory, so `import lab2` works
 
 
 def pytest_collection_modifyitems(config, items):

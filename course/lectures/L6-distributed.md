@@ -10,19 +10,20 @@ tags: [lecture, distributed, allreduce, ring, ddp, zero, fsdp, tensor-parallel, 
 [← 课程大纲](../syllabus.md) · 上一讲：[L5 推测解码](L5-speculative.md) · 配套实验：[lab6](../../labs/lab6/README.md) · 下一讲：[L7 研究方法与研究项目](L7-research.md)
 
 > [!abstract] 这一讲要解决的三个问题
+>
 > 1. **怎样高效地把 P 份数据加起来？** ring、tree、recursive doubling 各适合什么场景？用什么模型判断？
 > 2. **数据并行训练怎样把通信藏起来？** PyTorch DDP 的 bucket 和重叠是怎么回事？
 > 3. **模型大到一张卡装不下时怎么办？** ZeRO、FSDP、张量并行、流水线并行各切的是什么，各付出了什么代价？苗老师组的 Galvatron 怎样自动选择组合？
 
-| 节 | 内容 | 对应 lab |
-|---|---|---|
-| §1 | 集合通信原语与 α-β 模型 | Part A、B3 |
-| §2 | allreduce 算法：star、ring、recursive doubling | Part B |
-| §3 | 用模型选算法：交叉点 | Part B 报告 |
-| §4 | 数据并行：DDP 的 bucket 与重叠 | Part C1 |
-| §5 | 切分模型状态：ZeRO 1/2/3、FSDP | Part C2 |
-| §6 | 张量并行、流水线并行、序列和上下文并行、专家并行 | 选读 |
-| §7 | 演进脉络：自动并行、计算通信重叠、RL 训练系统 | 选题参考 |
+| 节  | 内容                                             | 对应 lab    |
+| --- | ------------------------------------------------ | ----------- |
+| §1  | 集合通信原语与 α-β 模型                          | Part A、B3  |
+| §2  | allreduce 算法：star、ring、recursive doubling   | Part B      |
+| §3  | 用模型选算法：交叉点                             | Part B 报告 |
+| §4  | 数据并行：DDP 的 bucket 与重叠                   | Part C1     |
+| §5  | 切分模型状态：ZeRO 1/2/3、FSDP                   | Part C2     |
+| §6  | 张量并行、流水线并行、序列和上下文并行、专家并行 | 选读        |
+| §7  | 演进脉络：自动并行、计算通信重叠、RL 训练系统    | 选题参考    |
 
 ---
 
@@ -54,11 +55,11 @@ $$T(n) = \alpha + n\beta$$
 - **α**（延迟）：建立一次通信的固定开销，包括软件栈、同步、网络往返；
 - **β**（每字节时间）= 1 / 带宽。
 
-| 环境 | α | 1/β |
-|---|---|---|
-| 同一台机器的进程间（lab6 实测，共享内存） | ~0.25 µs | ~19 GB/s |
-| NVLink（H100） | ~几 µs（含 kernel 启动） | ~450 GB/s（单向） |
-| InfiniBand 跨节点 | ~2–5 µs | ~25–50 GB/s |
+| 环境                                      | α                        | 1/β               |
+| ----------------------------------------- | ------------------------ | ----------------- |
+| 同一台机器的进程间（lab6 实测，共享内存） | ~0.25 µs                 | ~19 GB/s          |
+| NVLink（H100）                            | ~几 µs（含 kernel 启动） | ~450 GB/s（单向） |
+| InfiniBand 跨节点                         | ~2–5 µs                  | ~25–50 GB/s       |
 
 **半带宽消息大小** n_{1/2} = α/β：消息比它小时，耗时主要是延迟；比它大时，主要是带宽。lab 中约为 4.5 KB。
 
@@ -117,12 +118,12 @@ T_rd = log2(P) * (alpha + n beta)
 
 ### 2.4 汇总
 
-| 算法 | 延迟项 | 带宽项 | 适合 |
-|---|---|---|---|
-| star | 2(P−1)α | 2(P−1)nβ | 什么都不适合（只作基线） |
-| recursive doubling | log₂P · α | log₂P · nβ | 小消息 |
-| ring | 2(P−1)α | ≈ 2nβ | 大消息 |
-| tree（NCCL 的 double binary tree） | ≈ 2log₂P · α | ≈ 2nβ | 大规模集群上的中等大小消息 |
+| 算法                               | 延迟项       | 带宽项     | 适合                       |
+| ---------------------------------- | ------------ | ---------- | -------------------------- |
+| star                               | 2(P−1)α      | 2(P−1)nβ   | 什么都不适合（只作基线）   |
+| recursive doubling                 | log₂P · α    | log₂P · nβ | 小消息                     |
+| ring                               | 2(P−1)α      | ≈ 2nβ      | 大消息                     |
+| tree（NCCL 的 double binary tree） | ≈ 2log₂P · α | ≈ 2nβ      | 大规模集群上的中等大小消息 |
 
 ---
 
@@ -189,12 +190,12 @@ PyTorch 的默认值是 25 MB。lab 实测（12 MB 梯度、4 层）：4 MB 的 
 
 用 Adam、混合精度训练一个 Ψ 个参数的模型，每个参数要占用：
 
-| 内容 | 字节 |
-|---|---|
-| fp16 参数 | 2 |
-| fp16 梯度 | 2 |
+| 内容                       | 字节           |
+| -------------------------- | -------------- |
+| fp16 参数                  | 2              |
+| fp16 梯度                  | 2              |
 | fp32 主参数 + Adam 的 m、v | 4 + 4 + 4 = 12 |
-| **合计** | **16 Ψ** |
+| **合计**                   | **16 Ψ**       |
 
 7B 的模型需要 112 GB，单张 80 GB 的卡装不下。而数据并行时，P 张卡上各存一份**完全相同**的状态，显存被白白浪费了 P−1 份。
 
@@ -224,14 +225,14 @@ FSDP 是 PyTorch 对 ZeRO-3 的实现：按层（或按模块）分片参数，�
 
 ## §6 其他并行维度（选读）
 
-| 并行方式 | 切什么 | 通信 | 通信量 | 通常放在 |
-|---|---|---|---|---|
-| 数据并行（DP/ZeRO/FSDP） | 数据（以及状态） | 梯度 allreduce / RS + AG | 每步 ~2Ψ | 跨节点 |
-| 张量并行（[Megatron TP](https://arxiv.org/abs/1909.08053)） | 每个矩阵按行或列切 | 每层前向、反向各一次 allreduce | 每层 ~激活大小 | **节点内**（需要 NVLink） |
-| 序列并行（[SP](https://arxiv.org/abs/2205.05198)） | LayerNorm、Dropout 处的激活按序列切 | 把 TP 的 allreduce 拆成 RS + AG | 与 TP 相同，激活显存减为 1/P | 与 TP 一起 |
-| 流水线并行（[PP](https://arxiv.org/abs/2104.04473)） | 按层切成若干 stage | stage 之间点对点传激活 | 小 | 跨节点 |
-| 上下文并行（[Ring Attention](https://arxiv.org/abs/2310.01889)） | 长序列按 token 切 | KV 沿环传递，用 L2 §4 的 lse 合并 | 每层 KV | 长上下文 |
-| 专家并行（EP，[DeepEP](https://github.com/deepseek-ai/DeepEP)） | MoE 的专家分到不同的卡 | token 的 all-to-all | 每层激活 | MoE 模型 |
+| 并行方式                                                         | 切什么                              | 通信                              | 通信量                       | 通常放在                  |
+| ---------------------------------------------------------------- | ----------------------------------- | --------------------------------- | ---------------------------- | ------------------------- |
+| 数据并行（DP/ZeRO/FSDP）                                         | 数据（以及状态）                    | 梯度 allreduce / RS + AG          | 每步 ~2Ψ                     | 跨节点                    |
+| 张量并行（[Megatron TP](https://arxiv.org/abs/1909.08053)）      | 每个矩阵按行或列切                  | 每层前向、反向各一次 allreduce    | 每层 ~激活大小               | **节点内**（需要 NVLink） |
+| 序列并行（[SP](https://arxiv.org/abs/2205.05198)）               | LayerNorm、Dropout 处的激活按序列切 | 把 TP 的 allreduce 拆成 RS + AG   | 与 TP 相同，激活显存减为 1/P | 与 TP 一起                |
+| 流水线并行（[PP](https://arxiv.org/abs/2104.04473)）             | 按层切成若干 stage                  | stage 之间点对点传激活            | 小                           | 跨节点                    |
+| 上下文并行（[Ring Attention](https://arxiv.org/abs/2310.01889)） | 长序列按 token 切                   | KV 沿环传递，用 L2 §4 的 lse 合并 | 每层 KV                      | 长上下文                  |
+| 专家并行（EP，[DeepEP](https://github.com/deepseek-ai/DeepEP)）  | MoE 的专家分到不同的卡              | token 的 all-to-all               | 每层激活                     | MoE 模型                  |
 
 流水线并行的“气泡”：
 
@@ -250,18 +251,18 @@ bubble fraction = (p - 1) / (m + p - 1);  1F1B keeps the same bubble but needs l
 
 ## §7 演进脉络
 
-| 年份 | 工作 | 解决了上一步的什么问题 |
-|---|---|---|
-| 2005 | [Thakur et al.](https://web.cels.anl.gov/~thakur/papers/ijhpca-coll.pdf)（MPICH） | 集合通信算法的 α-β 分析与按消息大小的选择 |
-| 2017 | [Baidu ring allreduce](https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/)、Horovod | 把 HPC 的 ring 引入深度学习 |
-| 2019 | [Megatron-LM](https://arxiv.org/abs/1909.08053) | 张量并行：节点内切分 Transformer 层 |
-| 2020 | [ZeRO](https://arxiv.org/abs/1910.02054)（SC）、[PyTorch DDP](https://arxiv.org/abs/2006.15704)（VLDB） | 状态分片；bucket 与重叠 |
-| 2021 | [PTD-P](https://arxiv.org/abs/2104.04473)（SC） | DP、TP、PP 组合，交错式 1F1B 流水线 |
-| 2022 | [Alpa](https://arxiv.org/abs/2201.12023)（OSDI） | 自动搜索算子内与算子间的并行方案 |
-| 2022 | **[Galvatron](https://arxiv.org/abs/2211.13878)**（VLDB'23，苗旭鹏等）、[Hetu](https://github.com/PKU-DAIR/Hetu) | 对 Transformer 的每一层分别搜索 DP、SDP、TP、PP 的最优组合，用代价模型加动态规划 |
-| 2023 | [FSDP](https://arxiv.org/abs/2304.11277)（VLDB）、[Ring Attention](https://arxiv.org/abs/2310.01889)、[DeepSpeed Ulysses](https://arxiv.org/abs/2309.14509) | 工程化的 ZeRO-3；长上下文的序列切分 |
-| 2024 | [FLUX](https://arxiv.org/abs/2406.06858) | 把 TP 的通信融合进 GEMM kernel，实现细粒度的重叠 |
-| 2025 | [Comet](https://arxiv.org/abs/2502.19811)（MLSys）、[DeepEP](https://github.com/deepseek-ai/DeepEP)、[DualPipe](https://github.com/deepseek-ai/DualPipe) | MoE 的专家并行通信与计算重叠；双向流水线 |
+| 年份    | 工作                                                                                                                                                                                                               | 解决了上一步的什么问题                                                               |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| 2005    | [Thakur et al.](https://web.cels.anl.gov/~thakur/papers/ijhpca-coll.pdf)（MPICH）                                                                                                                                  | 集合通信算法的 α-β 分析与按消息大小的选择                                            |
+| 2017    | [Baidu ring allreduce](https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/)、Horovod                                                                                                               | 把 HPC 的 ring 引入深度学习                                                          |
+| 2019    | [Megatron-LM](https://arxiv.org/abs/1909.08053)                                                                                                                                                                    | 张量并行：节点内切分 Transformer 层                                                  |
+| 2020    | [ZeRO](https://arxiv.org/abs/1910.02054)（SC）、[PyTorch DDP](https://arxiv.org/abs/2006.15704)（VLDB）                                                                                                            | 状态分片；bucket 与重叠                                                              |
+| 2021    | [PTD-P](https://arxiv.org/abs/2104.04473)（SC）                                                                                                                                                                    | DP、TP、PP 组合，交错式 1F1B 流水线                                                  |
+| 2022    | [Alpa](https://arxiv.org/abs/2201.12023)（OSDI）                                                                                                                                                                   | 自动搜索算子内与算子间的并行方案                                                     |
+| 2022    | **[Galvatron](https://arxiv.org/abs/2211.13878)**（VLDB'23，苗旭鹏等）、[Hetu](https://github.com/PKU-DAIR/Hetu)                                                                                                   | 对 Transformer 的每一层分别搜索 DP、SDP、TP、PP 的最优组合，用代价模型加动态规划     |
+| 2023    | [FSDP](https://arxiv.org/abs/2304.11277)（VLDB）、[Ring Attention](https://arxiv.org/abs/2310.01889)、[DeepSpeed Ulysses](https://arxiv.org/abs/2309.14509)                                                        | 工程化的 ZeRO-3；长上下文的序列切分                                                  |
+| 2024    | [FLUX](https://arxiv.org/abs/2406.06858)                                                                                                                                                                           | 把 TP 的通信融合进 GEMM kernel，实现细粒度的重叠                                     |
+| 2025    | [Comet](https://arxiv.org/abs/2502.19811)（MLSys）、[DeepEP](https://github.com/deepseek-ai/DeepEP)、[DualPipe](https://github.com/deepseek-ai/DualPipe)                                                           | MoE 的专家并行通信与计算重叠；双向流水线                                             |
 | 2024–25 | RL 训练系统：[OpenRLHF](https://arxiv.org/abs/2405.11143)、[HybridFlow / verl](https://arxiv.org/abs/2409.19256)（EuroSys'25）、[AReaL](https://arxiv.org/abs/2505.24298)、[slime](https://github.com/THUDM/slime) | rollout（推理）与训练交替，权重要在两种并行布局之间重新分片；异步 rollout 以掩盖长尾 |
 
 ### 研究问题种子
@@ -272,14 +273,14 @@ bubble fraction = (p - 1) / (m + p - 1);  1F1B keeps the same bubble but needs l
 
 ## 可视化资料汇总
 
-| 资料 | 形式 | 配合哪一节 |
-|---|---|---|
-| [HuggingFace Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook) | **交互式**，DP、ZeRO、TP、PP、CP、EP 的动画和显存计算器 | **全讲主线** |
-| [Gibiansky: Baidu allreduce](https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/) | ring allreduce 的逐步图解 | §2.2 |
-| [JAX Scaling Book: sharding](https://jax-ml.github.io/scaling-book/sharding/) / [training](https://jax-ml.github.io/scaling-book/training/) | 带推导的切分与通信量分析 | §5、§6 |
-| [Simon Boehm: Data-parallel](https://siboehm.com/articles/22/data-parallel-training) / [Pipeline-parallel](https://siboehm.com/articles/22/pipeline-parallel-training) | bucket 与流水线气泡的图示 | §4、§6 |
-| [Lilian Weng: How to train really large models](https://lilianweng.github.io/posts/2021-09-25-train-large/) | 并行方式综述 | §6 |
-| [picotron](https://github.com/huggingface/picotron) | 每种并行方式不到 300 行的教学实现 | 对照阅读 |
+| 资料                                                                                                                                                                   | 形式                                                    | 配合哪一节   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------ |
+| [HuggingFace Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook)                                                                         | **交互式**，DP、ZeRO、TP、PP、CP、EP 的动画和显存计算器 | **全讲主线** |
+| [Gibiansky: Baidu allreduce](https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/)                                                                      | ring allreduce 的逐步图解                               | §2.2         |
+| [JAX Scaling Book: sharding](https://jax-ml.github.io/scaling-book/sharding/) / [training](https://jax-ml.github.io/scaling-book/training/)                            | 带推导的切分与通信量分析                                | §5、§6       |
+| [Simon Boehm: Data-parallel](https://siboehm.com/articles/22/data-parallel-training) / [Pipeline-parallel](https://siboehm.com/articles/22/pipeline-parallel-training) | bucket 与流水线气泡的图示                               | §4、§6       |
+| [Lilian Weng: How to train really large models](https://lilianweng.github.io/posts/2021-09-25-train-large/)                                                            | 并行方式综述                                            | §6           |
+| [picotron](https://github.com/huggingface/picotron)                                                                                                                    | 每种并行方式不到 300 行的教学实现                       | 对照阅读     |
 
 ## 自测清单
 

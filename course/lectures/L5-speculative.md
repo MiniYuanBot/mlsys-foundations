@@ -10,17 +10,18 @@ tags: [lecture, speculative-decoding, specinfer, rejection-sampling, token-tree]
 [← 课程大纲](../syllabus.md) · 上一讲：[L4 推理系统](L4-serving.md) · 配套实验：[lab5](../../labs/lab5/README.md) · 下一讲：[L6 集合通信与并行训练](L6-distributed.md)
 
 > [!abstract] 这一讲要解决的三个问题
+>
 > 1. **为什么“猜几个 token 再一起验证”能变快？** 这个“免费午餐”来自硬件的哪一点？
 > 2. **怎样做到无损？** greedy 解码时逐 token 相同；采样时，输出分布与原模型**完全一致**。
 > 3. **草稿从哪里来、怎样组织？** n-gram、小模型、额外的预测头（Medusa、EAGLE）、token tree（SpecInfer）各有什么取舍？
 
-| 节 | 内容 | 对应 lab |
-|---|---|---|
-| §1 | 为什么验证 k 个 token 和生成 1 个一样快 | Part A |
-| §2 | greedy 推测与期望加速公式 | Part A3、报告 |
-| §3 | 拒绝采样：无损的证明 | Part B |
-| §4 | token tree 与 tree attention（SpecInfer） | Part C |
-| §5 | 草稿从哪里来：演进脉络 | 选题参考 |
+| 节  | 内容                                      | 对应 lab      |
+| --- | ----------------------------------------- | ------------- |
+| §1  | 为什么验证 k 个 token 和生成 1 个一样快   | Part A        |
+| §2  | greedy 推测与期望加速公式                 | Part A3、报告 |
+| §3  | 拒绝采样：无损的证明                      | Part B        |
+| §4  | token tree 与 tree attention（SpecInfer） | Part C        |
+| §5  | 草稿从哪里来：演进脉络                    | 选题参考      |
 
 ---
 
@@ -79,11 +80,11 @@ $$S = \frac{1-\alpha^{k+1}}{(1-\alpha)(1+kc)}$$
 
 代入 lab5 的实测数据（0.6B 作草稿、1.7B 作目标，c ≈ 0.47，α ≈ 0.8）：
 
-| k | E[tokens] | 1 + kc | 预测 S | 实测 S（chat） |
-|---|---|---|---|---|
-| 2 | 2.44 | 1.94 | 1.26 | 1.20 |
-| 3 | 2.95 | 2.41 | 1.22 | 1.14 |
-| 5 | 3.69 | 3.35 | 1.10 | 1.03 |
+| k   | E[tokens] | 1 + kc | 预测 S | 实测 S（chat） |
+| --- | --------- | ------ | ------ | -------------- |
+| 2   | 2.44      | 1.94   | 1.26   | 1.20           |
+| 3   | 2.95      | 2.41   | 1.22   | 1.14           |
+| 5   | 3.69      | 3.35   | 1.10   | 1.03           |
 
 **结论很直接**：c = 0.47 的草稿太贵了。即便 α 高达 0.8，加速也只有约 1.2 倍。要想快，必须让 c 很小：
 
@@ -182,11 +183,11 @@ lab C1 要你在 lab4 的 warp 级 attention 上加入这个掩码，C2 实现�
 
 ### 4.3 lab 中的发现：树接受得更多，但不一定更快
 
-| | draft k=3 | tree [3,2,1,1] |
-|---|---|---|
-| 每次目标 forward 产出的 token 数（chat） | 2.91 | **3.84** |
-| 草稿 forward 次数 | 198 | 249 |
-| 实测加速 | 1.14× | 1.05× |
+|                                          | draft k=3 | tree [3,2,1,1] |
+| ---------------------------------------- | --------- | -------------- |
+| 每次目标 forward 产出的 token 数（chat） | 2.91      | **3.84**       |
+| 草稿 forward 次数                        | 198       | 249            |
+| 实测加速                                 | 1.14×     | 1.05×          |
 
 树确实让每次验证接受了更多 token，但构建树要做更多次草稿 forward（每层一次）。在 c ≈ 0.47 时，这部分开销抵消了收益。SpecInfer 论文中的设置是：草稿模型比目标模型小得多（c 很小），并且多个请求共享 GPU，这时树的收益才明显。**系统优化的收益依赖于具体的成本结构**，这正是 lab 要你用公式验证的原因。
 
@@ -194,16 +195,16 @@ lab C1 要你在 lab4 的 warp 级 attention 上加入这个掩码，C2 实现�
 
 ## §5 演进脉络：草稿从哪里来
 
-| 年份 | 工作 | 草稿来源 | 解决了上一步的什么问题 |
-|---|---|---|---|
-| 2023 | [Leviathan et al.](https://arxiv.org/abs/2211.17192)（ICML）、[Chen et al.](https://arxiv.org/abs/2302.01318) | 独立的小模型 | 提出推测解码和无损的拒绝采样 |
-| 2023 | **[SpecInfer](https://arxiv.org/abs/2305.09781)**（ASPLOS'24，苗旭鹏等） | 多个小模型 + token tree | 用树组织候选，一次验证多个分支；tree attention；树上的多步推测采样 |
-| 2023 | [Prompt lookup](https://github.com/apoorvumang/prompt-lookup-decoding) | 上文中的 n-gram | 零成本草稿，适合代码编辑、RAG 等复制上文的场景 |
-| 2024 | [Medusa](https://arxiv.org/abs/2401.10774)（ICML） | 目标模型上额外的预测头 | 不需要单独的草稿模型；多个头分别预测 +1、+2、+3 位置的 token，组合成树 |
-| 2024 | [Lookahead](https://arxiv.org/abs/2402.02057)（ICML） | Jacobi 迭代 + n-gram 池 | 完全不需要训练，也不需要草稿模型 |
-| 2024 | [EAGLE](https://arxiv.org/abs/2401.15077) / [EAGLE-2](https://arxiv.org/abs/2406.16858) | 在**特征层**上自回归的 1 层草稿头 | 在特征层预测比在 token 层更容易；EAGLE-2 根据置信度动态地扩展树 |
-| 2025 | [EAGLE-3](https://arxiv.org/abs/2503.01840) | 融合多层特征 + training-time test | 训练时就模拟推理时的多步草稿，解决了草稿越长越不准的问题 |
-| 2024– | [MagicDec](https://github.com/Infini-AI-Lab/MagicDec) | 稀疏 KV 的自推测 | 长上下文中瓶颈在读 KV 而不在读权重，用“只看部分 KV 的自己”做草稿 |
+| 年份  | 工作                                                                                                          | 草稿来源                          | 解决了上一步的什么问题                                                 |
+| ----- | ------------------------------------------------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------- |
+| 2023  | [Leviathan et al.](https://arxiv.org/abs/2211.17192)（ICML）、[Chen et al.](https://arxiv.org/abs/2302.01318) | 独立的小模型                      | 提出推测解码和无损的拒绝采样                                           |
+| 2023  | **[SpecInfer](https://arxiv.org/abs/2305.09781)**（ASPLOS'24，苗旭鹏等）                                      | 多个小模型 + token tree           | 用树组织候选，一次验证多个分支；tree attention；树上的多步推测采样     |
+| 2023  | [Prompt lookup](https://github.com/apoorvumang/prompt-lookup-decoding)                                        | 上文中的 n-gram                   | 零成本草稿，适合代码编辑、RAG 等复制上文的场景                         |
+| 2024  | [Medusa](https://arxiv.org/abs/2401.10774)（ICML）                                                            | 目标模型上额外的预测头            | 不需要单独的草稿模型；多个头分别预测 +1、+2、+3 位置的 token，组合成树 |
+| 2024  | [Lookahead](https://arxiv.org/abs/2402.02057)（ICML）                                                         | Jacobi 迭代 + n-gram 池           | 完全不需要训练，也不需要草稿模型                                       |
+| 2024  | [EAGLE](https://arxiv.org/abs/2401.15077) / [EAGLE-2](https://arxiv.org/abs/2406.16858)                       | 在**特征层**上自回归的 1 层草稿头 | 在特征层预测比在 token 层更容易；EAGLE-2 根据置信度动态地扩展树        |
+| 2025  | [EAGLE-3](https://arxiv.org/abs/2503.01840)                                                                   | 融合多层特征 + training-time test | 训练时就模拟推理时的多步草稿，解决了草稿越长越不准的问题               |
+| 2024– | [MagicDec](https://github.com/Infini-AI-Lab/MagicDec)                                                         | 稀疏 KV 的自推测                  | 长上下文中瓶颈在读 KV 而不在读权重，用“只看部分 KV 的自己”做草稿       |
 
 另一个方向是**系统层面**：在批量推理中，batch 越大，GPU 越接近计算受限，§1 的“平坦区域”就越短，推测的收益也越小。怎样根据负载动态决定是否推测、推测多长，是生产系统（vLLM、SGLang）中一个仍在研究的问题。
 
@@ -215,14 +216,14 @@ lab C1 要你在 lab4 的 warp 级 attention 上加入这个掩码，C2 实现�
 
 ## 可视化资料汇总
 
-| 资料 | 形式 | 配合哪一节 |
-|---|---|---|
-| [Google: Looking back at speculative decoding](https://research.google/blog/looking-back-at-speculative-decoding/) | 博客，原作者对历史和直觉的回顾 | §1、§2 |
-| [Jay Mody: Speculative Sampling](https://jaykmody.com/blog/speculative-sampling/) | 约 50 行 NumPy 实现 + 推导 | §3 |
-| [HF: Assisted Generation](https://huggingface.co/blog/assisted-generation) | 博客，带动画 | §2 |
-| [Lookahead decoding 博客](https://lmsys.org/blog/2023-11-21-lookahead-decoding/) | **Jacobi 迭代的 GIF 动画** | §5 |
-| [Medusa 项目页](https://sites.google.com/view/medusa-llm) | 多头预测与树注意力的示意图 | §4、§5 |
-| [EAGLE 项目页](https://sites.google.com/view/eagle-llm) | 特征层草稿的示意图 | §5 |
+| 资料                                                                                                               | 形式                           | 配合哪一节 |
+| ------------------------------------------------------------------------------------------------------------------ | ------------------------------ | ---------- |
+| [Google: Looking back at speculative decoding](https://research.google/blog/looking-back-at-speculative-decoding/) | 博客，原作者对历史和直觉的回顾 | §1、§2     |
+| [Jay Mody: Speculative Sampling](https://jaykmody.com/blog/speculative-sampling/)                                  | 约 50 行 NumPy 实现 + 推导     | §3         |
+| [HF: Assisted Generation](https://huggingface.co/blog/assisted-generation)                                         | 博客，带动画                   | §2         |
+| [Lookahead decoding 博客](https://lmsys.org/blog/2023-11-21-lookahead-decoding/)                                   | **Jacobi 迭代的 GIF 动画**     | §5         |
+| [Medusa 项目页](https://sites.google.com/view/medusa-llm)                                                          | 多头预测与树注意力的示意图     | §4、§5     |
+| [EAGLE 项目页](https://sites.google.com/view/eagle-llm)                                                            | 特征层草稿的示意图             | §5         |
 
 ## 自测清单
 

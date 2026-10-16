@@ -10,19 +10,20 @@ tags: [lecture, cuda, gpu, gemm, tensor-core, shared-memory]
 [← 课程大纲](../syllabus.md) · 上一讲：[L0 张量、内存与 CPU 性能](L0-tensor-runtime.md) · 配套实验：[lab1](../../labs/lab1/README.md) · 下一讲：[L2 Attention](L2-attention.md)
 
 > [!abstract] 这一讲要解决的三个问题
+>
 > 1. **GPU 是怎样执行程序的？** 几万个线程如何组织？为什么同样的代码，“相邻线程访问相邻地址”就能快很多倍？
 > 2. **怎样在 GPU 上把矩阵乘做快？** 这和 lab0 在 CPU 上的分块思想是同一套，只是换了一组硬件参数。
 > 3. **Tensor Core 改变了什么？** 为了让它满负荷运转，现代 kernel（CUTLASS、FlashAttention）都必须具备哪些结构？
 
 **前置**：L0 §3（Roofline、分块、寄存器微内核）。本讲会反复引用它，把 CPU 上的概念对应到 GPU 上。
 
-| 节 | 内容 | 对应 lab |
-|---|---|---|
-| §1 | GPU 执行模型：SM、warp、SIMT、occupancy、峰值 | Part A：A1 |
-| §2 | 内存：合并访存、shared memory、bank conflict、warp shuffle | Part A：A2、A3 |
-| §3 | SGEMM 阶梯：每次 FMA 要读几次内存 | Part B |
-| §4 | Tensor Core：WMMA、fragment 布局、ldmatrix、cp.async 流水线 | Part C |
-| §5 | 从基础到前沿：CUTLASS → Hopper → ThunderKittens → Blackwell | 选题参考 |
+| 节  | 内容                                                        | 对应 lab       |
+| --- | ----------------------------------------------------------- | -------------- |
+| §1  | GPU 执行模型：SM、warp、SIMT、occupancy、峰值               | Part A：A1     |
+| §2  | 内存：合并访存、shared memory、bank conflict、warp shuffle  | Part A：A2、A3 |
+| §3  | SGEMM 阶梯：每次 FMA 要读几次内存                           | Part B         |
+| §4  | Tensor Core：WMMA、fragment 布局、ldmatrix、cp.async 流水线 | Part C         |
+| §5  | 从基础到前沿：CUTLASS → Hopper → ThunderKittens → Blackwell | 选题参考       |
 
 ---
 
@@ -77,11 +78,11 @@ grid (gridDim.x = 4 blocks)
 
 一个 SM 能同时驻留多少 warp，受三种资源限制（以 Ada 架构为例）：
 
-| 资源 | 每个 SM 的总量 | 例子：每个线程用 64 个寄存器、block 为 256 线程、每个 block 用 16 KB smem |
-|---|---|---|
-| 线程数 | 1536（48 个 warp） | 1536 / 256 = 最多 6 个 block |
-| 寄存器 | 65536 个 | 65536 / (64 × 256) = 最多 4 个 block |
-| shared memory | 最多 100 KB | 100 / 16 = 最多 6 个 block |
+| 资源          | 每个 SM 的总量     | 例子：每个线程用 64 个寄存器、block 为 256 线程、每个 block 用 16 KB smem |
+| ------------- | ------------------ | ------------------------------------------------------------------------- |
+| 线程数        | 1536（48 个 warp） | 1536 / 256 = 最多 6 个 block                                              |
+| 寄存器        | 65536 个           | 65536 / (64 × 256) = 最多 4 个 block                                      |
+| shared memory | 最多 100 KB        | 100 / 16 = 最多 6 个 block                                                |
 
 取三者最小值：每个 SM 驻留 4 个 block = 32 个 warp，**occupancy** = 32/48 = 67%。
 
@@ -93,12 +94,12 @@ $$
 \text{FP32 峰值} = \text{SM 数} \times \text{每 SM 的 FP32 单元数} \times 2\,(\text{FMA}) \times \text{频率}
 $$
 
-| GPU | SM | FP32 单元/SM | 频率（boost） | FP32 峰值 | FP16 Tensor（FP32 累加） | 显存带宽 |
-|---|---|---|---|---|---|---|
-| RTX 4060 Laptop | 24 | 128 | 2.2–2.6 GHz（80 W 功耗墙下实测） | ~15 TFLOP/s | ~30 TFLOP/s | 256 GB/s（cudaMemcpy 实测 213） |
-| RTX 4090 | 128 | 128 | 2.52 GHz | 82.6 | 165 | 1008 GB/s |
-| A100 SXM | 108 | 64 | 1.41 GHz | 19.5 | 312 | 2039 GB/s |
-| H100 SXM | 132 | 128 | 1.83 GHz | 67 | 989 | 3350 GB/s |
+| GPU             | SM  | FP32 单元/SM | 频率（boost）                    | FP32 峰值   | FP16 Tensor（FP32 累加） | 显存带宽                        |
+| --------------- | --- | ------------ | -------------------------------- | ----------- | ------------------------ | ------------------------------- |
+| RTX 4060 Laptop | 24  | 128          | 2.2–2.6 GHz（80 W 功耗墙下实测） | ~15 TFLOP/s | ~30 TFLOP/s              | 256 GB/s（cudaMemcpy 实测 213） |
+| RTX 4090        | 128 | 128          | 2.52 GHz                         | 82.6        | 165                      | 1008 GB/s                       |
+| A100 SXM        | 108 | 64           | 1.41 GHz                         | 19.5        | 312                      | 2039 GB/s                       |
+| H100 SXM        | 132 | 128          | 1.83 GHz                         | 67          | 989                      | 3350 GB/s                       |
 
 注意两件反直觉的事：
 
@@ -120,13 +121,13 @@ lab 报告要求你用 `cudaGetDeviceProperties`（测试 `A0_device_is_visible`
 
 ### 2.1 内存层次
 
-| 层级 | 作用域 | 容量（Ada SM） | 延迟 | 谁来管理 |
-|---|---|---|---|---|
-| 寄存器 | 线程私有 | 64K × 4B = 256 KB / SM | ~1 周期 | 编译器 |
-| shared memory | block 内共享 | 最多 100 KB / SM（与 L1 共用 128 KB） | ~30 周期 | **你** |
-| L1 cache | SM 私有 | 剩余部分 | ~30 周期 | 硬件 |
-| L2 cache | 全 GPU | 32 MB（4060） | ~200 周期 | 硬件 |
-| global（显存） | 全 GPU | 8 GB | ~500 周期 | 你（cudaMalloc） |
+| 层级           | 作用域       | 容量（Ada SM）                        | 延迟      | 谁来管理         |
+| -------------- | ------------ | ------------------------------------- | --------- | ---------------- |
+| 寄存器         | 线程私有     | 64K × 4B = 256 KB / SM                | ~1 周期   | 编译器           |
+| shared memory  | block 内共享 | 最多 100 KB / SM（与 L1 共用 128 KB） | ~30 周期  | **你**           |
+| L1 cache       | SM 私有      | 剩余部分                              | ~30 周期  | 硬件             |
+| L2 cache       | 全 GPU       | 32 MB（4060）                         | ~200 周期 | 硬件             |
+| global（显存） | 全 GPU       | 8 GB                                  | ~500 周期 | 你（cudaMalloc） |
 
 与 CPU 最大的不同在于 **shared memory**：它是一块由程序员显式读写的片上缓存。lab0 里你“希望”数据留在 L1 或 L2 里；在 GPU 上，你直接把它放进 shared memory。
 
@@ -200,12 +201,12 @@ lab A2 的三级结构，是所有 GPU 归约（包括 softmax、LayerNorm）共
 
 用 **每次 FMA 需要的内存读取次数** 来衡量每一步优化，数值越小越好：
 
-| 步骤 | 每个线程算 | 每个 k 步的读取 | FMA | 读取 / FMA | 读取来源 |
-|---|---|---|---|---|---|
-| B0/B1 naive | 1 个 C | A 1 次 + B 1 次 | 1 | 2 | global（B1 能合并，B0 不能） |
-| B2 smem 32×32 | 1 个 C | As 1 次 + Bs 1 次 | 1 | 2 | **shared** |
-| B3 1D 分块 TM=8 | 8 个 C（一列） | As 8 次 + Bs 1 次 | 8 | 1.125 | shared |
-| B4 2D 分块 8×8 | 64 个 C | As 8 次 + Bs 8 次 | 64 | 0.25 | shared |
+| 步骤            | 每个线程算     | 每个 k 步的读取   | FMA | 读取 / FMA | 读取来源                     |
+| --------------- | -------------- | ----------------- | --- | ---------- | ---------------------------- |
+| B0/B1 naive     | 1 个 C         | A 1 次 + B 1 次   | 1   | 2          | global（B1 能合并，B0 不能） |
+| B2 smem 32×32   | 1 个 C         | As 1 次 + Bs 1 次 | 1   | 2          | **shared**                   |
+| B3 1D 分块 TM=8 | 8 个 C（一列） | As 8 次 + Bs 1 次 | 8   | 1.125      | shared                       |
+| B4 2D 分块 8×8  | 64 个 C        | As 8 次 + Bs 8 次 | 64  | 0.25       | shared                       |
 
 从 B2 起，读取来源变成了 shared memory；从 B3 起，被复用的值留在寄存器里。这和 lab0 的 CPU 路线一一对应：
 
@@ -239,6 +240,7 @@ threads             (B4)   <-->    (already 100k threads)
 
 > [!note] 为什么 B2 只比 B1 快了一点？
 > 在作者的 4060 Laptop 上，B1 是 0.98 TFLOP/s，B2 是 1.23，只快了 25%，远没有 “global 访问减少 32 倍” 听上去那么多。原因有两个：
+>
 > 1. **B1 其实已经有复用了**：同一个 block 中的线程读的是 A 的相同行和 B 的相同列，这些数据大多会命中 L1 或 L2 缓存，B1 真正落到 DRAM 的访问远少于理论值。
 > 2. **瓶颈转移了**：B2 中每次 FMA 仍要读两次 shared memory（见 §3.1 的表），而一个 SM 每周期能提供的 shared memory 带宽有限，小于 FP32 单元的需求。所以 B2 是 **shared memory 带宽受限**，要靠寄存器分块（B3、B4）来解决。
 >
@@ -382,17 +384,17 @@ lab C2c 中，`cp_async_wait<S-2>()` 的含义是“除最近发出的 S−2 组
 
 ### 5.1 GEMM kernel 的演进
 
-| 年份 | 工作 | 解决了上一步的什么问题 |
-|---|---|---|
-| 2008– | CUDA 与 cuBLAS | 用 shared memory 分块，让 GPU 跑通用矩阵乘 |
-| 2017 | Volta Tensor Core + WMMA | 专用矩阵单元，吞吐提升一个数量级 |
-| 2017– | [CUTLASS](https://github.com/NVIDIA/cutlass) 1.x/2.x | 把分层 tiling（block → warp → mma）写成 C++ 模板，人人都能组合出接近 cuBLAS 的 kernel |
-| 2020 | Ampere：`cp.async` + `ldmatrix` + `mma.sync` | 异步拷贝和多级流水线，隐藏访存延迟，**本讲 §4 的内容** |
-| 2022 | Hopper：**TMA** + **WGMMA** + warp specialization（[Colfax: WGMMA](https://research.colfax-intl.com/cutlass-tutorial-wgmma-hopper/)、[TMA](https://research.colfax-intl.com/tutorial-hopper-tma/)） | TMA 用一条指令搬运整块 tile，不再需要每个线程算地址；WGMMA 让 4 个 warp 共同完成一个更大的 mma；“生产者 warp 只搬数据，消费者 warp 只做计算”的分工方式，把流水线从软件实现变成了硬件支持 |
-| 2023 | CUTLASS 3 / [CuTe](https://github.com/NVIDIA/cutlass/tree/main/media/docs) | 用“布局代数”统一描述 tensor 与线程的映射；swizzle 等技巧都能用它表达 |
-| 2024 | [ThunderKittens](https://arxiv.org/abs/2410.20399)（ICLR'25） | 以 16×16 tile 为基本单位的小型 DSL，用几百行代码写出与 FlashAttention-3 竞争的 kernel |
-| 2025 | [DeepGEMM](https://github.com/deepseek-ai/DeepGEMM) | FP8 GEMM，核心约 300 行，JIT 编译；DeepSeek-V3 训练与推理的实际依赖 |
-| 2025 | Blackwell：`tcgen05` + **TMEM**（[Colfax 教程](https://research.colfax-intl.com/cutlass-tutorial-writing-gemm-kernels-using-tensor-memory-for-nvidia-blackwell-gpus/)） | 累加器从寄存器移到专用的 Tensor Memory，寄存器压力不再限制 tile 大小 |
+| 年份  | 工作                                                                                                                                                                                                | 解决了上一步的什么问题                                                                                                                                                                   |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2008– | CUDA 与 cuBLAS                                                                                                                                                                                      | 用 shared memory 分块，让 GPU 跑通用矩阵乘                                                                                                                                               |
+| 2017  | Volta Tensor Core + WMMA                                                                                                                                                                            | 专用矩阵单元，吞吐提升一个数量级                                                                                                                                                         |
+| 2017– | [CUTLASS](https://github.com/NVIDIA/cutlass) 1.x/2.x                                                                                                                                                | 把分层 tiling（block → warp → mma）写成 C++ 模板，人人都能组合出接近 cuBLAS 的 kernel                                                                                                    |
+| 2020  | Ampere：`cp.async` + `ldmatrix` + `mma.sync`                                                                                                                                                        | 异步拷贝和多级流水线，隐藏访存延迟，**本讲 §4 的内容**                                                                                                                                   |
+| 2022  | Hopper：**TMA** + **WGMMA** + warp specialization（[Colfax: WGMMA](https://research.colfax-intl.com/cutlass-tutorial-wgmma-hopper/)、[TMA](https://research.colfax-intl.com/tutorial-hopper-tma/)） | TMA 用一条指令搬运整块 tile，不再需要每个线程算地址；WGMMA 让 4 个 warp 共同完成一个更大的 mma；“生产者 warp 只搬数据，消费者 warp 只做计算”的分工方式，把流水线从软件实现变成了硬件支持 |
+| 2023  | CUTLASS 3 / [CuTe](https://github.com/NVIDIA/cutlass/tree/main/media/docs)                                                                                                                          | 用“布局代数”统一描述 tensor 与线程的映射；swizzle 等技巧都能用它表达                                                                                                                     |
+| 2024  | [ThunderKittens](https://arxiv.org/abs/2410.20399)（ICLR'25）                                                                                                                                       | 以 16×16 tile 为基本单位的小型 DSL，用几百行代码写出与 FlashAttention-3 竞争的 kernel                                                                                                    |
+| 2025  | [DeepGEMM](https://github.com/deepseek-ai/DeepGEMM)                                                                                                                                                 | FP8 GEMM，核心约 300 行，JIT 编译；DeepSeek-V3 训练与推理的实际依赖                                                                                                                      |
+| 2025  | Blackwell：`tcgen05` + **TMEM**（[Colfax 教程](https://research.colfax-intl.com/cutlass-tutorial-writing-gemm-kernels-using-tensor-memory-for-nvidia-blackwell-gpus/)）                             | 累加器从寄存器移到专用的 Tensor Memory，寄存器压力不再限制 tile 大小                                                                                                                     |
 
 趋势很清楚：**数据搬运逐步交给专用硬件**（TMA、TMEM），**编程抽象逐步上移**（tile 级的 DSL：Triton、TileLang、CuTe-DSL、ThunderKittens）。L2 和 L3 会沿着这两条线继续往下讲。
 
@@ -406,18 +408,18 @@ lab C2c 中，`cp_async_wait<S-2>()` 的含义是“除最近发出的 S−2 组
 
 ## 可视化资料汇总
 
-| 资料 | 形式 | 配合哪一节 |
-|---|---|---|
-| [Modal GPU Glossary](https://modal.com/gpu-glossary) | 图文 + 交互，GPU 术语百科 | 全讲随时查 |
-| [JAX Scaling Book: GPUs](https://jax-ml.github.io/scaling-book/gpus/) | SM、内存层次、Roofline 的图解 | §1、§2 |
-| [CUDA Programming Guide: Hardware Implementation](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html) | 官方文档，SIMT 与线程层次 | §1 |
-| [NVIDIA: Efficient Matrix Transpose](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/) | 博客，transpose 与 bank conflict 的经典图解 | §2.3、lab A3 |
-| [GPU Puzzles](https://github.com/srush/GPU-Puzzles)（Sasha Rush） | Notebook 谜题，可视化线程与内存访问 | §1–§2 热身 |
-| [siboehm: How to Optimize a CUDA Matmul Kernel](https://siboehm.com/articles/22/CUDA-MMM) | 博客，SGEMM 阶梯每一步都有图 | **§3 主线** |
-| [Aleksa Gordić: Inside NVIDIA GPUs](https://www.aleksagordic.com/blog/matmul) | 长文，从硬件结构讲到 Hopper matmul | §3、§4、§5 |
-| [Lei Mao: CUDA Matrix Multiplication Optimization](https://leimao.github.io/article/CUDA-Matrix-Multiplication-Optimization/) | 博客，含 Tensor Core 版本 | §3、§4 |
-| [Colfax: WGMMA](https://research.colfax-intl.com/cutlass-tutorial-wgmma-hopper/) / [TMA](https://research.colfax-intl.com/tutorial-hopper-tma/) | 教程，Hopper 的数据流图 | §5 |
-| [GPU MODE 讲座](https://github.com/gpu-mode/lectures)（[视频](https://www.youtube.com/@GPUMODE)） | 讲座，profiling、CUTLASS、Tensor Core 专题 | 延伸 |
+| 资料                                                                                                                                            | 形式                                        | 配合哪一节   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------ |
+| [Modal GPU Glossary](https://modal.com/gpu-glossary)                                                                                            | 图文 + 交互，GPU 术语百科                   | 全讲随时查   |
+| [JAX Scaling Book: GPUs](https://jax-ml.github.io/scaling-book/gpus/)                                                                           | SM、内存层次、Roofline 的图解               | §1、§2       |
+| [CUDA Programming Guide: Hardware Implementation](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)                             | 官方文档，SIMT 与线程层次                   | §1           |
+| [NVIDIA: Efficient Matrix Transpose](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)                                     | 博客，transpose 与 bank conflict 的经典图解 | §2.3、lab A3 |
+| [GPU Puzzles](https://github.com/srush/GPU-Puzzles)（Sasha Rush）                                                                               | Notebook 谜题，可视化线程与内存访问         | §1–§2 热身   |
+| [siboehm: How to Optimize a CUDA Matmul Kernel](https://siboehm.com/articles/22/CUDA-MMM)                                                       | 博客，SGEMM 阶梯每一步都有图                | **§3 主线**  |
+| [Aleksa Gordić: Inside NVIDIA GPUs](https://www.aleksagordic.com/blog/matmul)                                                                   | 长文，从硬件结构讲到 Hopper matmul          | §3、§4、§5   |
+| [Lei Mao: CUDA Matrix Multiplication Optimization](https://leimao.github.io/article/CUDA-Matrix-Multiplication-Optimization/)                   | 博客，含 Tensor Core 版本                   | §3、§4       |
+| [Colfax: WGMMA](https://research.colfax-intl.com/cutlass-tutorial-wgmma-hopper/) / [TMA](https://research.colfax-intl.com/tutorial-hopper-tma/) | 教程，Hopper 的数据流图                     | §5           |
+| [GPU MODE 讲座](https://github.com/gpu-mode/lectures)（[视频](https://www.youtube.com/@GPUMODE)）                                               | 讲座，profiling、CUTLASS、Tensor Core 专题  | 延伸         |
 
 ## 自测清单
 

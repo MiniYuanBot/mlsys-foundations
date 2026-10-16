@@ -10,6 +10,7 @@ tags: [lecture, tensor, stride, gemm, roofline, fusion, compiler]
 [← 课程大纲](../syllabus.md) · 配套实验：[lab0 minitensor](../../labs/lab0/README.md) · 下一讲：[L1 GPU 执行模型与 CUDA GEMM](L1-cuda-gemm.md)
 
 > [!abstract] 这一讲要解决的三个问题
+>
 > 1. **一个张量在内存里到底长什么样？** 为什么转置、切片、广播都可以“免费”完成？
 > 2. **为什么同样的数学运算，速度能差 100 倍？** 怎样判断一个程序被什么卡住，又能快到什么程度？
 > 3. **深度学习编译器在做什么？** 算子融合到底省下了什么？前沿的编译器（Mirage、megakernel）又往前走了多远？
@@ -18,13 +19,13 @@ tags: [lecture, tensor, stride, gemm, roofline, fusion, compiler]
 
 **学习方式**：本讲分四节，每节 45–60 分钟。读完一节就去做对应的 lab 部分，不要一口气读完再动手。每节末尾有自测题，答案默认折叠，先自己想再展开。
 
-| 节 | 内容 | 对应 lab |
-|---|---|---|
-| §1 | 张量 = 存储 + 元数据 | Part A：A1–A3 |
-| §2 | 视图、广播与“什么时候会复制” | Part A：A4–A9 |
-| §3 | CPU 性能：缓存、Roofline 与 GEMM 优化阶梯 | Part B |
-| §4 | 从 eager 到图：算子融合与深度学习编译器 | Part C |
-| §5 | 从基础到前沿：演进脉络与延伸阅读 | 研究选题参考 |
+| 节  | 内容                                      | 对应 lab      |
+| --- | ----------------------------------------- | ------------- |
+| §1  | 张量 = 存储 + 元数据                      | Part A：A1–A3 |
+| §2  | 视图、广播与“什么时候会复制”              | Part A：A4–A9 |
+| §3  | CPU 性能：缓存、Roofline 与 GEMM 优化阶梯 | Part B        |
+| §4  | 从 eager 到图：算子融合与深度学习编译器   | Part C        |
+| §5  | 从基础到前沿：演进脉络与延伸阅读          | 研究选题参考  |
 
 ---
 
@@ -101,14 +102,14 @@ flowchart LR
 
 ### 2.1 视图操作只改元数据
 
-| 操作 | 新 shape | 新 strides | 新 offset | 复制吗 |
-|---|---|---|---|---|
-| `transpose(0,1)` | 交换两维 | 交换两维 | 不变 | 否 |
-| `permute(order)` | `shape[order[i]]` | `strides[order[i]]` | 不变 | 否 |
-| `slice(d, start, stop, step)` | `ceil((stop-start)/step)` | `strides[d] × step` | `+ start × strides[d]` | 否 |
-| `broadcast_to(target)` | target | 被拉伸的维度设为 **0** | 不变 | 否 |
-| `view(new_shape)` | new_shape | 行优先 strides | 不变 | 否，但要求原张量连续 |
-| `contiguous()` | 不变 | 行优先 strides | 0 | **是**（已经连续时直接返回自己） |
+| 操作                          | 新 shape                  | 新 strides             | 新 offset              | 复制吗                           |
+| ----------------------------- | ------------------------- | ---------------------- | ---------------------- | -------------------------------- |
+| `transpose(0,1)`              | 交换两维                  | 交换两维               | 不变                   | 否                               |
+| `permute(order)`              | `shape[order[i]]`         | `strides[order[i]]`    | 不变                   | 否                               |
+| `slice(d, start, stop, step)` | `ceil((stop-start)/step)` | `strides[d] × step`    | `+ start × strides[d]` | 否                               |
+| `broadcast_to(target)`        | target                    | 被拉伸的维度设为 **0** | 不变                   | 否                               |
+| `view(new_shape)`             | new_shape                 | 行优先 strides         | 不变                   | 否，但要求原张量连续             |
+| `contiguous()`                | 不变                      | 行优先 strides         | 0                      | **是**（已经连续时直接返回自己） |
 
 一个切片例子：`arange(12).view({3,4})` 取第 1 维的 `1:4:2`，也就是第 1、3 列：
 
@@ -178,23 +179,23 @@ $$
 
 最后的 ×2 是因为一条 FMA（fused multiply-add，`a*b+c`）算作 2 次浮点运算。
 
-| CPU 核心 | 主频 | FMA 单元 | SIMD 宽度 | 单核峰值 |
-|---|---|---|---|---|
-| Intel Alder Lake P 核（AVX2） | ~4.7 GHz | 2 | 8（256 bit） | ~150 GFLOP/s |
-| Apple M1/M2 性能核（NEON） | ~3.2–3.5 GHz | 4 | 4（128 bit） | ~100–110 GFLOP/s |
-| AMD Zen 4（AVX-512，双发射 256 bit） | ~5 GHz | 2 | 8 | ~160 GFLOP/s |
+| CPU 核心                             | 主频         | FMA 单元 | SIMD 宽度    | 单核峰值         |
+| ------------------------------------ | ------------ | -------- | ------------ | ---------------- |
+| Intel Alder Lake P 核（AVX2）        | ~4.7 GHz     | 2        | 8（256 bit） | ~150 GFLOP/s     |
+| Apple M1/M2 性能核（NEON）           | ~3.2–3.5 GHz | 4        | 4（128 bit） | ~100–110 GFLOP/s |
+| AMD Zen 4（AVX-512，双发射 256 bit） | ~5 GHz       | 2        | 8            | ~160 GFLOP/s     |
 
 具体数值按你自己的 CPU 型号查（Intel ARK、Apple 规格页，或 [Agner Fog 的微架构手册](https://www.agner.org/optimize/microarchitecture.pdf)）。lab B0 要求你算出自己机器的这个数字。
 
 ### 3.2 内存层次：数据搬运才是真正的瓶颈
 
-| 层级 | 典型容量 | 延迟 | 单核带宽量级 |
-|---|---|---|---|
-| 寄存器 | 16 个 256-bit YMM（AVX2）/ 32 个 128-bit（NEON） | 0 周期 | — |
-| L1 数据缓存 | 32–64 KB / 核（Apple 128 KB） | ~4–5 周期 ≈ 1 ns | ~200+ GB/s |
-| L2 缓存 | 1–2 MB / 核（Apple 是多核共享的十几 MB） | ~14 周期 ≈ 3 ns | ~100 GB/s |
-| L3 缓存 | 十几到几十 MB，多核共享 | ~40–70 周期 ≈ 10–20 ns | ~50 GB/s |
-| DRAM | GB 级 | ~80–100 ns | 单核 ~10–30 GB/s，全核 ~50–100 GB/s |
+| 层级        | 典型容量                                         | 延迟                   | 单核带宽量级                        |
+| ----------- | ------------------------------------------------ | ---------------------- | ----------------------------------- |
+| 寄存器      | 16 个 256-bit YMM（AVX2）/ 32 个 128-bit（NEON） | 0 周期                 | —                                   |
+| L1 数据缓存 | 32–64 KB / 核（Apple 128 KB）                    | ~4–5 周期 ≈ 1 ns       | ~200+ GB/s                          |
+| L2 缓存     | 1–2 MB / 核（Apple 是多核共享的十几 MB）         | ~14 周期 ≈ 3 ns        | ~100 GB/s                           |
+| L3 缓存     | 十几到几十 MB，多核共享                          | ~40–70 周期 ≈ 10–20 ns | ~50 GB/s                            |
+| DRAM        | GB 级                                            | ~80–100 ns             | 单核 ~10–30 GB/s，全核 ~50–100 GB/s |
 
 两个必须记住的事实：
 
@@ -240,7 +241,7 @@ $$
 > [!important] Roofline 告诉你“能快到哪里”，而不只是“现在有多快”
 > 朴素 GEMM 只有 1 GFLOP/s，Roofline 却说它的上限是 150。差距不来自算法本身，而来自**实现没有达到最少的数据搬运**：朴素三重循环实际搬运的字节数远大于 3n²×4。§3.4–3.6 就是一步步把实际搬运量压向理论下界。
 
-视觉化的 Roofline 讲解推荐 [JAX Scaling Book: Rooflines](https://jax-ml.github.io/scaling-book/roofline/)，它以 TPU/GPU 为例，但模型完全通用。原始论文是 [Williams, Waterman & Patterson, *Roofline* (CACM 2009)](https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyNoYellow.pdf)。
+视觉化的 Roofline 讲解推荐 [JAX Scaling Book: Rooflines](https://jax-ml.github.io/scaling-book/roofline/)，它以 TPU/GPU 为例，但模型完全通用。原始论文是 [Williams, Waterman & Patterson, _Roofline_ (CACM 2009)](https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyNoYellow.pdf)。
 
 ### 3.4 第一步：循环顺序（lab B1）
 
@@ -251,6 +252,7 @@ for i: for j: for k:   C[i][j] += A[i][k] * B[k][j];
 ```
 
 看最内层循环，k 每加 1：
+
 - `A[i][k]` 在内存里向后挪 1 个元素，连续访问，很好；
 - `B[k][j]` 向后跳一整行（N 个 float），**每次都落在新的缓存行上**。N=1024 时一行是 4 KB，B 的一列 1024 个元素分布在 1024 条不同的缓存行里，L1 根本装不下。
 
@@ -415,12 +417,12 @@ flowchart LR
 
 物化（materialize）是指把一个节点的结果真正写进内存。lab 采用的规则也是 tinygrad、Inductor 中最基本的规则：
 
-| 情况 | 是否物化 | 原因 |
-|---|---|---|
-| 根节点 | 是 | 用户要结果 |
-| 归约（sum） | 是 | 归约之后形状变了，与后续逐元素运算的循环结构不同 |
-| 被 ≥ 2 个节点使用 | 是 | 否则要么重复计算，要么需要更复杂的调度 |
-| 只被 1 个节点使用的逐元素运算 | 否，内联到使用者 | 留在寄存器里即可 |
+| 情况                          | 是否物化         | 原因                                             |
+| ----------------------------- | ---------------- | ------------------------------------------------ |
+| 根节点                        | 是               | 用户要结果                                       |
+| 归约（sum）                   | 是               | 归约之后形状变了，与后续逐元素运算的循环结构不同 |
+| 被 ≥ 2 个节点使用             | 是               | 否则要么重复计算，要么需要更复杂的调度           |
+| 只被 1 个节点使用的逐元素运算 | 否，内联到使用者 | 留在寄存器里即可                                 |
 
 例如 `d = x*w; y = (d+1) * (d*2)`：d 被用了两次，所以先用一个 kernel 算出 d 写入内存，再用第二个 kernel 计算剩下的三个运算。
 
@@ -434,17 +436,18 @@ lab 的标量解释器为每个元素把整个后缀程序跑一遍：每个元�
 分块解释器（lab C4）把执行顺序倒过来：**每条指令处理一整块（512 个）元素**。分支开销被分摊到 512 个元素上，内层循环还能被编译器向量化。lab 实测，GELU 从 2.0 s 降到 0.79 s，和手写 C++ 循环一样快。
 
 这个思路很普遍：
+
 - **向量化解释器**：ClickHouse、DuckDB 等数据库就是这样执行 SQL 的；
 - **GPU 的 SIMT**：一个 warp 的 32 个线程执行同一条指令，指令开销被分摊到 32 个数据上（L1 会讲）。
 
 ### 4.5 从 lab 到真实编译器
 
-| lab 里的简化 | 真实系统 |
-|---|---|
-| 只融合逐元素链 | 也融合 reduction、broadcast、matmul 的 epilogue（如 matmul+bias+relu） |
-| 后缀指令 + 解释器 | 生成 C++/CUDA/Triton 源码，再交给编译器（lab 可选挑战 C5） |
-| 固定的调度规则 | 代价模型、自动调优（TVM、Ansor），甚至全局搜索（Mirage） |
-| 单线程 | 并行化、向量化、tiling 都由编译器决定 |
+| lab 里的简化      | 真实系统                                                               |
+| ----------------- | ---------------------------------------------------------------------- |
+| 只融合逐元素链    | 也融合 reduction、broadcast、matmul 的 epilogue（如 matmul+bias+relu） |
+| 后缀指令 + 解释器 | 生成 C++/CUDA/Triton 源码，再交给编译器（lab 可选挑战 C5）             |
+| 固定的调度规则    | 代价模型、自动调优（TVM、Ansor），甚至全局搜索（Mirage）               |
+| 单线程            | 并行化、向量化、tiling 都由编译器决定                                  |
 
 ---
 
@@ -452,25 +455,25 @@ lab 的标量解释器为每个元素把整个后缀程序跑一遍：每个元�
 
 ### 5.1 GEMM：从手写汇编到矩阵加速单元
 
-| 年份 | 工作 | 解决了上一步的什么问题 |
-|---|---|---|
-| 1979– | BLAS 接口标准 | 把“矩阵乘”抽象成一个可由厂商优化的库调用 |
-| 2008 | [Goto & van de Geijn](https://www.cs.utexas.edu/users/flame/pubs/GotoTOMS_final.pdf)（GotoBLAS → OpenBLAS） | 系统化的缓存/寄存器分块与打包，**本讲 §3.6** |
-| 2015 | [BLIS](https://github.com/flame/blis)（Van Zee & van de Geijn, TOMS） | 把 Goto 算法拆成“只需手写一个微内核”的框架，移植到新 CPU 只需写几十行 |
-| 2020– | Intel AMX、Apple AMX/SME（M4 起支持 Arm SME） | CPU 上出现专门的矩阵乘单元，单位从“向量 FMA”变成“矩阵块 FMA”，和 GPU 的 Tensor Core 思路相同（L1） |
+| 年份  | 工作                                                                                                        | 解决了上一步的什么问题                                                                             |
+| ----- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1979– | BLAS 接口标准                                                                                               | 把“矩阵乘”抽象成一个可由厂商优化的库调用                                                           |
+| 2008  | [Goto & van de Geijn](https://www.cs.utexas.edu/users/flame/pubs/GotoTOMS_final.pdf)（GotoBLAS → OpenBLAS） | 系统化的缓存/寄存器分块与打包，**本讲 §3.6**                                                       |
+| 2015  | [BLIS](https://github.com/flame/blis)（Van Zee & van de Geijn, TOMS）                                       | 把 Goto 算法拆成“只需手写一个微内核”的框架，移植到新 CPU 只需写几十行                              |
+| 2020– | Intel AMX、Apple AMX/SME（M4 起支持 Arm SME）                                                               | CPU 上出现专门的矩阵乘单元，单位从“向量 FMA”变成“矩阵块 FMA”，和 GPU 的 Tensor Core 思路相同（L1） |
 
 ### 5.2 深度学习编译器：从手写规则到自动搜索
 
-| 年份 | 工作 | 核心思想 | 和本讲的联系 |
-|---|---|---|---|
-| 2013 | [Halide](https://halide-lang.org/)（PLDI'13） | **算法与调度分离**：写一次“算什么”，另写“怎么算”（分块、融合、并行） | lab B 的循环变换，正是 Halide 中的调度原语 |
-| 2017 | XLA（TensorFlow） | 整图编译，自动做逐元素融合 | §4.3 的规则 |
-| 2018 | [TVM](https://arxiv.org/abs/1802.04799)（OSDI'18） | 把 Halide 的思路用于深度学习，加入学习型代价模型和自动调优 | 用搜索替代人手选择 MC/KC/MR/NR |
-| 2019 | [Triton](https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf)（MAPL'19） | 以 **tile** 为编程单位，块内细节交给编译器 | L2 的主要工具 |
-| 2020– | [tinygrad](https://github.com/tinygrad/tinygrad) | 极简的 lazy 张量 + 调度器 + 代码生成，代码量小、可读性强 | **lab C 几乎就是 tinygrad 调度器的玩具版**；运行时加 `DEBUG=4` 能看到它的调度和生成的代码 |
-| 2024 | [PyTorch 2 / TorchInductor](https://pytorch.org/assets/pytorch2-2.pdf)（ASPLOS'24） | Dynamo 捕获 Python 图，Inductor 生成 Triton/C++ 代码 | `torch.compile` 的背后 |
-| 2025 | [Mirage](https://arxiv.org/abs/2405.05751)（OSDI'25） | **多层超优化**：在 kernel、线程块、线程三个层次上**搜索**等价的计算图（μGraph），用概率方法验证等价性，能自动发现像 FlashAttention 这样需要专家手写的融合 kernel | 把 §4.3 “按规则决定怎么融合”升级为“在所有可能的融合方案里搜索” |
-| 2025– | Megakernel：[Hazy Research “No Bubbles”](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)、[MPK](https://arxiv.org/abs/2512.22219) | 把整个模型的前向计算编译成**一个**常驻 GPU 的 kernel，消除 kernel 之间的启动开销和气泡；MPK 能自动完成这个编译 | 融合的终极形态：从“几个算子一个 kernel”走到“整个模型一个 kernel” |
+| 年份  | 工作                                                                                                                                            | 核心思想                                                                                                                                                         | 和本讲的联系                                                                              |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 2013  | [Halide](https://halide-lang.org/)（PLDI'13）                                                                                                   | **算法与调度分离**：写一次“算什么”，另写“怎么算”（分块、融合、并行）                                                                                             | lab B 的循环变换，正是 Halide 中的调度原语                                                |
+| 2017  | XLA（TensorFlow）                                                                                                                               | 整图编译，自动做逐元素融合                                                                                                                                       | §4.3 的规则                                                                               |
+| 2018  | [TVM](https://arxiv.org/abs/1802.04799)（OSDI'18）                                                                                              | 把 Halide 的思路用于深度学习，加入学习型代价模型和自动调优                                                                                                       | 用搜索替代人手选择 MC/KC/MR/NR                                                            |
+| 2019  | [Triton](https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf)（MAPL'19）                                                | 以 **tile** 为编程单位，块内细节交给编译器                                                                                                                       | L2 的主要工具                                                                             |
+| 2020– | [tinygrad](https://github.com/tinygrad/tinygrad)                                                                                                | 极简的 lazy 张量 + 调度器 + 代码生成，代码量小、可读性强                                                                                                         | **lab C 几乎就是 tinygrad 调度器的玩具版**；运行时加 `DEBUG=4` 能看到它的调度和生成的代码 |
+| 2024  | [PyTorch 2 / TorchInductor](https://pytorch.org/assets/pytorch2-2.pdf)（ASPLOS'24）                                                             | Dynamo 捕获 Python 图，Inductor 生成 Triton/C++ 代码                                                                                                             | `torch.compile` 的背后                                                                    |
+| 2025  | [Mirage](https://arxiv.org/abs/2405.05751)（OSDI'25）                                                                                           | **多层超优化**：在 kernel、线程块、线程三个层次上**搜索**等价的计算图（μGraph），用概率方法验证等价性，能自动发现像 FlashAttention 这样需要专家手写的融合 kernel | 把 §4.3 “按规则决定怎么融合”升级为“在所有可能的融合方案里搜索”                            |
+| 2025– | Megakernel：[Hazy Research “No Bubbles”](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)、[MPK](https://arxiv.org/abs/2512.22219) | 把整个模型的前向计算编译成**一个**常驻 GPU 的 kernel，消除 kernel 之间的启动开销和气泡；MPK 能自动完成这个编译                                                   | 融合的终极形态：从“几个算子一个 kernel”走到“整个模型一个 kernel”                          |
 
 > [!info] 和苗旭鹏老师组的联系
 > Mirage 和 MPK 是苗老师参与的代表性工作，代码在 [mirage-project/mirage](https://github.com/mirage-project/mirage)。本讲的调度规则是理解它们的起点；L3 的 lab 会让你实现一个 mini-Mirage：在一个小的融合方案空间里搜索，并用随机测试验证等价性。
@@ -485,15 +488,15 @@ lab 的标量解释器为每个元素把整个后缀程序跑一遍：每个元�
 
 ## 可视化资料汇总
 
-| 资料 | 形式 | 配合哪一节 |
-|---|---|---|
-| [Stride Visualizer](https://ezyang.github.io/stride-visualizer/index.html) | 浏览器交互：shape/stride → 存储格子 | §1、§2 |
-| [PyTorch internals](https://blog.ezyang.com/2019/05/pytorch-internals/)（Edward Z. Yang） | 博客，storage/stride/view 静态图 | §1、§2 |
-| [JAX Scaling Book: Rooflines](https://jax-ml.github.io/scaling-book/roofline/) | 交互式图文，Roofline 推导 | §3.3 |
-| [Algorithmica: Matrix Multiplication](https://en.algorithmica.org/hpc/algorithms/matmul/) | 图文 + 代码 + 每步测量 | §3.4–3.6 |
-| [siboehm: Fast MMM on CPU](https://siboehm.com/articles/22/Fast-MMM-on-CPU) | 博客，循环顺序与分块图解 | §3.4–3.5 |
-| [Making Deep Learning Go Brrrr](https://horace.io/brrr_intro.html)（Horace He） | 博客，计算/访存/开销三分法的图示 | §4.1 |
-| [Hazy Research: No Bubbles](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles) | 博客，megakernel 的流水线时间线图 | §5.2 |
+| 资料                                                                                      | 形式                                | 配合哪一节 |
+| ----------------------------------------------------------------------------------------- | ----------------------------------- | ---------- |
+| [Stride Visualizer](https://ezyang.github.io/stride-visualizer/index.html)                | 浏览器交互：shape/stride → 存储格子 | §1、§2     |
+| [PyTorch internals](https://blog.ezyang.com/2019/05/pytorch-internals/)（Edward Z. Yang） | 博客，storage/stride/view 静态图    | §1、§2     |
+| [JAX Scaling Book: Rooflines](https://jax-ml.github.io/scaling-book/roofline/)            | 交互式图文，Roofline 推导           | §3.3       |
+| [Algorithmica: Matrix Multiplication](https://en.algorithmica.org/hpc/algorithms/matmul/) | 图文 + 代码 + 每步测量              | §3.4–3.6   |
+| [siboehm: Fast MMM on CPU](https://siboehm.com/articles/22/Fast-MMM-on-CPU)               | 博客，循环顺序与分块图解            | §3.4–3.5   |
+| [Making Deep Learning Go Brrrr](https://horace.io/brrr_intro.html)（Horace He）           | 博客，计算/访存/开销三分法的图示    | §4.1       |
+| [Hazy Research: No Bubbles](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles) | 博客，megakernel 的流水线时间线图   | §5.2       |
 
 ## 自测清单（读完全讲后）
 

@@ -10,19 +10,20 @@ tags: [lecture, attention, softmax, flashattention, triton, decoding]
 [← 课程大纲](../syllabus.md) · 上一讲：[L1 CUDA GEMM](L1-cuda-gemm.md) · 配套实验：[lab2](../../labs/lab2/README.md) · 下一讲：[L3 编译器与超优化](L3-compilers.md)
 
 > [!abstract] 这一讲要解决的三个问题
+>
 > 1. **为什么 attention 是访存受限的？** 它的计算明明主要是两次矩阵乘。
 > 2. **softmax 要求“先看完整行才能归一化”，怎样把它拆成块来算？** 这就是 online softmax，FlashAttention 的全部魔法都从这里来。
 > 3. **训练、推理 prefill、推理 decode 三种场景，最优的 attention kernel 为什么各不相同？** 从 FlashAttention 1/2/3/4 到 FlashDecoding、FlashInfer，每一代各自解决了什么问题？
 
-| 节 | 内容 | 对应 lab |
-|---|---|---|
-| §1 | 稳定的 softmax 与 Triton 编程模型 | Part A1 |
-| §2 | Online softmax：推导与证明 | Part A2 |
-| §3 | FlashAttention：分块 + 在线重缩放 | Part B |
-| §4 | 合并部分结果：log-sum-exp 代数 | Part C2 |
-| §5 | 在寄存器上做 FA2：Tensor Core 版本 | Part C1 |
-| §6 | 推理阶段的 attention：FlashDecoding 与 paged | Part C2 |
-| §7 | 演进脉络：FA1 → FA4、FlashInfer、稀疏与线性 attention | 选题参考 |
+| 节  | 内容                                                  | 对应 lab |
+| --- | ----------------------------------------------------- | -------- |
+| §1  | 稳定的 softmax 与 Triton 编程模型                     | Part A1  |
+| §2  | Online softmax：推导与证明                            | Part A2  |
+| §3  | FlashAttention：分块 + 在线重缩放                     | Part B   |
+| §4  | 合并部分结果：log-sum-exp 代数                        | Part C2  |
+| §5  | 在寄存器上做 FA2：Tensor Core 版本                    | Part C1  |
+| §6  | 推理阶段的 attention：FlashDecoding 与 paged          | Part C2  |
+| §7  | 演进脉络：FA1 → FA4、FlashInfer、稀疏与线性 attention | 选题参考 |
 
 ---
 
@@ -170,12 +171,12 @@ key block 3    [ . ][ . ][ . ][ d ]
 
 ### 3.4 FA1 与 FA2 的区别
 
-| | FlashAttention-1 (2022) | FlashAttention-2 (2023) |
-|---|---|---|
-| 外层循环 | K/V 块（每个 Q 块要反复读写 O） | **Q 块**（O 留在寄存器里，只写一次） |
-| 归一化 | 每个块都除以 l | **最后才除一次** |
-| 并行维度 | batch × head | batch × head × **Q 块**（长序列、小 batch 也能填满 GPU） |
-| warp 分工 | 按 K 切分，最后在 warp 间归约 | **按 Q 切分**，warp 之间不需要通信 |
+|           | FlashAttention-1 (2022)         | FlashAttention-2 (2023)                                  |
+| --------- | ------------------------------- | -------------------------------------------------------- |
+| 外层循环  | K/V 块（每个 Q 块要反复读写 O） | **Q 块**（O 留在寄存器里，只写一次）                     |
+| 归一化    | 每个块都除以 l                  | **最后才除一次**                                         |
+| 并行维度  | batch × head                    | batch × head × **Q 块**（长序列、小 batch 也能填满 GPU） |
+| warp 分工 | 按 K 切分，最后在 warp 间归约   | **按 Q 切分**，warp 之间不需要通信                       |
 
 lab B2 实现的就是 FA2 的结构：grid = (Q 块数, B×H)。
 
@@ -261,12 +262,12 @@ lab 实测，这个约 150 行的 kernel 达到 PyTorch FlashAttention 后端的
 
 ### 6.1 prefill 与 decode
 
-| | prefill（处理 prompt） | decode（逐个生成 token） |
-|---|---|---|
-| query 数 | S 个 | **1 个**（每个序列每步） |
-| 计算形态 | 矩阵乘（Tensor Core 能用满） | 矩阵 × 向量 |
-| 瓶颈 | 计算 | **读 KV cache 的带宽** |
-| 并行度 | B × H × (S/BM) 个 program | 只有 B × H 个 |
+|          | prefill（处理 prompt）       | decode（逐个生成 token） |
+| -------- | ---------------------------- | ------------------------ |
+| query 数 | S 个                         | **1 个**（每个序列每步） |
+| 计算形态 | 矩阵乘（Tensor Core 能用满） | 矩阵 × 向量              |
+| 瓶颈     | 计算                         | **读 KV cache 的带宽**   |
+| 并行度   | B × H × (S/BM) 个 program    | 只有 B × H 个            |
 
 decode 时，每生成一个 token 都要把整个 KV cache 读一遍：Qwen3-0.6B 有 28 层、8 个 KV head、d=128，fp16 下每个 token 的 KV 约占 112 KB，4096 个 token 的上下文就要读 458 MB。所以 decode 的速度上限约等于显存带宽 ÷ KV 大小。
 
@@ -290,19 +291,19 @@ lab 实测：B=1、H=8、S=32768 时，切分后从 86 GB/s 提升到 193 GB/s�
 
 ## §7 演进脉络
 
-| 年份 | 工作 | 解决了上一步的什么问题 |
-|---|---|---|
-| 2018 | [Online softmax](https://arxiv.org/abs/1805.02867)（Milakov & Gimelshein） | 一遍扫描同时求 max 和归一化因子 |
-| 2021 | [Self-attention does not need O(n²) memory](https://arxiv.org/abs/2112.05682) | 证明分块计算 attention 只需要 O(√n) 或 O(1) 的额外内存 |
-| 2022 | [FlashAttention](https://arxiv.org/abs/2205.14135)（NeurIPS） | IO-aware 分块，第一个比标准实现更快的精确 attention；反向传播靠重算 |
-| 2023 | [FlashAttention-2](https://arxiv.org/abs/2307.08691)（ICLR'24） | 外层循环换成 Q、沿序列方向并行、减少非 matmul 运算，**本讲 §3–§5 的内容** |
-| 2023 | [FlashDecoding](https://crfm.stanford.edu/2023/10/12/flashdecoding.html) | decode 时沿 KV 切分，填满 GPU |
-| 2023 | [PagedAttention / vLLM](https://arxiv.org/abs/2309.06180)（SOSP） | KV 分页管理，L4 的主题 |
-| 2024 | [FlashAttention-3](https://arxiv.org/abs/2407.08608)（NeurIPS） | Hopper：TMA + WGMMA + warp 特化（生产者/消费者）+ 两个 warpgroup 的 ping-pong 调度；FP8 |
-| 2024 | [FlexAttention](https://pytorch.org/blog/flexattention/)（PyTorch） | 用户写一个 `score_mod` 函数，编译器生成融合的 FlashAttention kernel，支持各种 mask 变体 |
-| 2025 | [FlashInfer](https://arxiv.org/abs/2501.01005)（MLSys） | 面向推理服务：block-sparse 表示统一 paged/ragged KV，JIT 生成，cascade attention |
-| 2025 | [NSA](https://arxiv.org/abs/2502.11089)（DeepSeek）、[FlashMLA](https://github.com/deepseek-ai/FlashMLA) | 硬件对齐的稀疏 attention；MLA（低秩 KV）的专用 decode kernel |
-| 2026 | [FlashAttention-4](https://arxiv.org/abs/2603.05451) | Blackwell：TMEM、用软件模拟 exp 绕开 MUFU 瓶颈、CuTe-DSL 编写 |
+| 年份 | 工作                                                                                                     | 解决了上一步的什么问题                                                                  |
+| ---- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 2018 | [Online softmax](https://arxiv.org/abs/1805.02867)（Milakov & Gimelshein）                               | 一遍扫描同时求 max 和归一化因子                                                         |
+| 2021 | [Self-attention does not need O(n²) memory](https://arxiv.org/abs/2112.05682)                            | 证明分块计算 attention 只需要 O(√n) 或 O(1) 的额外内存                                  |
+| 2022 | [FlashAttention](https://arxiv.org/abs/2205.14135)（NeurIPS）                                            | IO-aware 分块，第一个比标准实现更快的精确 attention；反向传播靠重算                     |
+| 2023 | [FlashAttention-2](https://arxiv.org/abs/2307.08691)（ICLR'24）                                          | 外层循环换成 Q、沿序列方向并行、减少非 matmul 运算，**本讲 §3–§5 的内容**               |
+| 2023 | [FlashDecoding](https://crfm.stanford.edu/2023/10/12/flashdecoding.html)                                 | decode 时沿 KV 切分，填满 GPU                                                           |
+| 2023 | [PagedAttention / vLLM](https://arxiv.org/abs/2309.06180)（SOSP）                                        | KV 分页管理，L4 的主题                                                                  |
+| 2024 | [FlashAttention-3](https://arxiv.org/abs/2407.08608)（NeurIPS）                                          | Hopper：TMA + WGMMA + warp 特化（生产者/消费者）+ 两个 warpgroup 的 ping-pong 调度；FP8 |
+| 2024 | [FlexAttention](https://pytorch.org/blog/flexattention/)（PyTorch）                                      | 用户写一个 `score_mod` 函数，编译器生成融合的 FlashAttention kernel，支持各种 mask 变体 |
+| 2025 | [FlashInfer](https://arxiv.org/abs/2501.01005)（MLSys）                                                  | 面向推理服务：block-sparse 表示统一 paged/ragged KV，JIT 生成，cascade attention        |
+| 2025 | [NSA](https://arxiv.org/abs/2502.11089)（DeepSeek）、[FlashMLA](https://github.com/deepseek-ai/FlashMLA) | 硬件对齐的稀疏 attention；MLA（低秩 KV）的专用 decode kernel                            |
+| 2026 | [FlashAttention-4](https://arxiv.org/abs/2603.05451)                                                     | Blackwell：TMEM、用软件模拟 exp 绕开 MUFU 瓶颈、CuTe-DSL 编写                           |
 
 另一条线是**改变 attention 本身**：线性 attention、状态空间模型、DeltaNet（[flash-linear-attention](https://github.com/fla-org/flash-linear-attention)）、低比特 attention（[SageAttention](https://github.com/thu-ml/SageAttention)）。
 
@@ -314,17 +315,17 @@ lab 实测：B=1、H=8、S=32768 时，切分后从 86 GB/s 提升到 193 GB/s�
 
 ## 可视化资料汇总
 
-| 资料 | 形式 | 配合哪一节 |
-|---|---|---|
-| [Transformer Explainer](https://poloclub.github.io/transformer-explainer/) | 交互，可以看到 attention 矩阵 | §1 背景 |
-| [UW CSE599m: FlashAttention 笔记](https://courses.cs.washington.edu/courses/cse599m/23sp/notes/flashattn.pdf) | PDF，online softmax 的完整推导 | §2、§3 |
-| [FlashAttention 论文 Figure 1](https://arxiv.org/abs/2205.14135) | HBM/SRAM 数据流图 | §3 |
-| [Triton 教程：Fused Attention](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html) | 代码 + 性能曲线 | §3、lab B |
-| [FlashDecoding 博客](https://crfm.stanford.edu/2023/10/12/flashdecoding.html) | **GIF 动画**，对比切分前后 | §6 |
-| [FlashInfer: Cascade Inference](https://flashinfer.ai/2024/02/02/cascade-inference.html) | 博客，lse 合并的图示 | §4 |
-| [Tri Dao: FlashAttention-3](https://tridao.me/blog/2024/flash3/) | 博客，warp 特化与 ping-pong 时间线 | §7 |
-| [Modal: Reverse-engineering FlashAttention-4](https://modal.com/blog/reverse-engineer-flash-attention-4) | 博客，Blackwell 上的数据流 | §7 |
-| [FlexAttention 博客](https://pytorch.org/blog/flexattention/) | mask 变体示意图 | §7 |
+| 资料                                                                                                           | 形式                               | 配合哪一节 |
+| -------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ---------- |
+| [Transformer Explainer](https://poloclub.github.io/transformer-explainer/)                                     | 交互，可以看到 attention 矩阵      | §1 背景    |
+| [UW CSE599m: FlashAttention 笔记](https://courses.cs.washington.edu/courses/cse599m/23sp/notes/flashattn.pdf)  | PDF，online softmax 的完整推导     | §2、§3     |
+| [FlashAttention 论文 Figure 1](https://arxiv.org/abs/2205.14135)                                               | HBM/SRAM 数据流图                  | §3         |
+| [Triton 教程：Fused Attention](https://triton-lang.org/main/getting-started/tutorials/06-fused-attention.html) | 代码 + 性能曲线                    | §3、lab B  |
+| [FlashDecoding 博客](https://crfm.stanford.edu/2023/10/12/flashdecoding.html)                                  | **GIF 动画**，对比切分前后         | §6         |
+| [FlashInfer: Cascade Inference](https://flashinfer.ai/2024/02/02/cascade-inference.html)                       | 博客，lse 合并的图示               | §4         |
+| [Tri Dao: FlashAttention-3](https://tridao.me/blog/2024/flash3/)                                               | 博客，warp 特化与 ping-pong 时间线 | §7         |
+| [Modal: Reverse-engineering FlashAttention-4](https://modal.com/blog/reverse-engineer-flash-attention-4)       | 博客，Blackwell 上的数据流         | §7         |
+| [FlexAttention 博客](https://pytorch.org/blog/flexattention/)                                                  | mask 变体示意图                    | §7         |
 
 ## 自测清单
 

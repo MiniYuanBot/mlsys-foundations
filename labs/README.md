@@ -40,7 +40,7 @@ MLSys 自学课程的配套实验：8 个 lab，从 CPU 张量运行时一直做
 | 路径                                                   | 内容                                      |
 | ------------------------------------------------------ | ----------------------------------------- |
 | `labN/`                                                | 任务说明、验收清单、源码、测试、benchmark |
-| [../solutions/](../solutions/README.md)                      | 参考答案                                  |
+| [../solutions/](../solutions/README.md)                | 参考答案                                  |
 | [templates/](templates/README.md)                      | 报告、预注册、周报模板                    |
 | [docs/](docs/README.md)                                | 实验记录规范，以及参考实现的实测结果      |
 | [tools/](tools/README.md)、[common/](common/README.md) | 环境安装与检查、运行记录、画图            |

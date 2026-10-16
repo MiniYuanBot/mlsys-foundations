@@ -4,11 +4,11 @@
 
 讲义、实验和参考答案都在这个仓库中：
 
-| 目录 | 内容 |
-| --- | --- |
-| [course/](course/README.md) | 大纲、讲义、阅读资料、学习指南和课程模板 |
-| [labs/](labs/README.md) | lab0–lab7 的任务说明、学生代码、测试、benchmark 和实验工具 |
-| [solutions/](solutions/README.md) | 各 lab 的参考实现，与学生代码分开存放 |
+| 目录                              | 内容                                                       |
+| --------------------------------- | ---------------------------------------------------------- |
+| [course/](course/README.md)       | 大纲、讲义、阅读资料、学习指南和课程模板                   |
+| [labs/](labs/README.md)           | lab0–lab7 的任务说明、学生代码、测试、benchmark 和实验工具 |
+| [solutions/](solutions/README.md) | 各 lab 的参考实现，与学生代码分开存放                      |
 
 ## 开始
 

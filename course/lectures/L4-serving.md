@@ -10,21 +10,22 @@ tags: [lecture, serving, kv-cache, paged-attention, batching, scheduling, prefix
 [← 课程大纲](../syllabus.md) · 上一讲：[L3 编译器](L3-compilers.md) · 配套实验：[lab4](../../labs/lab4/README.md) · 下一讲：[L5 推测解码](L5-speculative.md)
 
 > [!abstract] 这一讲要解决的三个问题
+>
 > 1. **一个 token 是怎样被生成出来的？** prefill 和 decode 的计算特征为什么截然不同？
 > 2. **KV cache 为什么是推理系统的核心资源？** PagedAttention 怎样像操作系统一样管理它？
 > 3. **调度器怎样在吞吐量和延迟之间权衡？** continuous batching、chunked prefill、前缀缓存、PD 分离各自解决了什么问题？
 
 本讲的数字都来自 lab4 在 RTX 4060 Laptop 上跑 Qwen3-0.6B 的实测结果。
 
-| 节 | 内容 | 对应 lab |
-|---|---|---|
-| §1 | 一个 token 怎样流过 Qwen3 | Part A |
-| §2 | prefill 与 decode；性能的天花板 | Part A、B |
-| §3 | KV cache 与 PagedAttention | Part B1、B2 |
-| §4 | 批处理：从 static 到 continuous | Part B3 |
-| §5 | chunked prefill：别让 decode 被卡住 | Part C1 |
-| §6 | 前缀缓存：别重复算相同的 prompt | Part C2 |
-| §7 | 演进脉络：PD 分离、Mooncake、KV 压缩、苗老师组的服务系统 | 选题参考 |
+| 节  | 内容                                                     | 对应 lab    |
+| --- | -------------------------------------------------------- | ----------- |
+| §1  | 一个 token 怎样流过 Qwen3                                | Part A      |
+| §2  | prefill 与 decode；性能的天花板                          | Part A、B   |
+| §3  | KV cache 与 PagedAttention                               | Part B1、B2 |
+| §4  | 批处理：从 static 到 continuous                          | Part B3     |
+| §5  | chunked prefill：别让 decode 被卡住                      | Part C1     |
+| §6  | 前缀缓存：别重复算相同的 prompt                          | Part C2     |
+| §7  | 演进脉络：PD 分离、Mooncake、KV 压缩、苗老师组的服务系统 | 选题参考    |
 
 ---
 
@@ -57,12 +58,12 @@ next token = argmax(logits of the last position)
 
 ## §2 prefill 与 decode；性能的天花板
 
-| | prefill | decode |
-|---|---|---|
-| 每步处理 | 整个 prompt（几百到几千个 token） | 每个序列 1 个 token |
-| GEMM 形状 | [T, 1024] × [1024, 3072]，T 很大 | [1, 1024] × [1024, 3072]，矩阵 × 向量 |
-| 瓶颈 | 计算（Tensor Core） | **读权重和 KV cache 的带宽** |
-| 关心的延迟指标 | **TTFT**（time to first token） | **TPOT**（time per output token） |
+|                | prefill                           | decode                                |
+| -------------- | --------------------------------- | ------------------------------------- |
+| 每步处理       | 整个 prompt（几百到几千个 token） | 每个序列 1 个 token                   |
+| GEMM 形状      | [T, 1024] × [1024, 3072]，T 很大  | [1, 1024] × [1024, 3072]，矩阵 × 向量 |
+| 瓶颈           | 计算（Tensor Core）               | **读权重和 KV cache 的带宽**          |
+| 关心的延迟指标 | **TTFT**（time to first token）   | **TPOT**（time per output token）     |
 
 ### 2.1 decode 的带宽上限
 
@@ -259,19 +260,19 @@ lab 可选挑战 C3 要求你把块级 hash 换成基数树。
 
 ## §7 演进脉络
 
-| 年份 | 工作 | 解决了上一步的什么问题 |
-|---|---|---|
-| 2022 | [Orca](https://www.usenix.org/conference/osdi22/presentation/yu)（OSDI） | 以迭代为调度单位的 continuous batching |
-| 2023 | [vLLM / PagedAttention](https://arxiv.org/abs/2309.06180)（SOSP） | 分页管理 KV，消除碎片，支持共享；**lab B 的原型** |
-| 2023 | [SpotServe](https://arxiv.org/abs/2311.15566)（ASPLOS'24，苗旭鹏等） | 在会被随时回收的廉价抢占式实例上做推理服务，动态调整并行配置并迁移 KV |
-| 2024 | [SGLang / RadixAttention](https://arxiv.org/abs/2312.07104)（NeurIPS） | token 级的基数树前缀缓存与 cache-aware 调度 |
-| 2024 | [Sarathi-Serve](https://arxiv.org/abs/2403.02310)（OSDI） | chunked prefill，让 decode 不被 prefill 卡住；**lab C1 的原型** |
-| 2024 | [DistServe](https://arxiv.org/abs/2401.09670)（OSDI）、[Splitwise](https://arxiv.org/abs/2311.18677)（ISCA） | **PD 分离**：prefill 和 decode 放在不同的 GPU 上，各自用最合适的并行方式，互不干扰；代价是要传输 KV |
-| 2024 | [Helix](https://arxiv.org/abs/2406.01566)（ASPLOS'25，苗旭鹏等） | 在由不同型号 GPU、不同网络组成的异构集群上，用最大流建模来规划模型的放置与请求的路由 |
-| 2024 | [Mooncake](https://arxiv.org/abs/2407.00079)（FAST'25） | 以 KV cache 为中心的分离式架构：KV 存储池跨机共享，调度围绕 KV 的位置展开 |
-| 2024 | [NanoFlow](https://arxiv.org/abs/2408.12757) | 在单 GPU 内把计算、访存、通信拆成重叠的流水线 |
-| 2023– | KV 压缩：[H2O](https://arxiv.org/abs/2306.14048)、[SnapKV](https://arxiv.org/abs/2404.14469)、[KVQuant](https://arxiv.org/abs/2401.18079)、[PQCache](https://arxiv.org/abs/2407.12820)（SIGMOD'25，苗旭鹏等） | 丢弃不重要的 token，或者把 KV 量化/乘积量化，用少量精度换取大得多的并发 |
-| 2025 | [SGLang 大规模 EP + PD 分离](https://lmsys.org/blog/2025-05-05-large-scale-ep/) | 在 DeepSeek-V3 这样的 MoE 模型上，把专家并行与 PD 分离结合起来 |
+| 年份  | 工作                                                                                                                                                                                                          | 解决了上一步的什么问题                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 2022  | [Orca](https://www.usenix.org/conference/osdi22/presentation/yu)（OSDI）                                                                                                                                      | 以迭代为调度单位的 continuous batching                                                              |
+| 2023  | [vLLM / PagedAttention](https://arxiv.org/abs/2309.06180)（SOSP）                                                                                                                                             | 分页管理 KV，消除碎片，支持共享；**lab B 的原型**                                                   |
+| 2023  | [SpotServe](https://arxiv.org/abs/2311.15566)（ASPLOS'24，苗旭鹏等）                                                                                                                                          | 在会被随时回收的廉价抢占式实例上做推理服务，动态调整并行配置并迁移 KV                               |
+| 2024  | [SGLang / RadixAttention](https://arxiv.org/abs/2312.07104)（NeurIPS）                                                                                                                                        | token 级的基数树前缀缓存与 cache-aware 调度                                                         |
+| 2024  | [Sarathi-Serve](https://arxiv.org/abs/2403.02310)（OSDI）                                                                                                                                                     | chunked prefill，让 decode 不被 prefill 卡住；**lab C1 的原型**                                     |
+| 2024  | [DistServe](https://arxiv.org/abs/2401.09670)（OSDI）、[Splitwise](https://arxiv.org/abs/2311.18677)（ISCA）                                                                                                  | **PD 分离**：prefill 和 decode 放在不同的 GPU 上，各自用最合适的并行方式，互不干扰；代价是要传输 KV |
+| 2024  | [Helix](https://arxiv.org/abs/2406.01566)（ASPLOS'25，苗旭鹏等）                                                                                                                                              | 在由不同型号 GPU、不同网络组成的异构集群上，用最大流建模来规划模型的放置与请求的路由                |
+| 2024  | [Mooncake](https://arxiv.org/abs/2407.00079)（FAST'25）                                                                                                                                                       | 以 KV cache 为中心的分离式架构：KV 存储池跨机共享，调度围绕 KV 的位置展开                           |
+| 2024  | [NanoFlow](https://arxiv.org/abs/2408.12757)                                                                                                                                                                  | 在单 GPU 内把计算、访存、通信拆成重叠的流水线                                                       |
+| 2023– | KV 压缩：[H2O](https://arxiv.org/abs/2306.14048)、[SnapKV](https://arxiv.org/abs/2404.14469)、[KVQuant](https://arxiv.org/abs/2401.18079)、[PQCache](https://arxiv.org/abs/2407.12820)（SIGMOD'25，苗旭鹏等） | 丢弃不重要的 token，或者把 KV 量化/乘积量化，用少量精度换取大得多的并发                             |
+| 2025  | [SGLang 大规模 EP + PD 分离](https://lmsys.org/blog/2025-05-05-large-scale-ep/)                                                                                                                               | 在 DeepSeek-V3 这样的 MoE 模型上，把专家并行与 PD 分离结合起来                                      |
 
 苗老师组的[推理服务综述](https://arxiv.org/abs/2312.15234)把这些工作按“算法”和“系统”两个维度做了系统分类，适合作为本讲的延伸阅读。
 
@@ -283,16 +284,16 @@ lab 可选挑战 C3 要求你把块级 hash 换成基数树。
 
 ## 可视化资料汇总
 
-| 资料 | 形式 | 配合哪一节 |
-|---|---|---|
-| [Aleksa Gordić: Inside vLLM](https://www.aleksagordic.com/blog/vllm) | 长文，逐模块图解 vLLM v1：调度器、KV 管理器、前缀缓存、chunked prefill | **全讲主线** |
-| [vLLM 发布博客](https://blog.vllm.ai/2023/06/20/vllm.html) | PagedAttention 的分块与共享**动画** | §3 |
-| [Anyscale: continuous batching](https://www.anyscale.com/blog/continuous-batching-llm-inference) | static 与 continuous 的时间线图 | §4 |
-| [HuggingFace: continuous batching](https://huggingface.co/blog/continuous_batching) | 从零推导 continuous batching | §4 |
-| [Lequn Chen: Dissecting batching](https://le.qun.ch/en/blog/2023/05/13/transformer-batching/) | batching 的性能分析 | §2、§4 |
-| [SGLang 博客](https://lmsys.org/blog/2024-01-17-sglang/) | RadixAttention 基数树的逐步示意图 | §6 |
-| [DistServe 博客](https://hao-ai-lab.github.io/blogs/distserve/) | goodput 与 PD 分离的图示 | §7 |
-| [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm) | 约 1200 行 Python，结构与 lab4 几乎一一对应 | 对照阅读 |
+| 资料                                                                                             | 形式                                                                   | 配合哪一节   |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | ------------ |
+| [Aleksa Gordić: Inside vLLM](https://www.aleksagordic.com/blog/vllm)                             | 长文，逐模块图解 vLLM v1：调度器、KV 管理器、前缀缓存、chunked prefill | **全讲主线** |
+| [vLLM 发布博客](https://blog.vllm.ai/2023/06/20/vllm.html)                                       | PagedAttention 的分块与共享**动画**                                    | §3           |
+| [Anyscale: continuous batching](https://www.anyscale.com/blog/continuous-batching-llm-inference) | static 与 continuous 的时间线图                                        | §4           |
+| [HuggingFace: continuous batching](https://huggingface.co/blog/continuous_batching)              | 从零推导 continuous batching                                           | §4           |
+| [Lequn Chen: Dissecting batching](https://le.qun.ch/en/blog/2023/05/13/transformer-batching/)    | batching 的性能分析                                                    | §2、§4       |
+| [SGLang 博客](https://lmsys.org/blog/2024-01-17-sglang/)                                         | RadixAttention 基数树的逐步示意图                                      | §6           |
+| [DistServe 博客](https://hao-ai-lab.github.io/blogs/distserve/)                                  | goodput 与 PD 分离的图示                                               | §7           |
+| [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm)                                         | 约 1200 行 Python，结构与 lab4 几乎一一对应                            | 对照阅读     |
 
 ## 自测清单
 

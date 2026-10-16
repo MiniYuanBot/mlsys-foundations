@@ -10,20 +10,21 @@ tags: [lecture, compiler, fusion, codegen, superoptimization, mirage, megakernel
 [← 课程大纲](../syllabus.md) · 上一讲：[L2 Attention](L2-attention.md) · 配套实验：[lab3](../../labs/lab3/README.md) · 下一讲：[L4 LLM 推理系统](L4-serving.md)
 
 > [!abstract] 这一讲要解决的三个问题
+>
 > 1. **编译器怎么把一张计算图变成 GPU kernel？** 中间经过哪些步骤，每一步做了什么决定？
 > 2. **融合的规则是什么，边界在哪里？** 为什么基于规则的融合永远写不出 FlashAttention？
 > 3. **超优化器（TASO、PET、Mirage）比规则多做了什么？** 它们靠什么保证改写后的程序仍然正确？megakernel 又把“融合”推到了什么程度？
 
 L0 Part C 用解释器执行融合后的计算图，L1、L2 是手写 kernel。本讲把两者连起来：**让程序替你写 kernel**。这也是苗旭鹏老师组 Mirage 和 MPK 的研究方向。
 
-| 节 | 内容 | 对应 lab |
-|---|---|---|
-| §1 | 编译器流水线：IR、参考执行、代码生成 | Part A |
-| §2 | 融合：三类 kernel 与吸收规则 | Part B1 |
-| §3 | 行归约 kernel 的代码生成：重算还是物化 | Part B2 |
-| §4 | GEMM 模板与序言/尾声融合 | Part B3 |
-| §5 | 超优化：改写、验证、搜索 | Part C |
-| §6 | 演进脉络：Halide → TVM → Triton → Inductor → Mirage → megakernel | 选题参考 |
+| 节  | 内容                                                             | 对应 lab |
+| --- | ---------------------------------------------------------------- | -------- |
+| §1  | 编译器流水线：IR、参考执行、代码生成                             | Part A   |
+| §2  | 融合：三类 kernel 与吸收规则                                     | Part B1  |
+| §3  | 行归约 kernel 的代码生成：重算还是物化                           | Part B2  |
+| §4  | GEMM 模板与序言/尾声融合                                         | Part B3  |
+| §5  | 超优化：改写、验证、搜索                                         | Part C   |
+| §6  | 演进脉络：Halide → TVM → Triton → Inductor → Mirage → megakernel | 选题参考 |
 
 ---
 
@@ -51,11 +52,11 @@ lab3 实现的就是从 “IR” 到 “binary” 这一段：
 
 ### 2.1 三类 kernel
 
-| 类型 | 并行方式 | 代表运算 |
-|---|---|---|
-| Elementwise | 每个线程一个输出元素 | add、mul、exp、gelu |
+| 类型        | 并行方式                      | 代表运算                    |
+| ----------- | ----------------------------- | --------------------------- |
+| Elementwise | 每个线程一个输出元素          | add、mul、exp、gelu         |
 | Row（归约） | 每个 block 一行，列方向用循环 | softmax、layernorm、rmsnorm |
-| MatMul | 分块 GEMM 模板 | 线性层 + bias + 激活函数 |
+| MatMul      | 分块 GEMM 模板                | 线性层 + bias + 激活函数    |
 
 ### 2.2 吸收规则（lab B1）
 
@@ -88,10 +89,10 @@ reverse topo order        decision
 
 Row kernel 中，每遇到一个归约就要扫一遍整行。softmax 需要三遍：求 max、求 sum、写输出。每一遍都会用到 `x - m`、`exp(...)` 这类“整行”中间值。它们放不进寄存器（每行有几千个元素），有两种处理办法：
 
-| 做法 | 代价 |
-|---|---|
+| 做法                                  | 代价                                      |
+| ------------------------------------- | ----------------------------------------- |
 | 写入 shared memory 或显存，下一遍再读 | 额外的访存；行太长时 shared memory 装不下 |
-| **每一遍都重新计算** | 多做几次 exp 等运算 |
+| **每一遍都重新计算**                  | 多做几次 exp 等运算                       |
 
 lab 选择重算：生成的代码里，`x - m` 在第二遍和第三遍各算一次。这在访存受限的场景中划算，背后是 L2 FlashAttention 的同一个道理：**在访存受限时，用计算换带宽**。lab 实测：融合后的 softmax 达到 236 GB/s，unfused 版本只有 55 GB/s。
 
@@ -141,10 +142,10 @@ CUTLASS 的 epilogue visitor、cuBLASLt 的 epilogue、TorchInductor 的 “temp
 
 规则融合只能在**给定的图**上做决定。但很多更好的方案需要**先把图改一改**：
 
-| 改写 | 效果 |
-|---|---|
+| 改写                                                    | 效果                                                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | `MatMul(a * r, B) = MatMul(a, B) * r`（r 是按行的缩放） | 把 rmsnorm 的缩放从 A 一侧（序言，每个 N-tile 都要重算）挪到输出一侧（尾声，只算一次） |
-| 反 CSE：给被共享的节点每个使用者一份拷贝 | 结合融合，可以消除一个必须物化的大张量 |
+| 反 CSE：给被共享的节点每个使用者一份拷贝                | 结合融合，可以消除一个必须物化的大张量                                                 |
 
 softmax·V 的例子：e = exp(x − m) 被 RowSum 和 matmul 共用，规则融合只能把它物化。如果给 matmul 一份独立的 e 拷贝（反 CSE），那么 RowSum 那一份可以融合进 Row kernel，matmul 那一份可以融合进 GEMM 的序言，**[M, K] 的 e 就再也不需要写入显存了**。代价是 exp 要算两遍。这正是 FlashAttention 的核心思想。lab 的搜索会自己找到这个方案：实测从 11.9 ms 降到 6.6 ms。
 
@@ -154,10 +155,10 @@ softmax·V 的例子：e = exp(x − m) 被 RowSum 和 matmul 共用，规则融
 
 验证方法有两类：
 
-| 方法 | 代表系统 | 优缺点 |
-|---|---|---|
+| 方法                     | 代表系统                                                                             | 优缺点                                         |
+| ------------------------ | ------------------------------------------------------------------------------------ | ---------------------------------------------- |
 | 形式化证明（SMT 求解器） | [TASO](https://theory.stanford.edu/~aiken/publications/papers/sosp19.pdf)（SOSP'19） | 严格，但要为每个算子写规格说明，求解器可能很慢 |
-| **随机测试** | Mirage、lab C2 | 简单，适用于任意算子；有极小的误判概率 |
+| **随机测试**             | Mirage、lab C2                                                                       | 简单，适用于任意算子；有极小的误判概率         |
 
 随机测试为什么可信？如果两个函数都是 d 次多项式，并且不相等，那么在一个随机点上它们取值相同的概率不超过 d/|域的大小|（**Schwartz–Zippel 引理**）。Mirage 在有限域上做随机测试，没有舍入误差，测几次就能把误判概率压到可以忽略。lab 在 fp64 实数上测 3 次，容差为 1e-9。
 
@@ -190,20 +191,20 @@ thread graph        : what each thread computes in registers
 
 ## §6 演进脉络
 
-| 年份 | 工作 | 解决了上一步的什么问题 |
-|---|---|---|
-| 2013 | [Halide](https://halide-lang.org/)（PLDI） | **算法与调度分离**：“算什么”与“怎么算”分开描述，后者可以单独优化 |
-| 2017 | XLA（TensorFlow） | 整图编译，自动融合逐元素运算；HLO IR |
-| 2018 | [TVM](https://arxiv.org/abs/1802.04799)（OSDI） | Halide 的思路用于深度学习；学习型代价模型 + 自动调优 |
-| 2019 | [TASO](https://theory.stanford.edu/~aiken/publications/papers/sosp19.pdf)（SOSP） | **自动生成**图改写规则，并用 SMT 形式化验证 |
-| 2019 | [Triton](https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf)（MAPL） | 以 tile 为编程单位，块内细节交给编译器 |
-| 2021 | [PET](https://www.usenix.org/conference/osdi21/presentation/wang)（OSDI） | 部分等价改写 + 自动修正，扩大了搜索空间 |
-| 2022 | [TensorIR](https://arxiv.org/abs/2207.04296)（ASPLOS'23） | 以 Tensor Core 指令为单位的调度抽象 |
-| 2023 | [TorchInductor / PyTorch 2](https://pytorch.org/assets/pytorch2-2.pdf)（ASPLOS'24） | Dynamo 从 Python 捕获图，Inductor 生成 Triton 代码；GEMM 模板 + 尾声融合，**lab3 B 的工业版** |
-| 2025 | [TileLang](https://arxiv.org/abs/2504.17577) | 以 tile 为单位的 DSL，在 TVM 之上实现 |
-| 2025 | **[Mirage](https://arxiv.org/abs/2405.05751)**（OSDI） | 跨 kernel、线程块、线程三层的 μGraph 超优化；有限域随机验证；**lab3 C 的原型** |
-| 2025 | [Hazy Research: No Bubbles](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles) | 手写 megakernel：整个 Llama-1B 前向放进一个常驻 kernel，消除 kernel 之间的启动开销和“气泡” |
-| 2025 | **[MPK](https://arxiv.org/abs/2512.22219)** | **自动**把模型编译成任务图形式的 megakernel；SM 之间用事件同步，而不再依赖 kernel 边界 |
+| 年份 | 工作                                                                                          | 解决了上一步的什么问题                                                                        |
+| ---- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 2013 | [Halide](https://halide-lang.org/)（PLDI）                                                    | **算法与调度分离**：“算什么”与“怎么算”分开描述，后者可以单独优化                              |
+| 2017 | XLA（TensorFlow）                                                                             | 整图编译，自动融合逐元素运算；HLO IR                                                          |
+| 2018 | [TVM](https://arxiv.org/abs/1802.04799)（OSDI）                                               | Halide 的思路用于深度学习；学习型代价模型 + 自动调优                                          |
+| 2019 | [TASO](https://theory.stanford.edu/~aiken/publications/papers/sosp19.pdf)（SOSP）             | **自动生成**图改写规则，并用 SMT 形式化验证                                                   |
+| 2019 | [Triton](https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf)（MAPL） | 以 tile 为编程单位，块内细节交给编译器                                                        |
+| 2021 | [PET](https://www.usenix.org/conference/osdi21/presentation/wang)（OSDI）                     | 部分等价改写 + 自动修正，扩大了搜索空间                                                       |
+| 2022 | [TensorIR](https://arxiv.org/abs/2207.04296)（ASPLOS'23）                                     | 以 Tensor Core 指令为单位的调度抽象                                                           |
+| 2023 | [TorchInductor / PyTorch 2](https://pytorch.org/assets/pytorch2-2.pdf)（ASPLOS'24）           | Dynamo 从 Python 捕获图，Inductor 生成 Triton 代码；GEMM 模板 + 尾声融合，**lab3 B 的工业版** |
+| 2025 | [TileLang](https://arxiv.org/abs/2504.17577)                                                  | 以 tile 为单位的 DSL，在 TVM 之上实现                                                         |
+| 2025 | **[Mirage](https://arxiv.org/abs/2405.05751)**（OSDI）                                        | 跨 kernel、线程块、线程三层的 μGraph 超优化；有限域随机验证；**lab3 C 的原型**                |
+| 2025 | [Hazy Research: No Bubbles](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)     | 手写 megakernel：整个 Llama-1B 前向放进一个常驻 kernel，消除 kernel 之间的启动开销和“气泡”    |
+| 2025 | **[MPK](https://arxiv.org/abs/2512.22219)**                                                   | **自动**把模型编译成任务图形式的 megakernel；SM 之间用事件同步，而不再依赖 kernel 边界        |
 
 ### 研究问题种子
 
@@ -213,16 +214,16 @@ thread graph        : what each thread computes in registers
 
 ## 可视化资料汇总
 
-| 资料 | 形式 | 配合哪一节 |
-|---|---|---|
-| [Making Deep Learning Go Brrrr](https://horace.io/brrr_intro.html)（Horace He） | 博客，融合的直觉图示 | §2 |
-| [TorchInductor 设计帖](https://dev-discuss.pytorch.org/t/torchinductor-a-pytorch-native-compiler-with-define-by-run-ir-and-symbolic-shapes/747) | 设计文档，IR 与调度器 | §1、§2、§4 |
-| [depyf](https://github.com/thuml/depyf) | 工具，查看 torch.compile 生成的代码 | §1 |
-| [tinygrad](https://github.com/tinygrad/tinygrad)（`DEBUG=4`） | 打印调度结果和生成的 kernel | §1–§3 |
-| [TASO 演讲 slides](https://www.sigops.org/s/conferences/sosp/2019/slides/jia.pdf) | 改写的自动生成与验证 | §5 |
-| [Mirage 文档](https://mirage-project.readthedocs.io/) | μGraph 示例 | §5.4 |
-| [No Bubbles 博客](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles) | megakernel 的流水线时间线 | §6 |
-| [MLC 课程](https://mlc.ai/)（陈天奇） | 机器学习编译的完整课程 | 延伸 |
+| 资料                                                                                                                                            | 形式                                | 配合哪一节 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ---------- |
+| [Making Deep Learning Go Brrrr](https://horace.io/brrr_intro.html)（Horace He）                                                                 | 博客，融合的直觉图示                | §2         |
+| [TorchInductor 设计帖](https://dev-discuss.pytorch.org/t/torchinductor-a-pytorch-native-compiler-with-define-by-run-ir-and-symbolic-shapes/747) | 设计文档，IR 与调度器               | §1、§2、§4 |
+| [depyf](https://github.com/thuml/depyf)                                                                                                         | 工具，查看 torch.compile 生成的代码 | §1         |
+| [tinygrad](https://github.com/tinygrad/tinygrad)（`DEBUG=4`）                                                                                   | 打印调度结果和生成的 kernel         | §1–§3      |
+| [TASO 演讲 slides](https://www.sigops.org/s/conferences/sosp/2019/slides/jia.pdf)                                                               | 改写的自动生成与验证                | §5         |
+| [Mirage 文档](https://mirage-project.readthedocs.io/)                                                                                           | μGraph 示例                         | §5.4       |
+| [No Bubbles 博客](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)                                                                 | megakernel 的流水线时间线           | §6         |
+| [MLC 课程](https://mlc.ai/)（陈天奇）                                                                                                           | 机器学习编译的完整课程              | 延伸       |
 
 ## 自测清单
 
