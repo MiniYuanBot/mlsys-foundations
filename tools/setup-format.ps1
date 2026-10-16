@@ -57,7 +57,7 @@ function Find-Python {
         if (-not (Get-Command $cand[0] -ErrorAction SilentlyContinue)) { continue }
         $rest = @($cand | Select-Object -Skip 1)
         & $cand[0] @rest -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>$null
-        if ($LASTEXITCODE -eq 0) { return $cand }
+        if ($LASTEXITCODE -eq 0) { return ,$cand } # the comma keeps @('python') an array
     }
     return $null
 }
