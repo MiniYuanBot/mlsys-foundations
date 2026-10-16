@@ -22,8 +22,7 @@
 ## 0. 构建
 
 ```bash
-# WSL / Linux: sudo apt install openmpi-bin libopenmpi-dev   (tools/setup_wsl.sh already did)
-# macOS:       brew install open-mpi
+bash tools/setup_env.sh --lab 6 && bash tools/check_env.sh --lab 6   # Open MPI (WSL or macOS)
 cmake -S lab6 -B build/lab6 && cmake --build build/lab6 -j
 ctest --test-dir build/lab6 --output-on-failure        # runs every test with P = 1, 2, 3, 4, 8 ranks
 mpirun -np 3 build/lab6/test_coll B1                   # one rank count, tests whose name contains B1

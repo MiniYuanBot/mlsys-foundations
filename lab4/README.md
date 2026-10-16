@@ -27,7 +27,13 @@ requests -> Scheduler (B3, C1) -> BatchInput -> Qwen3::forward (A2) -> argmax ->
 
 ## 0. 环境与构建
 
-`tools/setup_wsl.sh` 已经装好 Rust、PyTorch，并把模型下载到 `~/models`。在 WSL 中执行：
+先装 Rust、Hugging Face 工具，并把 Qwen3-0.6B 下载到 `~/models`（在 WSL 里、仓库根目录下）：
+
+```bash
+bash tools/setup_env.sh --lab 4 && bash tools/check_env.sh --lab 4
+```
+
+然后执行：
 
 ```bash
 cd lab4
@@ -185,7 +191,7 @@ cargo run --release --bin bench -- --label chunk_256 --requests 40 --prompt 1536
 - **C3 RadixAttention**：把块级的 hash 链换成 token 级的基数树，支持任意长度的前缀匹配（参考 SGLang 和 mini-sglang）。
 - **C4 decode 的 CUDA Graph**：decode 步的 kernel 启动开销不可忽视。把固定 batch 大小的 decode 步录成 CUDA Graph，测量收益。
 - **C5 Tensor Core prefill attention**：prefill 时用 lab2 C1 的 mma.sync FlashAttention 代替 warp 版本。
-- **C6 与 vLLM 对比**：升级驱动后装上 vLLM，用同样的负载对比，并分析差距来自哪里。
+- **C6 与 vLLM 对比**：升级驱动后，在**另一个**虚拟环境里装上 vLLM（见 [setup.md](../setup.md)），用同样的负载对比，并分析差距来自哪里。
 
 ---
 

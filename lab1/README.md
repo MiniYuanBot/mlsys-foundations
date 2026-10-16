@@ -23,8 +23,8 @@ lab0 在 CPU 上把矩阵乘从 1 GFLOP/s 做到了接近 BLAS。这个 lab 把�
 
 本 lab 在 **WSL2 Ubuntu** 里做。Windows 原生的 nvcc 依赖特定版本的 Visual Studio：作者机器上，CUDA 12.6 与 VS 2026 不兼容，编译器前端会直接崩溃。
 
-1. 按 labs 仓库 [setup.md](../setup.md) 的 “WSL2 与 CUDA” 一节装好 CUDA Toolkit，确认 `nvcc --version` 和 `nvidia-smi` 都能用。
-2. 把 `/usr/local/cuda/bin` 加进 PATH：`echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc`。
+1. 按 [setup.md](../setup.md) 的 “WSL2 与 GPU 驱动” 一节装好 WSL2 和 Windows 驱动。
+2. 在 WSL 里、仓库根目录下执行 `bash tools/setup_env.sh --lab 1`（安装 CUDA Toolkit 12.6，约 3 GB，并把 `/usr/local/cuda/bin` 加进 PATH），新开一个终端后再执行 `bash tools/check_env.sh --lab 1`，每一项都必须是 OK。
 3. 仓库可以留在 Windows 盘上（WSL 里的路径是 `/mnt/d/...`），但构建目录建议放到 Linux 文件系统里（比如 `-B ~/build/lab1`），编译会快很多。
 
 在**仓库根目录**执行：

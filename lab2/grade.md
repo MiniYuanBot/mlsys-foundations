@@ -1,6 +1,6 @@
 # Lab 2 验收清单
 
-## 自动测试（WSL2，mlsys 虚拟环境）
+## 自动测试（WSL2，`bash tools/check_env.sh --lab 2` 全部 OK）
 
 ```bash
 cmake --build build/lab2 -j && python -m pytest lab2/tests -q
@@ -24,7 +24,7 @@ compute-sanitizer --tool memcheck python -m pytest lab2/tests/test_c_cuda.py -q
 
 ## 报告 `reports/lab2.md`
 
-- [ ] 环境（`bash tools/check_env.sh` 的输出）
+- [ ] 环境（`bash tools/check_env.sh --lab 2` 的输出）
 - [ ] 手推一遍 online softmax 的正确性证明，即讲义 §2 的自测题 2.2
 - [ ] 计算并说明 S=4096、D=64 时，标准 attention 与 FlashAttention 各自的 HBM 读写字节数
 - [ ] softmax、attention、decode 三张结果表，以及每部分 README 中提出的问题

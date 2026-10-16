@@ -21,7 +21,11 @@ decode 是访存受限的：读一遍 3.4 GB 的权重才产出 1 个 token。�
 
 ## 0. 构建
 
-lab5 是一个依赖 `../lab4` 的 Rust crate。`cargo` 会编译**你的** lab4 代码，所以你的 lab4 必须先通过 Part A、B 的测试。
+lab5 是一个依赖 `../lab4` 的 Rust crate。`cargo` 会编译**你的** lab4 代码，所以你的 lab4 必须先通过 Part A、B 的测试。目标模型 Qwen3-1.7B 要另外下载（约 4 GB）：
+
+```bash
+bash tools/setup_env.sh --lab 5 && bash tools/check_env.sh --lab 5   # from the repo root
+```
 
 ```bash
 cd lab5

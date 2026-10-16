@@ -1,4 +1,0 @@
-# Optional plotting only. Tests, scoring, simulation and planning use stdlib.
-# Install torch/vLLM separately using setup.md, then freeze YOUR working environment.
-matplotlib>=3.8,<4
-

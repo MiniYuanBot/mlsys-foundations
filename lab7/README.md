@@ -26,7 +26,7 @@
 | S3   | `decide`       | 置信区间完全越过阈值为 supported，完全没越过为 refuted，其余为 inconclusive |
 
 ```bash
-python -m unittest lab7.tests.test_stats -v      # Windows / Mac / WSL, no GPU needed
+python -m unittest lab7.tests.test_stats -v      # stdlib only: any Python 3.10+, no GPU needed
 ```
 
 `test_coverage_is_roughly_nominal` 会模拟 300 次实验，检查你的 95% 置信区间是否真的约有 95% 的时候包含真值。

@@ -5,7 +5,7 @@ MLSys 自学课程的配套实验：8 个 lab，从 CPU 张量运行时一直做
 ## 开始
 
 1. 把本仓库和 `mlsys-research-course` clone 到同一个父目录下，跨仓库链接依赖这个位置。
-2. 按 [setup.md](setup.md) 配置环境：lab0 只需要 C++ 编译器；lab1 起需要 WSL2 + CUDA，运行一次 `bash tools/setup_wsl.sh` 就能装好，再用 `bash tools/check_env.sh` 检查。
+2. 按 [setup.md](setup.md) 配置环境：全部 lab 共用 WSL2 里的一套环境，每开始一个 lab 运行一次 `bash tools/setup_env.sh --lab N` 补装缺的东西，再用 `bash tools/check_env.sh --lab N` 检查。
 3. 先读对应讲义，再按 lab 的 `README.md` 一步步做，用 `grade.md` 自查。
 
 用 VS Code 打开 [mlsys-research.code-workspace](mlsys-research.code-workspace)，可以同时编辑两个仓库。

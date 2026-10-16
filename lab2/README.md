@@ -25,11 +25,15 @@ $$\text{out} = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d}}\right)V$$
 
 ## 0. 环境与构建
 
-用 `tools/setup_wsl.sh` 装好的虚拟环境（PyTorch 2.14 + Triton 3.8）即可，在 WSL 里执行：
+先在 WSL 里装好 PyTorch 2.14.1 + Triton 3.8.0（版本见 [env-versions.env](../tools/env-versions.env)）：
 
 ```bash
-mlsys                                              # alias: activates ~/venvs/mlsys
-cd /mnt/d/__Coding__/github/mlsys-research-labs   # or wherever the repo is
+bash tools/setup_env.sh --lab 2 && bash tools/check_env.sh --lab 2
+```
+
+在仓库里，direnv 会自动激活 `~/venvs/mlsys`，然后执行：
+
+```bash
 cmake -S lab2 -B build/lab2 && cmake --build build/lab2 -j    # Part C1 shared library
 python -m pytest lab2/tests -q                     # all fail at first, except one argument check
 ```
@@ -166,7 +170,7 @@ python lab2/bench/bench_decode.py > results/lab2/decode.csv
 
 原始数据和图存放在 `results/lab2/`，报告写在 `reports/lab2.md`（[模板](../templates/report.md)），验收清单见 [grade.md](grade.md)。报告要包括：
 
-1. 环境（`bash tools/check_env.sh` 的输出）；
+1. 环境（`bash tools/check_env.sh --lab 2` 的输出）；
 2. 三张表：softmax 带宽、attention 的 TFLOP/s（D=64、causal、D=128）、decode 的 GB/s；
 3. 上面各部分提出的问题；
 4. 卡住最久的地方。

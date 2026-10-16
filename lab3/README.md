@@ -27,7 +27,7 @@ Graph --A1 toposort--> --A2 evaluate (CPU, fp64: the oracle)
 
 ## 0. 构建
 
-这个 lab 是纯 C++，不需要 nvcc：生成的 CUDA 代码由 NVRTC 在运行时编译（`tools/check_env.sh` 已经确认过 NVRTC 可用）。
+这个 lab 是纯 C++，不需要 nvcc：生成的 CUDA 代码由 NVRTC 在运行时编译（`bash tools/check_env.sh --lab 3` 会确认 NVRTC 可用）。
 
 ```bash
 cmake -S lab3 -B build/lab3 && cmake --build build/lab3 -j

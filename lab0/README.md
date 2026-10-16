@@ -23,18 +23,29 @@ PyTorch 的 `Tensor` 背后其实只有一块平坦的内存，再加上 shape�
 
 ## 0. 环境与构建（约 30 分钟）
 
-只需要一个 C++17 编译器和 CMake ≥ 3.18；不需要 GPU，也不需要 Python（Python 只用来跑基线和画图）。
-
-| 平台         | 安装                                                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Windows 原生 | [MSYS2](https://www.msys2.org/) 的 `mingw-w64-ucrt-x86_64-gcc` 与 `cmake`，或 Visual Studio 2022 的 “使用 C++ 的桌面开发” |
-| WSL2 / Linux | `sudo apt install build-essential cmake`                                                                                  |
-| macOS        | `xcode-select --install`，再 `brew install cmake`                                                                         |
-
-在**仓库根目录**执行：
+需要 C++17 编译器、CMake ≥ 3.18，以及一个装了 numpy 和 matplotlib 的 Python 环境（只用来跑基线和画图）；不需要 GPU。WSL、Linux、macOS 和 Windows 原生都可以做。建议用 WSL：从 lab1 开始所有实验都在 WSL 里做，这样环境只用配一次。在仓库根目录下执行：
 
 ```bash
-cmake -S lab0 -B build/lab0 -DCMAKE_BUILD_TYPE=Release        # Windows+MinGW 加 -G "MinGW Makefiles"
+# WSL / Linux / macOS
+bash tools/setup_env.sh --lab 0     # g++, cmake, direnv, ~/venvs/mlsys with numpy/matplotlib/pytest
+# open a NEW terminal and cd back into the repo: direnv now activates the venv
+bash tools/check_env.sh --lab 0     # every line must be OK
+```
+
+```powershell
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File tools\setup_env.ps1 -Lab 0
+# open a NEW PowerShell window, cd back into the repo, then activate the venv:
+mlsys
+powershell -ExecutionPolicy Bypass -File tools\check_env.ps1 -Lab 0
+```
+
+之后在仓库里直接用 `python`（或 `python3`），用的就是课程环境里的版本。如果看到 `No module named 'numpy'`，说明当前终端没有激活课程环境，详见 [setup.md](../setup.md#虚拟环境放在哪里怎么生效)。
+
+构建和测试（Windows 原生要在第一行末尾加 `-G Ninja`）：
+
+```bash
+cmake -S lab0 -B build/lab0 -DCMAKE_BUILD_TYPE=Release
 cmake --build build/lab0 -j
 ctest --test-dir build/lab0 --output-on-failure                # all 3 fail at first: expected
 ```
