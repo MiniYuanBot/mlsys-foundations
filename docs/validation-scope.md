@@ -106,6 +106,6 @@
 | 示例研究端到端（dev → 锁定前拒绝 held-out → lock → held-out → report） | WSL，lab6 参考实现                     | 跑通；P=4、batch 64：0.907 [0.886, 0.944]，supported；P=2：inconclusive；消融无效果                         |
 | 发现并修复的 bug                                                       | lab6 `CommThread`                      | 线程在成员构造完之前就已启动（初始化顺序 UB），在实验矩阵中 60 次运行里崩溃 2 次；已修复，lab6 测试重跑通过 |
 
-## 重构完成
+## 覆盖范围
 
-lab0–lab7 全部重构完毕，旧版 `legacy/` 已删除。
+lab0–lab7 的脚手架都按上面的方法验证过。各 lab 的“未验证”一栏列出还没有实测的平台与条件。

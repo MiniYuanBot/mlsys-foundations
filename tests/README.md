@@ -1,6 +1,6 @@
 # 仓库自检
 
-检查已迁移的 lab 的目录结构、Python 语法和 Markdown 链接，并确认学生文件里没有残留参考答案标记。
+检查各 lab 的目录结构、Python 语法和 Markdown 链接，并确认学生文件里没有残留参考答案标记。
 
 ```bash
 python -m unittest discover -s tests -v

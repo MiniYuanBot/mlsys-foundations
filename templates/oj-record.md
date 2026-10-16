@@ -9,4 +9,4 @@
 - 平台全题状态：
 - 不能从平台分数推出的结论：
 
-Ascend C 与本地 CUDA/Triton 环境不同；首次选 Ascend 路线时按课程平台手册完成 Relu 入门并另存目录，不声称本地 lab2x 模板能运行 NPU kernel。
+Ascend C 与本地 CUDA/Triton 环境不同；首次选 Ascend 路线时按课程平台手册完成 Relu 入门并另存目录，不声称本地 lab2 的模板能运行 NPU kernel。
