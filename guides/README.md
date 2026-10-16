@@ -5,10 +5,10 @@
 建议按下面的顺序使用；后四项在需要时查阅。
 
 1. [起步指南](getting-started.md)：确认先修知识、时间和学习目标。
-2. [环境准备](environment.md)：选择平台，确认依赖与硬件。
+2. [环境准备](environment.md)：设备分工、显存限制与 HPC；安装步骤在 labs 仓库的 setup.md。
 3. [实验规范](experiments.md)：设置对照、记录测量、保存结果。
 4. [论文阅读](reading.md)：提取问题、机制与证据。
 5. [研究路线](research-roadmap.md)：筛选方向并安排后续工作。
 6. [在线评测](online-judge.md)：选择适合当前阶段的算子练习。
 
-环境文档提供配置步骤，实验代码和逐项检查见 [配套仓库](../../mlsys-research-labs/README.md)。
+安装步骤、实验代码和逐项检查都在 [配套仓库](../../mlsys-research-labs/README.md)。

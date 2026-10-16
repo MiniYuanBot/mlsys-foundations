@@ -19,11 +19,11 @@ updated: 2026-10-05
 | [Tensara](https://tensara.org/) / [官方项目说明](https://github.com/tensara/tensara) | 支持 CUDA、Triton 等；真实 GPU 评测、按 GPU 排榜；有具体题面、测试规模和 CLI | **默认 Triton 补充平台**：lab2 完成一次小算子提交；X 周做归约/融合拓展 | 当前题目的语言、GPU、额度；不同题目接口并不统一 |
 | [LeetGPU](https://leetgpu.com/) / [题库](https://leetgpu.com/challenges) | 浏览器 GPU 编程；主页列出 CUDA、Triton、PyTorch 等；题库含 Reduction、Softmax、RMS Normalization、融合残差归一化 | Tensara 不便使用时的替代；按题名选择一题 | 具体题目的语言支持、免费/Pro 边界、测试限制；本次部分页面依赖脚本渲染 |
 | [TensorOJ / CANNJudge](https://tensoroj.cn/cann/home) / [Vector 题单](https://tensoroj.cn/cann/public/vector) | 公开题库含 Add、Relu、Softmax、AddRmsNorm；所查题面要求 Ascend C、昇腾 NPU，题目元数据标注 CANN 9.0.0 | **跨硬件选修**：lab5 比较方向，或 X 周专做一次 Ascend C 入门 | 实际 NPU 型号、评测方式、版本、提交权限和额度未实测；不把 RTX 4060 当作昇腾运行环境 |
-| [GPU MODE](https://www.gpumode.com/) / [Popcorn CLI](https://github.com/gpu-mode/popcorn-cli) | 官方 CLI 支持提交到评测平台；README 指向面向初学者的 PMPP_v2 题集 | lab2x 后再选；适合更深入的 kernel 训练 | 先选当前开放题集，检查设备和比赛规则；不要求参加有截止日期的竞赛 |
+| [GPU MODE](https://www.gpumode.com/) / [Popcorn CLI](https://github.com/gpu-mode/popcorn-cli) | 官方 CLI 支持提交到评测平台；README 指向面向初学者的 PMPP_v2 题集 | lab2 之后再选；适合更深入的 kernel 训练 | 先选当前开放题集，检查设备和比赛规则；不要求参加有截止日期的竞赛 |
 
 选择建议：先用 Tensara 的小题确认能运行 Triton；若账号/网络不便，换 LeetGPU。两者都不通时，在 4060 上运行课程自测，记录“OJ 未完成”，继续学习。只有明确想探索昇腾时，才为 TensorOJ 单独安排学习时间。
 
-OJ 评测环境通常围绕单个算子设计。lab3–lab7 的 vLLM 常驻服务、到达过程、请求延迟与原始日志仍需自己的机器或获批服务器；通过一个 attention 题不能代替服务实验。
+OJ 评测环境通常围绕单个算子设计。lab3–lab7 的引擎、到达过程、请求延迟与原始日志仍需自己的机器或获批服务器；通过一个 attention 题不能代替端到端实验。
 
 ## 题目路线：每个阶段只取一项
 
@@ -67,7 +67,7 @@ TensorOJ 的公开入口与题面已经核对；没有核实具体 NPU 型号、
 - lab2 是二维、contiguous、最后一维、FP32 的 softmax。Tensara Softmax 的公开题面要求任意形状和指定维度，直接搬过去并不满足契约；其中某些输入明显大于本课程的本地矩阵。
 - Tensara Log Softmax 是逐行归约，但结果应是对数概率。默认公开测试列宽可到 8192；先用本地小形状验证，再讨论远端规模。
 - TensorOJ Softmax 的题面还包含多 dtype、正负维度索引等要求；平台的完整规格与教学子集分别记录。
-- RMSNorm 是否有可学习权重、epsilon 的位置、残差是否输出及输出 dtype，都不能只靠题名判断。lab2x 专门给出一份本地契约。
+- RMSNorm 是否有可学习权重、epsilon 的位置、残差是否输出及输出 dtype，都不能只靠题名判断。做这类题之前，先自己写一份本地契约。
 
 ## OJ 成绩怎样进入实验报告
 
