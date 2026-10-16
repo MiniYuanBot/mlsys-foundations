@@ -8,7 +8,7 @@ MLSys 自学课程的配套实验：8 个 lab，从 CPU 张量运行时一直做
 2. 按 [setup.md](setup.md) 配置环境：全部 lab 共用 WSL2 里的一套环境，每开始一个 lab 运行一次 `bash tools/setup_env.sh --lab N` 补装缺的东西，再用 `bash tools/check_env.sh --lab N` 检查。
 3. 先读对应讲义，再按 lab 的 `README.md` 一步步做，用 `grade.md` 自查。
 
-用 VS Code 打开仓库根目录或 [mlsys-foundations.code-workspace](../mlsys-foundations.code-workspace)，可以同时编辑课程、实验和参考答案。
+用 VS Code 打开仓库根目录，可以同时编辑课程、实验和参考答案。
 
 ## 实验
 
@@ -44,7 +44,6 @@ MLSys 自学课程的配套实验：8 个 lab，从 CPU 张量运行时一直做
 | [templates/](templates/README.md)                      | 报告、预注册、周报模板                    |
 | [docs/](docs/README.md)                                | 实验记录规范，以及参考实现的实测结果      |
 | [tools/](tools/README.md)、[common/](common/README.md) | 环境安装与检查、运行记录、画图            |
-| [tests/](tests/README.md)                              | 仓库自检                                  |
 | [portfolio/](portfolio/README.md)                      | 结课材料索引                              |
 
 ## 代码格式化

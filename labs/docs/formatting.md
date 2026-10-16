@@ -52,16 +52,16 @@ Windows 下把 `python3` 换成 `python`。
 
 ## VS Code
 
-打开仓库根目录或 [mlsys-foundations.code-workspace](../../mlsys-foundations.code-workspace)，在扩展面板安装推荐的扩展。新终端默认进入 `labs/`。
+打开仓库根目录，在扩展面板安装推荐的扩展。新终端默认进入 `labs/`。
 `.vscode/settings.json` 直接指向 `${workspaceFolder}/labs/.venv-format/bin/` 下的 clang-format 和 shfmt，
 不需要激活 venv，也不依赖终端的 PATH，因此从图形界面启动 VS Code 同样可用。
 原生 Windows 上这些文件位于 `labs/.venv-format/Scripts/`，需要在个人用户设置中覆盖 `C_Cpp.clang_format_path` 和 `shfmt.executablePath`；WSL 中无需处理。
 Prettier 扩展会查找全局安装的版本，无需添加 npm 项目或 Prettier 插件。
 
 保存支持的语言文件会调用对应 Formatter，也可执行 **Format Document**。
-Ruff 的 lint、修复和 import 整理均已关闭；工作区文件也包含 Ruff 的窗口级开关。
+Ruff 的 lint、修复和 import 整理均已关闭。
 共享设置不指定 `cmake.sourceDirectory`、构建目录、生成器或 Kit，可继续在个人/工作区设置中选择 Lab，
-例如 `cmake.sourceDirectory = "${workspaceFolder:mlsys-foundations}/labs/lab0"`。
+例如 `cmake.sourceDirectory = "${workspaceFolder}/labs/lab0"`。
 除 `settings.json`、`extensions.json` 外的 `.vscode/` 文件仍保持本地忽略。
 
 ## 手动格式化

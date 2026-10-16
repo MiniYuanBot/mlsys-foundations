@@ -28,20 +28,10 @@ Windows 原生支持 lab0、lab7，安装命令见 [环境配置](labs/setup.md#
 
 ## 阅读与开发
 
-用 VS Code 打开仓库根目录或 [mlsys-foundations.code-workspace](mlsys-foundations.code-workspace)，即可同时编辑课程、实验和参考答案；新终端默认进入 `labs/`。也可以把仓库根目录作为 Obsidian vault 打开。
+用 VS Code 打开仓库根目录，即可同时编辑课程、实验和参考答案；新终端默认进入 `labs/`。也可以把仓库根目录作为 Obsidian vault 打开。
 
 - [详细讲义](course/lectures/README.md)：L0–L7 的原理、例子和自测题。
 - [阅读资料](course/readings/README.md)：论文、代码、参考课程和可视化资料。
 - [学习指南](course/guides/README.md)：环境、实验规范、论文阅读和研究路线。
 - [实验记录规范](labs/docs/experiment-records.md)：运行记录、原始数据和图表归档。
 - [代码格式化](labs/docs/formatting.md)：共享配置、工具安装和编辑器设置。
-
-## 仓库自检
-
-在仓库根目录执行：
-
-```bash
-python -m unittest discover -s labs/tests -v
-```
-
-自检覆盖目录结构、参考答案与学生文件的对应关系、Python 语法，以及课程、实验和参考答案之间的 Markdown 链接。各 lab 的正确性与性能验收仍按自己的 `README.md` 和 `grade.md` 执行。
