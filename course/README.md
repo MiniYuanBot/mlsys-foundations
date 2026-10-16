@@ -1,8 +1,8 @@
-# MLSys Research Course
+# MLSys Foundations Course
 
 一门从系统基础一路走到研究前沿的自学课程，内容涵盖张量运行时、GPU kernel、深度学习编译器、LLM 推理系统、推测解码和分布式训练。课程共 16 周，每周约 11 小时。
 
-本仓库存放大纲、讲义和阅读资料；代码、测试和验收清单在相邻的 [mlsys-research-labs](../mlsys-research-labs/README.md)。两个仓库要放在同一个父目录下。本仓库可以直接作为 Obsidian vault 打开。
+`course/` 存放大纲、讲义和阅读资料。代码、测试和验收清单在同一仓库的 [labs/](../labs/README.md)，参考答案在 [solutions/](../solutions/README.md)。可以把仓库根目录作为 Obsidian vault 打开，统一阅读课程和实验文档。
 
 | 入口 | 内容 |
 |---|---|
@@ -12,6 +12,6 @@
 | [guides/](guides/README.md) | 起步、环境、实验规范、论文阅读与研究路线 |
 | [templates/](templates/README.md) | 阅读卡、实验记录、周报、提案模板 |
 
-**怎么开始**：先读 [起步指南](guides/getting-started.md)，再读 [大纲](syllabus.md)，然后从 [L0 讲义](lectures/L0-tensor-runtime.md) 和 [lab0](../mlsys-research-labs/lab0/README.md) 开始。
+**怎么开始**：先读 [起步指南](guides/getting-started.md)，再读 [大纲](syllabus.md)，然后从 [L0 讲义](lectures/L0-tensor-runtime.md) 和 [lab0](../labs/lab0/README.md) 开始。
 
 

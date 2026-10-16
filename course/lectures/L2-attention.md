@@ -7,7 +7,7 @@ tags: [lecture, attention, softmax, flashattention, triton, decoding]
 
 # L2 Attention：从 online softmax 到 FlashAttention
 
-[← 课程大纲](../syllabus.md) · 上一讲：[L1 CUDA GEMM](L1-cuda-gemm.md) · 配套实验：[lab2](../../mlsys-research-labs/lab2/README.md) · 下一讲：[L3 编译器与超优化](L3-compilers.md)
+[← 课程大纲](../syllabus.md) · 上一讲：[L1 CUDA GEMM](L1-cuda-gemm.md) · 配套实验：[lab2](../../labs/lab2/README.md) · 下一讲：[L3 编译器与超优化](L3-compilers.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **为什么 attention 是访存受限的？** 它的计算明明主要是两次矩阵乘。

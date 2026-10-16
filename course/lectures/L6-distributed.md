@@ -7,7 +7,7 @@ tags: [lecture, distributed, allreduce, ring, ddp, zero, fsdp, tensor-parallel, 
 
 # L6 集合通信与并行训练
 
-[← 课程大纲](../syllabus.md) · 上一讲：[L5 推测解码](L5-speculative.md) · 配套实验：[lab6](../../mlsys-research-labs/lab6/README.md) · 下一讲：[L7 研究方法与研究项目](L7-research.md)
+[← 课程大纲](../syllabus.md) · 上一讲：[L5 推测解码](L5-speculative.md) · 配套实验：[lab6](../../labs/lab6/README.md) · 下一讲：[L7 研究方法与研究项目](L7-research.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **怎样高效地把 P 份数据加起来？** ring、tree、recursive doubling 各适合什么场景？用什么模型判断？

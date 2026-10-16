@@ -7,7 +7,7 @@ tags: [lecture, research-method, statistics, preregistration, reading, proposal]
 
 # L7 研究方法与研究项目
 
-[← 课程大纲](../syllabus.md) · 上一讲：[L6 集合通信与并行训练](L6-distributed.md) · 配套实验：[lab7](../../mlsys-research-labs/lab7/README.md)
+[← 课程大纲](../syllabus.md) · 上一讲：[L6 集合通信与并行训练](L6-distributed.md) · 配套实验：[lab7](../../labs/lab7/README.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **好的 MLSys 研究问题从哪里来？** 怎样从“我测到一个奇怪的数”走到“一个可以发表的问题”？
@@ -46,7 +46,7 @@ MLSys 的大多数好论文都遵循同一个模式：
    and NOT where it should not         prefill share is small (negative control)
 ```
 
-这门课的每个 lab 都刻意留下了这样的缺口：lab3 的代价模型排错了顺序，lab4 的 chunked prefill 收益很小，lab5 的草稿模型太贵，lab6 的 bucket 划分很粗糙。[lab7/topics.md](../../mlsys-research-labs/lab7/topics.md) 把它们整理成了 9 个候选题目。
+这门课的每个 lab 都刻意留下了这样的缺口：lab3 的代价模型排错了顺序，lab4 的 chunked prefill 收益很小，lab5 的草稿模型太贵，lab6 的 bucket 划分很粗糙。[lab7/topics.md](../../labs/lab7/topics.md) 把它们整理成了 9 个候选题目。
 
 ### 1.2 好问题的四个检验
 
@@ -237,7 +237,7 @@ lab7 的示例正好说明了留出集的价值：dev 条件（P=4，batch 16）
 | Gernot Heiser, [Systems Benchmarking Crimes](https://gernot-heiser.org/benchmarking-crimes.html) | 系统论文中常见的测量错误清单，与 §2 对照阅读 |
 | [Hsword / Awesome-MLSys-Papers](https://github.com/Hsword/Awesome-Machine-Learning-System-Papers) | 苗老师组整理的论文地图 |
 | Efron & Tibshirani, *An Introduction to the Bootstrap*（第 1–6 章） | §3 的理论 |
-| [lab7/topics.md](../../mlsys-research-labs/lab7/topics.md) | 9 个基于前面 lab 实测缺口的候选题目 |
+| [lab7/topics.md](../../labs/lab7/topics.md) | 9 个基于前面 lab 实测缺口的候选题目 |
 | [研究路线](../guides/research-roadmap.md)、[论文阅读方法](../guides/reading.md) | 时间规划与阅读方法 |
 
 ## 自测清单

@@ -7,7 +7,7 @@ tags: [mlsys, environment]
 
 [返回大纲](../syllabus.md) · [实验规范](experiments.md)
 
-安装步骤全部写在 labs 仓库的 [setup.md](../../mlsys-research-labs/setup.md)，本页只讲设备分工、显存限制和 HPC。
+安装步骤全部写在 `labs/` 中的 [setup.md](../../labs/setup.md)，本页只讲设备分工、显存限制和 HPC。
 
 ## 设备分工
 
@@ -30,7 +30,7 @@ TensorOJ 所查题目面向 Ascend C / 昇腾 NPU；本地 RTX 4060 的 CUDA 环
 
 ## 安装与检查
 
-按 [setup.md](../../mlsys-research-labs/setup.md) 做。每开始一个新 lab 运行一次 `setup_env`，它只补装这个 lab 新增的东西；`check_env` 逐项检查并给出修复命令。版本锁定在 labs 仓库的 `tools/env-versions.env`，不要凭 `nvidia-smi` 显示的 CUDA 版本猜 PyTorch wheel 该装哪个。
+按 [setup.md](../../labs/setup.md) 做。每开始一个新 lab 运行一次 `setup_env`，它只补装这个 lab 新增的东西；`check_env` 逐项检查并给出修复命令。版本锁定在 `labs/` 中的 `labs/tools/env-versions.env`，不要凭 `nvidia-smi` 显示的 CUDA 版本猜 PyTorch wheel 该装哪个。
 
 Windows 上装好支持 WSL 的 NVIDIA 驱动即可，**不要在 WSL 中安装 Linux 显卡驱动**，参见 [NVIDIA CUDA on WSL 用户指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。在 WSL 内运行 `nvidia-smi`；若命令不在 PATH，按该指南检查 `/usr/lib/wsl/lib/nvidia-smi`。记录 GPU 名称、驱动、可用显存，以及 4060 是笔记本版还是桌面版。笔记本接电、固定电源模式，关掉占用 GPU 的游戏和浏览器重任务，但不要擅自结束不认识的系统进程。
 
@@ -56,7 +56,7 @@ lab4 使用 Qwen3-0.6B，lab5 再加上 Qwen3-1.7B 作为目标模型，由 `set
 
 向平台或导师确认：GPU 型号/显存/计算能力、驱动和容器支持、单卡/多卡权限、排队时长、最长作业时间、模型文件下载方式、计费归属及预算。显存大不代表架构一定兼容。
 
-阅读 [Slurm 使用说明](https://hpc.pku.edu.cn/ug/guide/slurm/) 与 [sbatch 文档](https://hpc.pku.edu.cn/ug/guide/slurm/sbatch/)。**训练与性能测试在分配的计算节点运行，不在登录/传输节点运行。** labs 仓库的 [lab6/hpc/](../../mlsys-research-labs/lab6/hpc/README.md) 有一份 NCCL 作业脚本，其中的大写占位项需换成平台核准值。具体 GPU 请求语法、分区、账户选项以实际平台为准。费用按 [官方缴费说明](https://hpc.pku.edu.cn/ug/account/recharge/) 与实际账号确认，不在本课纲预估未知卡型单价。
+阅读 [Slurm 使用说明](https://hpc.pku.edu.cn/ug/guide/slurm/) 与 [sbatch 文档](https://hpc.pku.edu.cn/ug/guide/slurm/sbatch/)。**训练与性能测试在分配的计算节点运行，不在登录/传输节点运行。** `labs/` 中的 [lab6/hpc/](../../labs/lab6/hpc/README.md) 有一份 NCCL 作业脚本，其中的大写占位项需换成平台核准值。具体 GPU 请求语法、分区、账户选项以实际平台为准。费用按 [官方缴费说明](https://hpc.pku.edu.cn/ug/account/recharge/) 与实际账号确认，不在本课纲预估未知卡型单价。
 
 ## 环境验收
 
@@ -65,7 +65,7 @@ lab4 使用 Qwen3-0.6B，lab5 再加上 Qwen3-1.7B 作为目标模型，由 `set
 - [ ] GPU 未通过时已提交阻塞记录，而不是反复盲试。
 - [ ] 没有把 HPC、多卡或付费资源当作前几周的前提。
 
-参考：[labs setup.md](../../mlsys-research-labs/setup.md) · [WSL CUDA](https://docs.nvidia.com/cuda/wsl-user-guide/index.html) · [PyTorch 安装](https://pytorch.org/get-started/locally/) · [北大 HPC](https://hpc.pku.edu.cn/)
+参考：[labs setup.md](../../labs/setup.md) · [WSL CUDA](https://docs.nvidia.com/cuda/wsl-user-guide/index.html) · [PyTorch 安装](https://pytorch.org/get-started/locally/) · [北大 HPC](https://hpc.pku.edu.cn/)
 
 ## 系统实现补充
 

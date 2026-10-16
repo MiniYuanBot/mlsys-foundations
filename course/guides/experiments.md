@@ -7,11 +7,11 @@ tags: [mlsys, methodology]
 
 [返回大纲](../syllabus.md)
 
-本页是跨 lab 的通用规范。各 lab 的目录结构、工具命令和归档要求见 labs 仓库的 [实验记录](../../mlsys-research-labs/docs/experiment-records.md)。
+本页是跨 lab 的通用规范。各 lab 的目录结构、工具命令和归档要求见 `labs/` 中的 [实验记录](../../labs/docs/experiment-records.md)。
 
 ## 每次实验保留什么
 
-课程笔记与实验仓库分开。课程文件可以放 Obsidian；代码在 labs 仓库。每次运行的目录至少包含 `config.json`（全部参数）、`command.txt`、`environment.txt`、`stdout.log`、`raw.json` 或 `raw.csv`、`summary.csv`。图从原始数据生成，不能手改数值。文件名包含实验、配置和重复编号，例如 `lab4-long-high-r2`。
+课程笔记放在 `course/`，实验代码放在 `labs/`。可以把仓库根目录作为 Obsidian vault 打开。每次运行的目录至少包含 `config.json`（全部参数）、`command.txt`、`environment.txt`、`stdout.log`、`raw.json` 或 `raw.csv`、`summary.csv`。图从原始数据生成，不能手改数值。文件名包含实验、配置和重复编号，例如 `lab4-long-high-r2`。
 
 配置须包括：日期、代码 commit、设备、OS/WSL、驱动、编译器与编译参数、Python/PyTorch/Triton/Rust 版本、CUDA 版本、模型与 tokenizer revision、dtype、输入/输出长度、seed、预热次数、重复编号、到达率、并发与批 token 限制、缓存设置。未用到的字段写 `not applicable`，不留让人猜测的空白。
 
@@ -84,11 +84,11 @@ AI 辅助实现需要独立参考、至少一个新条件和一次解释/修改�
 
 分布式实验使用真实进程，先证明梯度与单进程 oracle 等价，再测通信；异步 API 返回不能作为通信完成或重叠的证据。CPU host 性能与 GPU 互连性能分开报告。阅读或修改上游系统时，保留可应用的 patch、真实的源码路径和调用链，诊断开关要做关闭与开启的对照，正式计时关闭重型观测。
 
-研究实验在结果前冻结主张、基线、矩阵、指标、消融、负对照和留出条件。报告最接近的三项工作、实际修改、成本与反例；没有加速不影响结论的价值，缺少正确性与公平对照则不行。重建图表的命令只读归档的 raw 数据，昂贵的硬件复跑另设显式入口。细则见 [课程主线](../syllabus.md) 与 [上游使用记录](../../mlsys-research-labs/templates/upstream-record.md)。
+研究实验在结果前冻结主张、基线、矩阵、指标、消融、负对照和留出条件。报告最接近的三项工作、实际修改、成本与反例；没有加速不影响结论的价值，缺少正确性与公平对照则不行。重建图表的命令只读归档的 raw 数据，昂贵的硬件复跑另设显式入口。细则见 [课程主线](../syllabus.md) 与 [上游使用记录](../../labs/templates/upstream-record.md)。
 
 ## 参考资料
 
 - [PyTorch benchmark](https://docs.pytorch.org/tutorials/recipes/recipes/benchmark.html)
 - [PyTorch Profiler](https://docs.pytorch.org/tutorials/recipes/recipes/profiler_recipe.html)
-- [labs 实验记录规范](../../mlsys-research-labs/docs/experiment-records.md)
+- [labs 实验记录规范](../../labs/docs/experiment-records.md)
 - [实验记录模板](../templates/experiment-record.md)

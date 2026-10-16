@@ -1,0 +1,14 @@
+{
+  "folders": [
+    {
+      "name": "mlsys-foundations",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "ruff.lint.enable": false,
+    "ruff.fixAll": false,
+    "ruff.organizeImports": false,
+    "ruff.showSyntaxErrors": false
+  }
+}

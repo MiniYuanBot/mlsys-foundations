@@ -7,7 +7,7 @@ tags: [lecture, speculative-decoding, specinfer, rejection-sampling, token-tree]
 
 # L5 推测解码
 
-[← 课程大纲](../syllabus.md) · 上一讲：[L4 推理系统](L4-serving.md) · 配套实验：[lab5](../../mlsys-research-labs/lab5/README.md) · 下一讲：[L6 集合通信与并行训练](L6-distributed.md)
+[← 课程大纲](../syllabus.md) · 上一讲：[L4 推理系统](L4-serving.md) · 配套实验：[lab5](../../labs/lab5/README.md) · 下一讲：[L6 集合通信与并行训练](L6-distributed.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **为什么“猜几个 token 再一起验证”能变快？** 这个“免费午餐”来自硬件的哪一点？

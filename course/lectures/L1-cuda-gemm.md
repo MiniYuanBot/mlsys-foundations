@@ -7,7 +7,7 @@ tags: [lecture, cuda, gpu, gemm, tensor-core, shared-memory]
 
 # L1 GPU 执行模型与 CUDA GEMM
 
-[← 课程大纲](../syllabus.md) · 上一讲：[L0 张量、内存与 CPU 性能](L0-tensor-runtime.md) · 配套实验：[lab1](../../mlsys-research-labs/lab1/README.md) · 下一讲：[L2 Attention](L2-attention.md)
+[← 课程大纲](../syllabus.md) · 上一讲：[L0 张量、内存与 CPU 性能](L0-tensor-runtime.md) · 配套实验：[lab1](../../labs/lab1/README.md) · 下一讲：[L2 Attention](L2-attention.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **GPU 是怎样执行程序的？** 几万个线程如何组织？为什么同样的代码，“相邻线程访问相邻地址”就能快很多倍？

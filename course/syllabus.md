@@ -12,7 +12,7 @@ tags: [syllabus]
 
 **方向侧重**：编译器与超优化（Mirage/MPK）、LLM 推理服务、推测解码（SpecInfer）、分布式训练（Hetu/Galvatron）。这些都是 [苗旭鹏老师组](https://github.com/Hsword) 的主要研究方向。
 
-**每个 lab 三级阶梯**：① 代码填空，熟悉架构 → ② 实现核心代码，达到性能目标 → ③ 精简复现一个前沿设计。实验代码见 [mlsys-research-labs](../mlsys-research-labs/README.md)。
+**每个 lab 三级阶梯**：① 代码填空，熟悉架构 → ② 实现核心代码，达到性能目标 → ③ 精简复现一个前沿设计。实验代码见 [labs](../labs/README.md)。
 
 ---
 
@@ -20,14 +20,14 @@ tags: [syllabus]
 
 | 周 | 讲义 | Lab | ③ 前沿复现目标 |
 |---|---|---|---|
-| 1–2 | [L0 张量、内存与 CPU 性能](lectures/L0-tensor-runtime.md) | [lab0 minitensor](../mlsys-research-labs/lab0/README.md)（C++） | Goto GEMM 达到 BLAS 的 80%；tinygrad 式 lazy 融合 |
-| 3–4 | [L1 GPU 执行模型与 CUDA GEMM](lectures/L1-cuda-gemm.md) | [lab1](../mlsys-research-labs/lab1/README.md)（CUDA） | Tensor Core `mma.sync` 三级流水线 HGEMM，达到 cuBLAS 的 60–80% |
-| 5–6 | [L2 Attention：从 online softmax 到 FlashAttention](lectures/L2-attention.md) | [lab2](../mlsys-research-labs/lab2/README.md)（Triton + CUDA） | Triton FA2 与手写 `mma.sync` FA2 达到 SDPA 的 90%+；FlashDecoding split-KV |
-| 7–8 | [L3 深度学习编译器与超优化](lectures/L3-compilers.md) | [lab3](../mlsys-research-labs/lab3/README.md)（C++ + NVRTC） | mini-Mirage：改写 + 随机验证 + 代价搜索，自动发现 FlashAttention 式的重算 |
-| 9–11 | [L4 LLM 推理系统](lectures/L4-serving.md) | [lab4](../mlsys-research-labs/lab4/README.md)（Rust + CUDA） | 跑通 Qwen3-0.6B；PagedAttention + continuous batching + chunked prefill + 前缀缓存 |
-| 12 | [L5 推测解码](lectures/L5-speculative.md) | [lab5](../mlsys-research-labs/lab5/README.md)（Rust + CUDA） | 无损的拒绝采样；SpecInfer token tree + tree attention |
-| 13–14 | [L6 集合通信与并行训练](lectures/L6-distributed.md) | [lab6](../mlsys-research-labs/lab6/README.md)（C++ MPI） | 手写 ring / recursive doubling allreduce + α-β 模型；DDP bucket 重叠 + ZeRO-1 |
-| 15–16 | [L7 研究方法与研究项目](lectures/L7-research.md) | [lab7](../mlsys-research-labs/lab7/README.md)（自选） | 预注册 + 强基线 + 消融 + 负对照 + 留出集的完整研究循环；两页提案 |
+| 1–2 | [L0 张量、内存与 CPU 性能](lectures/L0-tensor-runtime.md) | [lab0 minitensor](../labs/lab0/README.md)（C++） | Goto GEMM 达到 BLAS 的 80%；tinygrad 式 lazy 融合 |
+| 3–4 | [L1 GPU 执行模型与 CUDA GEMM](lectures/L1-cuda-gemm.md) | [lab1](../labs/lab1/README.md)（CUDA） | Tensor Core `mma.sync` 三级流水线 HGEMM，达到 cuBLAS 的 60–80% |
+| 5–6 | [L2 Attention：从 online softmax 到 FlashAttention](lectures/L2-attention.md) | [lab2](../labs/lab2/README.md)（Triton + CUDA） | Triton FA2 与手写 `mma.sync` FA2 达到 SDPA 的 90%+；FlashDecoding split-KV |
+| 7–8 | [L3 深度学习编译器与超优化](lectures/L3-compilers.md) | [lab3](../labs/lab3/README.md)（C++ + NVRTC） | mini-Mirage：改写 + 随机验证 + 代价搜索，自动发现 FlashAttention 式的重算 |
+| 9–11 | [L4 LLM 推理系统](lectures/L4-serving.md) | [lab4](../labs/lab4/README.md)（Rust + CUDA） | 跑通 Qwen3-0.6B；PagedAttention + continuous batching + chunked prefill + 前缀缓存 |
+| 12 | [L5 推测解码](lectures/L5-speculative.md) | [lab5](../labs/lab5/README.md)（Rust + CUDA） | 无损的拒绝采样；SpecInfer token tree + tree attention |
+| 13–14 | [L6 集合通信与并行训练](lectures/L6-distributed.md) | [lab6](../labs/lab6/README.md)（C++ MPI） | 手写 ring / recursive doubling allreduce + α-β 模型；DDP bucket 重叠 + ZeRO-1 |
+| 15–16 | [L7 研究方法与研究项目](lectures/L7-research.md) | [lab7](../labs/lab7/README.md)（自选） | 预注册 + 强基线 + 消融 + 负对照 + 留出集的完整研究循环；两页提案 |
 
 
 ## 各讲要点
@@ -58,7 +58,7 @@ prefill 与 decode；KV cache 的显存账；Orca continuous batching；vLLM Pag
 
 ## 完成标准
 
-- 每个 lab：`grade.md` 中的自动测试与性能目标全部达标，并提交报告（[模板](../mlsys-research-labs/templates/report.md)）。
+- 每个 lab：`grade.md` 中的自动测试与性能目标全部达标，并提交报告（[模板](../labs/templates/report.md)）。
 - 课程结束：一份研究提案。包括问题、最接近的三篇工作、强基线、你的初步数据、两周内可以完成的下一步。
 
 ## 配套资料

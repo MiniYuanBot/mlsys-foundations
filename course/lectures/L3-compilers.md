@@ -7,7 +7,7 @@ tags: [lecture, compiler, fusion, codegen, superoptimization, mirage, megakernel
 
 # L3 深度学习编译器与超优化
 
-[← 课程大纲](../syllabus.md) · 上一讲：[L2 Attention](L2-attention.md) · 配套实验：[lab3](../../mlsys-research-labs/lab3/README.md) · 下一讲：[L4 LLM 推理系统](L4-serving.md)
+[← 课程大纲](../syllabus.md) · 上一讲：[L2 Attention](L2-attention.md) · 配套实验：[lab3](../../labs/lab3/README.md) · 下一讲：[L4 LLM 推理系统](L4-serving.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **编译器怎么把一张计算图变成 GPU kernel？** 中间经过哪些步骤，每一步做了什么决定？

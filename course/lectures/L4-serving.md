@@ -7,7 +7,7 @@ tags: [lecture, serving, kv-cache, paged-attention, batching, scheduling, prefix
 
 # L4 LLM 推理系统
 
-[← 课程大纲](../syllabus.md) · 上一讲：[L3 编译器](L3-compilers.md) · 配套实验：[lab4](../../mlsys-research-labs/lab4/README.md) · 下一讲：[L5 推测解码](L5-speculative.md)
+[← 课程大纲](../syllabus.md) · 上一讲：[L3 编译器](L3-compilers.md) · 配套实验：[lab4](../../labs/lab4/README.md) · 下一讲：[L5 推测解码](L5-speculative.md)
 
 > [!abstract] 这一讲要解决的三个问题
 > 1. **一个 token 是怎样被生成出来的？** prefill 和 decode 的计算特征为什么截然不同？

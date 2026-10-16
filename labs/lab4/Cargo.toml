@@ -1,0 +1,21 @@
+[package]
+name = "minillm"
+version = "0.1.0"
+edition = "2021"
+description = "lab4: a small LLM inference engine (Rust control plane + CUDA kernels) for Qwen3"
+
+[dependencies]
+anyhow = "1"
+cudarc = { version = "0.17", default-features = false, features = ["std", "driver", "nvrtc", "cublas", "f16", "cuda-12060", "dynamic-linking"] }
+half = "2"
+memmap2 = "0.9"
+safetensors = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokenizers = { version = "0.22", default-features = false, features = ["onig"] }
+
+[profile.release]
+debug = 1          # keep symbols for profilers (nsys, perf)
+
+[profile.test]
+opt-level = 3      # GPU tests also run CPU references; keep them fast

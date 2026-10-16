@@ -1,0 +1,17 @@
+[package]
+name = "specdec"
+version = "0.1.0"
+edition = "2021"
+description = "lab5: speculative decoding on top of lab4's engine (n-gram drafts, draft models, SpecInfer token trees)"
+
+[dependencies]
+anyhow = "1"
+cudarc = { version = "0.17", default-features = false, features = ["std", "driver", "nvrtc", "cublas", "f16", "cuda-12060", "dynamic-linking"] }
+half = "2"
+minillm = { path = "../lab4" }   # your lab4 engine: Parts A and B must work
+
+[profile.release]
+debug = 1
+
+[profile.test]
+opt-level = 3
