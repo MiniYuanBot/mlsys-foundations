@@ -13,7 +13,7 @@ tags: [lecture, research-method, statistics, preregistration, reading, proposal]
 >
 > 1. **好的 MLSys 研究问题从哪里来？** 怎样从“我测到一个奇怪的数”走到“一个可以发表的问题”？
 > 2. **怎样让一个性能结论值得相信？** 强基线、预注册、置信区间、消融、负对照、留出集，各自防的是什么错误？
-> 3. **怎样读论文、写提案、和导师沟通？** 怎样把 16 周的课程变成一份能拿去申请的研究材料？
+> 3. **怎样读论文、写提案，并与导师沟通？** 怎样把 16 周的课程变成一份能拿去申请的研究材料？
 
 前六讲教你“系统是怎样工作的”，这一讲教你“怎样产生关于系统的新知识”。它没有新的公式，但有一份**常见错误清单**：几乎每一条都来自真实论文的审稿意见。
 
@@ -39,13 +39,19 @@ MLSys 的大多数好论文都遵循同一个模式：
 1. measure something real              lab4: chunked prefill only gives 13%
 2. find a gap between expectation      the paper (Sarathi-Serve) reports much more
    and reality
-3. explain the gap with a model        step time = a*prefill + b*decode + ...; on a
-                                       0.6B model the prefill share is small
+3. explain the gap with a model        fit a step-time model; on a 0.6B model
+                                       the prefill share is small
 4. design a mechanism that exploits    choose the chunk per step from the model
    the explanation
 5. show it works where it should,      SLO met with lower TTFT; no gain when
    and NOT where it should not         prefill share is small (negative control)
 ```
+
+图中的步耗时模型为：
+
+$$
+\text{step time} = a \times \text{prefill} + b \times \text{decode} + \cdots
+$$
 
 这门课的每个 lab 都刻意留下了这样的缺口：lab3 的代价模型排错了顺序，lab4 的 chunked prefill 收益很小，lab5 的草稿模型太贵，lab6 的 bucket 划分很粗糙。[lab7/topics.md](../../labs/lab7/topics.md) 把它们整理成了 9 个候选题目。
 
@@ -58,7 +64,7 @@ MLSys 的大多数好论文都遵循同一个模式：
 | **新**   | 检索 30 分钟，有人做过吗？做过的话，在什么条件下？ |
 | **可做** | 第一天能做什么实验？4060 能完成主要实验吗？        |
 
-“新”不等于“没人想到过”。把一个已有的方法在新的条件下（小模型、消费级 GPU、新的负载）重新检验，找出它的适用边界，同样是有价值的贡献，也是学生最常见的第一篇论文的形态。
+“新”不等于“没人想到过”。在新的条件下（小模型、消费级 GPU、新的负载）重新检验已有方法，找出它的适用边界，同样是有价值的贡献，也是学生第一篇论文最常见的形式。
 
 ### 1.3 苗老师组的方向，与本课程的对应
 
@@ -95,7 +101,7 @@ lab7 示例中的消融（一个 bucket，也就是没有重叠）在所有条�
 
 ### 3.2 bootstrap 置信区间
 
-有 n 次测量 x₁…xₙ。我们想知道：“如果再做一遍实验，中位数会落在哪个范围？”bootstrap 的思路是**用样本本身模拟“再做一遍”**：
+有 $n$ 次测量 $x_1, \ldots, x_n$。我们想知道：“如果再做一遍实验，中位数会落在哪个范围？”bootstrap 的思路是**用样本本身模拟“再做一遍”**：
 
 ```
 repeat 10000 times:
@@ -104,26 +110,26 @@ repeat 10000 times:
 sort the 10000 medians; the 2.5% and 97.5% quantiles are the 95% CI
 ```
 
-它不需要假设数据服从正态分布，这对偏斜的性能数据很重要。lab7 Part A 要你实现它，并测试覆盖率：模拟 300 次实验，95% 的置信区间应当约有 95% 的时候包含真值。
+它不需要假设数据服从正态分布，这对偏斜的性能数据很重要。lab7 Part A 要你实现它，并测试覆盖率：模拟 300 次实验，所构造的 95% 置信区间应当约有 95% 包含真值。
 
 ### 3.3 比值与判定
 
-“快了多少”用处理 / 基线的中位数之比表示，它的置信区间要对两组**分别**重抽样。再与预注册的最小效应 δ 比较：
+“快了多少”用 $\text{处理组中位数} / \text{基线组中位数}$ 表示，它的置信区间要对两组**分别**重抽样。再与预注册的最小效应 $\delta$ 比较：
+
+例如，方向为 "lower"、最小效应为 $\delta = 0.05$ 时，目标比值为 $0.95$：
 
 ```
-want "lower" by at least delta = 0.05  ->  target ratio 0.95
-
   CI entirely below 0.95          [0.886 ---- 0.944]  |          supported
   CI straddles 0.95                     [0.817 ------|-- 1.005]  inconclusive
   CI entirely above 0.95                             | [0.97 -- 1.02]  refuted
                                                     0.95
 ```
 
-**inconclusive 不是失败**，它说明需要更多的重复，或者效应确实太小、噪声太大。在报告里如实写出“n=5 时不足以区分”，比强行宣称有效更可信。
+**inconclusive 不是失败**，它说明需要更多的重复，或者效应确实太小、噪声太大。在报告里如实写出“$n=5$ 时不足以区分”，比强行宣称有效更可信。
 
 ### 3.4 需要多少次重复
 
-粗略的经验：置信区间的宽度大约与 1/√n 成正比。lab7 示例中，n=5 时，dev 的置信区间宽约 0.19（0.817–1.005），要检测 5% 的效应，大约需要把区间缩到 0.05 以下，也就是 n ≈ 5 × (0.19/0.05)² ≈ 70 次。另一种做法是降低噪声：固定 GPU 频率、关闭后台程序、让每次运行更长。实践中通常两种办法一起用。
+粗略的经验：置信区间的宽度大约与 $1/\sqrt{n}$ 成正比。lab7 示例中，$n=5$ 时，dev 的置信区间宽约 $0.19$（$0.817$–$1.005$），要检测 5% 的效应，大约需要把区间缩到 $0.05$ 以下，也就是 $n \approx 5 \times (0.19/0.05)^2 \approx 70$ 次。另一种做法是降低噪声：固定 GPU 频率、关闭后台程序、让每次运行更长。实践中通常两种办法一起用。
 
 ---
 
@@ -154,7 +160,7 @@ dev conditions      look as often as you like; tune, debug, iterate
 held-out conditions run ONCE; report whatever comes out
 ```
 
-lab7 的示例正好说明了留出集的价值：dev 条件（P=4，batch 16）的结果是 inconclusive；held-out 条件中，P=4、batch 64 是 supported，而 P=2 完全没有效果。如果只看 dev，或者只挑 P=4、batch 64 来报告，都会得出误导性的结论。
+lab7 的示例正好说明了留出集的价值：dev 条件（$P=4$，batch 16）的结果是 inconclusive；held-out 条件中，$P=4$、batch 64 是 supported，而 $P=2$ 完全没有效果。如果只看 dev，或者只挑 $P=4$、batch 64 来报告，都会得出误导性的结论。
 
 ---
 

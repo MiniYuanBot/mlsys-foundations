@@ -5,7 +5,7 @@ MLSys 自学课程的配套实验：8 个 lab，从 CPU 张量运行时一直做
 ## 开始
 
 1. 从仓库根目录执行 `cd labs`。本目录及各 lab 文档中的命令都以 `labs/` 为工作目录。
-2. 按 [setup.md](setup.md) 配置环境：全部 lab 共用 WSL2 里的一套环境，每开始一个 lab 运行一次 `bash tools/setup_env.sh --lab N` 补装缺的东西，再用 `bash tools/check_env.sh --lab N` 检查。
+2. 按 [setup.md](setup.md) 配置环境：全部 lab 共用 WSL2 里的一套环境，每开始一个 lab 运行一次 `bash tools/setup_env.sh --lab N` 补装所需依赖，再用 `bash tools/check_env.sh --lab N` 检查。
 3. 先读对应讲义，再按 lab 的 `README.md` 一步步做，用 `grade.md` 自查。
 
 用 VS Code 打开仓库根目录，可以同时编辑课程、实验和参考答案。

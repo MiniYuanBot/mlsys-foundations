@@ -3,7 +3,7 @@
 > 配套讲义：[L3 深度学习编译器与超优化](../../course/lectures/L3-compilers.md)
 > 预计用时：2 周 × 约 7 小时　·　语言：C++17（生成 CUDA C++，由 NVRTC 在运行时编译）　·　硬件：RTX 4060（WSL2）
 
-lab0 Part C 里，你用解释器执行了融合后的计算图。真实的编译器（XLA、TorchInductor、TVM、tinygrad）会更进一步：**为每个融合后的 kernel 生成源代码，编译后在 GPU 上运行**。这个 lab 把这条链路完整走一遍，最后再往前走一步，做超优化器 Mirage 所做的事：不只按规则融合，而是**改写计算图本身**，验证改写后的图与原图等价，再从所有候选中选出最快的。
+lab0 Part C 里，你用解释器执行了融合后的计算图。真实的编译器（XLA、TorchInductor、TVM、tinygrad）会更进一步：**为每个融合后的 kernel 生成源代码，编译后在 GPU 上运行**。这个 lab 先实现这套流程，再尝试超优化器 Mirage 的方法：不只按规则融合，而是**改写计算图本身**，验证改写后的图与原图等价，再从所有候选中选出最快的。
 
 ```
 Graph --A1 toposort--> --A2 evaluate (CPU, fp64: the oracle)
@@ -37,7 +37,7 @@ build/lab3/tc_dump softmax                           # graph, plans and generate
 build/lab3/tc_dump softmax_matmul --search           # Part C: every candidate with its cost
 ```
 
-生成的代码如果编译失败，NVRTC 的错误信息和完整源码会一起作为异常抛出，像看普通编译错误一样读它就行。
+生成的代码如果编译失败，NVRTC 的错误信息和完整源码会一起作为异常抛出，可以按普通编译错误排查。
 
 ## 1. 代码地图
 

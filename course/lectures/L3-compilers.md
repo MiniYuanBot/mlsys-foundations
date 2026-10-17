@@ -60,9 +60,9 @@ lab3 实现的就是从 “IR” 到 “binary” 这一段：
 
 ### 2.2 吸收规则（lab B1）
 
-按**逆拓扑序**（先访问消费者）遍历每个节点 n：如果 n 的所有消费者都在同一个 kernel K 中，并且 n 可以加入 K，就把 n 并进 K。这样 n 永远不会被写到显存里。否则 n 自成一个新 kernel，它的结果要**物化**到显存。
+按**逆拓扑序**（先访问消费者）遍历每个节点 $n$：如果 $n$ 的所有消费者都在同一个 kernel $K$ 中，并且 $n$ 可以加入 $K$，就把 $n$ 并进 $K$。这样 $n$ 的结果就不会写入显存。否则 $n$ 自成一个新 kernel，它的结果要**物化**到显存。
 
-以 softmax 为例（x 为 [R, C]）：
+以 softmax 为例（$x$ 为 $[R,C]$）：
 
 ```
 reverse topo order        decision
@@ -76,12 +76,12 @@ reverse topo order        decision
 
 不能融合的典型情况：
 
-1. **消费者分散在两个 kernel 中**：比如 `t = exp(x)` 同时被 matmul 的 A 操作数和 matmul 之后的加法使用（lab 测试 `B1_node_feeding_two_kernels_is_materialised`）。t 必须写进显存，供两个 kernel 分别读取。
+1. **消费者分散在两个 kernel 中**：比如 `t = exp(x)` 同时被 matmul 的 $A$ 操作数和 matmul 之后的加法使用（lab 测试 `B1_node_feeding_two_kernels_is_materialised`）。`t` 必须写进显存，供两个 kernel 分别读取。
 2. **行宽不一致**：一个 16 列的循环里，没法同时归约一行 32 列的数据。
-3. **matmul 的 B 操作数**：GEMM 模板对 B 的加载方式固定，lab 只允许把逐元素运算融合到 A 一侧。
-4. **归约与 matmul**：一个 GEMM tile 只看到一行的一部分（BK 列），无法完成整行归约。
+3. **matmul 的 $B$ 操作数**：GEMM 模板对 $B$ 的加载方式固定，lab 只允许把逐元素运算融合到 $A$ 一侧。
+4. **归约与 matmul**：一个 GEMM tile 只看到一行的一部分（$B_K$ 列，$B_K$ 对应代码中的 `BK`），无法完成整行归约。
 
-第 4 条正是 attention 的情况：softmax(x)·V 里，softmax 需要整行归约，而 matmul 只能逐块地看到这一行。lab 中规则融合的结果是 3 个 kernel，并且要把 [M, K] 的 exp 结果写入显存一次、再读两次。§5 会说明搜索是怎样绕开它的。
+第 4 条正是 attention 的情况：$\operatorname{softmax}(x) \cdot V$ 里，softmax 需要整行归约，而 matmul 只能逐块地看到这一行。lab 中规则融合的结果是 3 个 kernel，并且要把 $[M,K]$ 的 exp 结果写入显存一次、再读两次。§5 会说明搜索怎样绕开这一限制。
 
 ---
 
@@ -94,7 +94,7 @@ Row kernel 中，每遇到一个归约就要扫一遍整行。softmax 需要三�
 | 写入 shared memory 或显存，下一遍再读 | 额外的访存；行太长时 shared memory 装不下 |
 | **每一遍都重新计算**                  | 多做几次 exp 等运算                       |
 
-lab 选择重算：生成的代码里，`x - m` 在第二遍和第三遍各算一次。这在访存受限的场景中划算，背后是 L2 FlashAttention 的同一个道理：**在访存受限时，用计算换带宽**。lab 实测：融合后的 softmax 达到 236 GB/s，unfused 版本只有 55 GB/s。
+lab 选择重算：生成的代码里，`x - m` 在第二遍和第三遍各算一次。这在访存受限的场景中划算，原理与 L2 中的 FlashAttention 相同：**在访存受限时，用计算换带宽**。lab 实测：融合后的 softmax 达到 236 GB/s，unfused 版本只有 55 GB/s。
 
 lab 中 `tc_dump softmax` 生成的代码结构如下（已简化）：
 
@@ -115,7 +115,7 @@ tc_kernel(in0, out, R, C) {
 
 ## §4 GEMM 模板与序言/尾声融合（lab B3）
 
-GEMM 不适合从零开始生成，它的性能来自 L1 中那些精细的分块。编译器的通常做法是：**保留一个手写的 GEMM 模板，只把三个“钩子”函数交给代码生成**：
+GEMM 不适合从零开始生成，它的性能来自 L1 介绍的精细分块。编译器的通常做法是：**保留一个手写的 GEMM 模板，只把三个“钩子”函数交给代码生成**：
 
 ```
 template (provided):                       hooks (generated, lab B3):
@@ -127,12 +127,12 @@ template (provided):                       hooks (generated, lab B3):
 ```
 
 - **尾声**（epilogue）：matmul 之后的逐元素运算，比如 `+ bias`、`gelu`、`+ residual`，在写回之前就地完成。
-- **序言**（prologue）：A 操作数上的逐元素运算，比如 `x * gamma`，在把 A 读进 shared memory 时完成。
+- **序言**（prologue）：$A$ 操作数上的逐元素运算，比如 `x * gamma`，在把 $A$ 读进 shared memory 时完成。
 
 CUTLASS 的 epilogue visitor、cuBLASLt 的 epilogue、TorchInductor 的 “template + epilogue fusion” 都是这种模式。lab 实测：matmul_bias_gelu 融合后，从 11 个 kernel、15.2 ms 降到 1 个 kernel、6.5 ms。
 
 > [!warning] 序言的隐藏代价
-> 尾声对每个输出元素只执行一次。序言则不同：A 的每个元素会被**每一个 N 方向的 tile** 各读一次，序言也就跟着被重复计算 N/BN 次。N 较大时，复杂的序言可能比单独物化 A 更慢。§5 的代价模型没有考虑这一点，这正是 lab C 中模型与实测不一致的原因之一。
+> 尾声对每个输出元素只执行一次。序言则不同：$A$ 的每个元素会被**每一个 $N$ 方向的 tile** 各读一次，序言因此也要重复计算 $N/B_N$ 次（$B_N$ 对应代码中的 `BN`）。$N$ 较大时，复杂的序言可能比单独物化 $A$ 更慢。§5 的代价模型没有考虑这一点，这正是 lab C 中模型与实测不一致的原因之一。
 
 ---
 
@@ -142,16 +142,18 @@ CUTLASS 的 epilogue visitor、cuBLASLt 的 epilogue、TorchInductor 的 “temp
 
 规则融合只能在**给定的图**上做决定。但很多更好的方案需要**先把图改一改**：
 
-| 改写                                                    | 效果                                                                                   |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `MatMul(a * r, B) = MatMul(a, B) * r`（r 是按行的缩放） | 把 rmsnorm 的缩放从 A 一侧（序言，每个 N-tile 都要重算）挪到输出一侧（尾声，只算一次） |
-| 反 CSE：给被共享的节点每个使用者一份拷贝                | 结合融合，可以消除一个必须物化的大张量                                                 |
+以下改写式中的 $\odot$ 表示逐元素乘法。
 
-softmax·V 的例子：e = exp(x − m) 被 RowSum 和 matmul 共用，规则融合只能把它物化。如果给 matmul 一份独立的 e 拷贝（反 CSE），那么 RowSum 那一份可以融合进 Row kernel，matmul 那一份可以融合进 GEMM 的序言，**[M, K] 的 e 就再也不需要写入显存了**。代价是 exp 要算两遍。这正是 FlashAttention 的核心思想。lab 的搜索会自己找到这个方案：实测从 11.9 ms 降到 6.6 ms。
+| 改写                                                                                          | 效果                                                                                       |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| $\operatorname{MatMul}(a \odot r,B) = \operatorname{MatMul}(a,B) \odot r$（$r$ 是按行的缩放） | 把 rmsnorm 的缩放从 $A$ 一侧（序言，每个 $N$-tile 都要重算）挪到输出一侧（尾声，只算一次） |
+| 反 CSE：给被共享的节点每个使用者一份拷贝                                                      | 结合融合，可以消除一个必须物化的大张量                                                     |
+
+$\operatorname{softmax} \cdot V$ 的例子：$e = \exp(x-m)$ 被 RowSum 和 matmul 共用，规则融合只能把它物化。如果给 matmul 一份独立的 $e$ 拷贝（反 CSE），那么 RowSum 那一份可以融合进 Row kernel，matmul 那一份可以融合进 GEMM 的序言，**$[M,K]$ 的 $e$ 就再也不需要写入显存了**。代价是 exp 要算两遍。这正是 FlashAttention 的核心思想。lab 的搜索会自己找到这个方案：实测从 11.9 ms 降到 6.6 ms。
 
 ### 5.2 怎么保证改写正确：验证
 
-自动生成的改写可能是错的。lab 的 R3 就故意写错：`MatMul(a * s, B) = MatMul(a, B) * s`，其中 s 按列缩放。只有当 K == N 时，这个式子的形状才对得上，但它的值一般是错的。
+自动生成的改写可能是错的。lab 的 R3 是一条故意写错的规则：$\operatorname{MatMul}(a \odot s,B) = \operatorname{MatMul}(a,B) \odot s$，其中 $s$ 按列缩放。只有当 $K = N$ 时，这个式子的形状才对得上，但它的值一般是错的。
 
 验证方法有两类：
 
@@ -160,7 +162,7 @@ softmax·V 的例子：e = exp(x − m) 被 RowSum 和 matmul 共用，规则融
 | 形式化证明（SMT 求解器） | [TASO](https://theory.stanford.edu/~aiken/publications/papers/sosp19.pdf)（SOSP'19） | 严格，但要为每个算子写规格说明，求解器可能很慢 |
 | **随机测试**             | Mirage、lab C2                                                                       | 简单，适用于任意算子；有极小的误判概率         |
 
-随机测试为什么可信？如果两个函数都是 d 次多项式，并且不相等，那么在一个随机点上它们取值相同的概率不超过 d/|域的大小|（**Schwartz–Zippel 引理**）。Mirage 在有限域上做随机测试，没有舍入误差，测几次就能把误判概率压到可以忽略。lab 在 fp64 实数上测 3 次，容差为 1e-9。
+随机测试为什么可信？如果两个函数都是 $d$ 次多项式，并且不相等，那么在一个随机点上它们取值相同的概率不超过 $d/\lvert\text{域的大小}\rvert$（**Schwartz–Zippel 引理**）。Mirage 在有限域上做随机测试，没有舍入误差，测几次就能把误判概率压到可以忽略。lab 在 fp64 实数上测 3 次，容差为 $10^{-9}$。
 
 [PET](https://www.usenix.org/conference/osdi21/presentation/wang)（OSDI'21）更进一步：允许“部分等价”的改写，也就是只在部分输出位置上相等，然后自动生成修正代码，弥补不相等的部分。
 
@@ -168,7 +170,9 @@ softmax·V 的例子：e = exp(x − m) 被 RowSum 和 matmul 共用，规则融
 
 候选图可能有几十到上百万个，不可能每一个都实际运行一遍。所以需要一个**代价模型**快速估算。lab 用的是一个 Roofline 风格的模型：
 
-$$t_{\text{kernel}} = \max\left(\frac{\text{bytes}}{\text{bandwidth}}, \frac{\text{FLOPs}}{\text{FLOP rate}}\right) + t_{\text{launch}}$$
+$$
+t_{\text{kernel}} = \max\left(\frac{\text{bytes}}{\text{bandwidth}}, \frac{\text{FLOPs}}{\text{FLOP rate}}\right) + t_{\text{launch}}
+$$
 
 搜索采用广度优先，以 canonical 形式去重，只保留验证通过的候选。
 
@@ -185,7 +189,7 @@ thread-block graph  : how one kernel's work is split into tiles,
 thread graph        : what each thread computes in registers
 ```
 
-它把这三层统称为 **μGraph**。Mirage 正是在 thread-block 层上搜索，才能自动发现 FlashAttention 那样的 kernel：把 softmax 的归约和 matmul 放进同一个 kernel，按 tile 处理，并在线重缩放。lab 可选挑战 C6 要求你思考：为了做到这一步，还需要什么样的改写规则和 kernel 模板？
+它把这三层统称为 **$\mu$Graph**。Mirage 正是在 thread-block 层上搜索，才能自动发现 FlashAttention 那样的 kernel：把 softmax 的归约和 matmul 放进同一个 kernel，按 tile 处理，并在线重缩放。lab 可选挑战 C6 要求你思考：为了做到这一步，还需要什么样的改写规则和 kernel 模板？
 
 ---
 
@@ -202,7 +206,7 @@ thread graph        : what each thread computes in registers
 | 2022 | [TensorIR](https://arxiv.org/abs/2207.04296)（ASPLOS'23）                                     | 以 Tensor Core 指令为单位的调度抽象                                                           |
 | 2023 | [TorchInductor / PyTorch 2](https://pytorch.org/assets/pytorch2-2.pdf)（ASPLOS'24）           | Dynamo 从 Python 捕获图，Inductor 生成 Triton 代码；GEMM 模板 + 尾声融合，**lab3 B 的工业版** |
 | 2025 | [TileLang](https://arxiv.org/abs/2504.17577)                                                  | 以 tile 为单位的 DSL，在 TVM 之上实现                                                         |
-| 2025 | **[Mirage](https://arxiv.org/abs/2405.05751)**（OSDI）                                        | 跨 kernel、线程块、线程三层的 μGraph 超优化；有限域随机验证；**lab3 C 的原型**                |
+| 2025 | **[Mirage](https://arxiv.org/abs/2405.05751)**（OSDI）                                        | 跨 kernel、线程块、线程三层的 $\mu$Graph 超优化；有限域随机验证；**lab3 C 的原型**            |
 | 2025 | [Hazy Research: No Bubbles](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)     | 手写 megakernel：整个 Llama-1B 前向放进一个常驻 kernel，消除 kernel 之间的启动开销和“气泡”    |
 | 2025 | **[MPK](https://arxiv.org/abs/2512.22219)**                                                   | **自动**把模型编译成任务图形式的 megakernel；SM 之间用事件同步，而不再依赖 kernel 边界        |
 
@@ -221,7 +225,7 @@ thread graph        : what each thread computes in registers
 | [depyf](https://github.com/thuml/depyf)                                                                                                         | 工具，查看 torch.compile 生成的代码 | §1         |
 | [tinygrad](https://github.com/tinygrad/tinygrad)（`DEBUG=4`）                                                                                   | 打印调度结果和生成的 kernel         | §1–§3      |
 | [TASO 演讲 slides](https://www.sigops.org/s/conferences/sosp/2019/slides/jia.pdf)                                                               | 改写的自动生成与验证                | §5         |
-| [Mirage 文档](https://mirage-project.readthedocs.io/)                                                                                           | μGraph 示例                         | §5.4       |
+| [Mirage 文档](https://mirage-project.readthedocs.io/)                                                                                           | $\mu$Graph 示例                     | §5.4       |
 | [No Bubbles 博客](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)                                                                 | megakernel 的流水线时间线           | §6         |
 | [MLC 课程](https://mlc.ai/)（陈天奇）                                                                                                           | 机器学习编译的完整课程              | 延伸       |
 

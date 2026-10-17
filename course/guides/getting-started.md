@@ -3,7 +3,7 @@
 ## 第一次使用
 
 1. 读 [课程大纲](../syllabus.md)，了解 16 周的安排和每个 lab 要做什么。
-2. 按 `labs/` 中的 [setup.md](../../labs/setup.md) 装好 lab0 的环境（约 30 分钟）：运行一次 `setup_env --lab 0`，再用 `check_env --lab 0` 检查。后面每开始一个 lab 再运行一次，补装那个 lab 新增的东西。
+2. 按 `labs/` 中的 [setup.md](../../labs/setup.md) 装好 lab0 的环境（约 30 分钟）：运行一次 `setup_env --lab 0`，再用 `check_env --lab 0` 检查。之后每开始一个 lab，再运行一次安装脚本，补装该 lab 新增的依赖。
 3. 打开 [L0 讲义](../lectures/L0-tensor-runtime.md)，读完 §1 后进入 [lab0](../../labs/lab0/README.md) 的 Part A。
 
 ## 每周节奏

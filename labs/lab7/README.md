@@ -17,7 +17,7 @@
 
 ## Part A：实验统计工具（约 1.5 小时）
 
-读讲义 §3。笔记本 GPU 上的测量很嘈杂：频率会随温度变化，后台进程会抢资源。所以每个条件都要重复多次，用**中位数**加 **bootstrap 置信区间**来描述，再拿置信区间和**事先定好的**最小效应比较，得出结论。
+读讲义 §3。笔记本 GPU 上的测量结果容易波动：频率会随温度变化，后台进程会抢资源。所以每个条件都要重复多次，用**中位数**加 **bootstrap 置信区间**来描述，再拿置信区间和**事先定好的**最小效应比较，得出结论。
 
 | TODO | 函数           | 内容                                                                        |
 | ---- | -------------- | --------------------------------------------------------------------------- |
@@ -29,7 +29,7 @@
 python -m unittest lab7.tests.test_stats -v      # stdlib only: any Python 3.10+, no GPU needed
 ```
 
-`test_coverage_is_roughly_nominal` 会模拟 300 次实验，检查你的 95% 置信区间是否真的约有 95% 的时候包含真值。
+`test_coverage_is_roughly_nominal` 会模拟 300 次实验，检查你的 95% 置信区间是否在约 95% 的模拟实验中包含真值。
 
 ## Part B：跑通示例研究（约 1.5 小时，在 WSL 中）
 
@@ -52,7 +52,7 @@ python -m lab7.exp.report results/lab7/bucket_overlap --markdown
 | held-out            | P=4，batch 64 | 0.907 [0.886, 0.944] | **supported**                              |
 | 消融（一个 bucket） | 三个条件      | 0.97–1.02            | 无效果，证明收益确实来自多个 bucket 的重叠 |
 
-**这正是一个诚实的研究结论**：效果在 4 个 rank、较大 batch 时成立；在 2 个 rank 时消失，因为需要藏的通信本来就少；而 n=5 时，dev 条件下的噪声太大，无法下结论。
+**这正是一个诚实的研究结论**：效果在 4 个 rank、较大 batch 时成立；在 2 个 rank 时消失，因为需要通过重叠隐藏的通信本来就少；而 n=5 时，dev 条件下的噪声太大，无法下结论。
 
 > 运行这个示例时，作者发现 lab6 的 `CommThread` 有一个罕见的崩溃：线程在成员变量构造完成之前就启动了，属于未定义行为。60 次运行里出现了 2 次。正是“失败的运行不丢弃、要记录下来”这条规则让它暴露了出来。
 
@@ -84,7 +84,7 @@ python -m lab7.exp.report results/lab7/bucket_overlap --markdown
 
 ### C4 实现与 dev 迭代（第 4–8 天）
 
-在 dev 条件上随便迭代、调参、改代码，这正是 dev 的用途。每次正式运行都用 `lab7.exp.run`，结果保留在 `results/lab7/` 下（不进 git，自己归档）。
+在 dev 条件上可以迭代、调参、修改代码，这正是 dev 的用途。每次正式运行都用 `lab7.exp.run`，结果保留在 `results/lab7/` 下（不进 git，自己归档）。
 
 ### C5 锁定与留出（第 9 天）
 
@@ -97,7 +97,7 @@ held-out 只跑一次。不管结果是 supported、refuted 还是 inconclusive�
 
 ### C6 提案与汇报（第 10 天）
 
-- **两页提案**：用`course/` 中的 [research-proposal.md](../../course/templates/research-proposal.md) 模板；
+- **两页提案**：用 `course/` 中的 [research-proposal.md](../../course/templates/research-proposal.md) 模板；
 - **10 分钟汇报**：问题（1 页）→ 我测到的缺口（1 张图）→ 方法（1 页）→ 结果，包括 held-out 和负面结果（1–2 页）→ 局限与下一步（1 页）→ 想请老师判断的一件事。
 
 验收清单见 [grade.md](grade.md)。

@@ -30,7 +30,7 @@ TensorOJ 所查题目面向 Ascend C / 昇腾 NPU；本地 RTX 4060 的 CUDA 环
 
 ## 安装与检查
 
-按 [setup.md](../../labs/setup.md) 做。每开始一个新 lab 运行一次 `setup_env`，它只补装这个 lab 新增的东西；`check_env` 逐项检查并给出修复命令。版本锁定在 `labs/` 中的 `labs/tools/env-versions.env`，不要凭 `nvidia-smi` 显示的 CUDA 版本猜 PyTorch wheel 该装哪个。
+按 [setup.md](../../labs/setup.md) 做。每开始一个新 lab 运行一次 `setup_env`，它只补装这个 lab 新增的依赖；`check_env` 逐项检查并给出修复命令。版本锁定在 `labs/` 中的 `labs/tools/env-versions.env`，不要凭 `nvidia-smi` 显示的 CUDA 版本猜 PyTorch wheel 该装哪个。
 
 Windows 上装好支持 WSL 的 NVIDIA 驱动即可，**不要在 WSL 中安装 Linux 显卡驱动**，参见 [NVIDIA CUDA on WSL 用户指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。在 WSL 内运行 `nvidia-smi`；若命令不在 PATH，按该指南检查 `/usr/lib/wsl/lib/nvidia-smi`。记录 GPU 名称、驱动、可用显存，以及 4060 是笔记本版还是桌面版。笔记本接电、固定电源模式，关掉占用 GPU 的游戏和浏览器重任务，但不要擅自结束不认识的系统进程。
 
@@ -46,9 +46,9 @@ lab4 使用 Qwen3-0.6B，lab5 再加上 Qwen3-1.7B 作为目标模型，由 `set
 
 1. 分辨是 Windows/其他进程占用、权重加载失败，还是 KV cache 不够；保存错误与当时的可用显存。
 2. 结束自己启动且不用的进程。同一时刻只跑一个实验。检查是否误用了更大的模型。
-3. 降低并发序列数，再缩短上下文长度，同时确保输入＋最大输出不超过限制。相应条件下的实验要一并改写，不能只缩小表现差的那一个。
+3. 降低并发序列数，再缩短上下文长度，同时确保输入＋最大输出不超过限制。所有对照实验的配置都要相应调整，不能只缩小表现差的那一个。
 4. 所有对照统一使用降级后的配置，重做容量标定。
-5. 仍失败时，本周可完成论文、CPU 部分和负载设计，GPU 验收保持未完成。带着错误请组内成员确认服务器，而不是立即租长时间机器。
+5. 仍失败时，本周可完成论文阅读、CPU 部分和负载设计，GPU 验收保持未完成。先带着错误记录，请组内成员确认服务器情况，不要立即长时间租用机器。
 
 ## 北大 HPC：先确认再安排实验
 

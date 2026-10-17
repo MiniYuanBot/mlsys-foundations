@@ -15,7 +15,7 @@ tags: [lecture, tensor, stride, gemm, roofline, fusion, compiler]
 > 2. **为什么同样的数学运算，速度能差 100 倍？** 怎样判断一个程序被什么卡住，又能快到什么程度？
 > 3. **深度学习编译器在做什么？** 算子融合到底省下了什么？前沿的编译器（Mirage、megakernel）又往前走了多远？
 >
-> 这三个问题贯穿整门课：L1 把问题 2 搬到 GPU 上，L2、L3 把问题 3 做到极致。
+> 这三个问题贯穿整门课：L1 把问题 2 搬到 GPU 上，L2、L3 进一步讨论问题 3。
 
 **学习方式**：本讲分四节，每节 45–60 分钟。读完一节就去做对应的 lab 部分，不要一口气读完再动手。每节末尾有自测题，答案默认折叠，先自己想再展开。
 
@@ -33,7 +33,7 @@ tags: [lecture, tensor, stride, gemm, roofline, fusion, compiler]
 
 ### 1.1 内存是一维的
 
-无论张量有几维，内存都只是一长串地址。一个 2×3 的矩阵：
+无论张量有几维，内存都只是一长串地址。一个 $2\times 3$ 的矩阵：
 
 ```
 logical view (in your head)          physical storage (in memory)
@@ -42,14 +42,14 @@ row0  [  0    1    2  ]         storage: [ 0 | 1 | 2 | 3 | 4 | 5 ]
 row1  [  3    4    5  ]          index:    0   1   2   3   4   5
 ```
 
-把逻辑位置 `(i, j)` 映射到存储下标的规则，就是张量的**布局**。最常见的是**行优先**（row-major，也叫 C order），同一行的元素在内存里挨在一起。
+把逻辑位置 $(i,j)$ 映射到存储下标的规则，就是张量的**布局**。最常见的是**行优先**（row-major，也叫 C order），同一行的元素在内存里挨在一起。
 
 ### 1.2 Stride：每一维“走一步”跳多远
 
-**stride[d]** 的意思是：第 d 维的下标加 1 时，存储下标要跳过多少个元素。上面那个矩阵：
+$\mathrm{stride}[d]$ 的意思是：第 $d$ 维的下标加 1 时，存储下标要跳过多少个元素。上面那个矩阵：
 
-- 沿行方向（第 0 维）走一步，要跳过一整行，即 3 个元素，所以 `stride[0] = 3`；
-- 沿列方向（第 1 维）走一步，跳到相邻元素，所以 `stride[1] = 1`。
+- 沿行方向（第 0 维）走一步，要跳过一整行，即 3 个元素，所以 $\mathrm{stride}[0]=3$；
+- 沿列方向（第 1 维）走一步，跳到相邻元素，所以 $\mathrm{stride}[1]=1$。
 
 于是有一个通用公式：
 
@@ -57,14 +57,16 @@ $$
 \text{storage\_index}(i_0, i_1, \dots) = \text{offset} + \sum_d i_d \cdot \text{stride}[d]
 $$
 
-验算：`(1, 2)` → `0 + 1×3 + 2×1 = 5`，存储里第 5 个元素正好是 5。✓
+验算：$(1,2)\longrightarrow 0+1\times 3+2\times 1=5$，存储里第 5 个元素正好是 5。✓
 
 **行优先 stride 的算法**（lab A1）：最后一维的 stride 是 1，往前每一维都是后一维的 stride 乘以后一维的大小。
 
-```
-shape   = [2, 3, 4]
-strides = [3x4, 4, 1] = [12, 4, 1]
-```
+$$
+\begin{aligned}
+\mathrm{shape} &= [2,3,4], \\
+\mathrm{strides} &= [3\times 4,4,1] = [12,4,1].
+\end{aligned}
+$$
 
 所以，一个张量 = **一块共享的存储** + **shape、strides、offset 三样元数据**。PyTorch 的 `Tensor`、NumPy 的 `ndarray` 都是这样设计的，你在 lab A 里写的 `mt::Tensor` 也一样。
 
@@ -82,19 +84,19 @@ flowchart LR
 ```
 
 > [!tip] 立刻动手
-> 打开 [Stride Visualizer](https://ezyang.github.io/stride-visualizer/index.html)，把 shape 设为 `[2,3]`、stride 设为 `[3,1]`，然后把 stride 改成 `[1,2]`，观察逻辑格子映射到的存储格子怎样变化。这个工具只演示地址映射，不模拟缓存。
+> 打开 [Stride Visualizer](https://ezyang.github.io/stride-visualizer/index.html)，把 shape 设为 $[2,3]$、stride 设为 $[3,1]$，然后把 stride 改成 $[1,2]$，观察逻辑格子映射到的存储格子怎样变化。这个工具只演示地址映射，不模拟缓存。
 
 ### 1.3 连续（contiguous）是什么意思
 
-如果按逻辑上的行优先顺序遍历所有元素，存储下标恰好是 `offset, offset+1, offset+2, …`，中间没有空洞、没有回跳，这个张量就是**连续的**。
+如果按逻辑上的行优先顺序遍历所有元素，存储下标恰好是 $\mathrm{offset},\mathrm{offset}+1,\mathrm{offset}+2,\ldots$，中间没有空洞、没有回跳，这个张量就是**连续的**。
 
-一个容易漏掉的细节（lab A3 会考）：**大小为 1 的维度，stride 是多少都无所谓**，因为你永远不会沿它走第二步。所以 shape `[1, 3]`、stride `[99, 1]` 的张量依然是连续的。
+一个容易漏掉的细节（lab A3 会考）：**大小为 1 的维度，stride 是多少都无所谓**，因为你永远不会沿它走第二步。所以 shape $[1,3]$、stride $[99,1]$ 的张量依然是连续的。
 
-> [!question]- 自测 1.1：shape `[4, 5]` 的行优先张量，元素 `(3, 2)` 的存储下标是多少？如果从这块存储里取 offset=6、shape=[2,2]、strides=[5,1] 的视图，它包含哪些下标？
-> strides = [5, 1]，所以 `(3,2)` → 3×5 + 2 = **17**。视图包含 6, 7, 11, 12，也就是原矩阵第 1–2 行、第 1–2 列组成的子块。子块不连续：7 和 11 之间隔了 3 个元素。
+> [!question]- 自测 1.1：shape $[4,5]$ 的行优先张量，元素 $(3,2)$ 的存储下标是多少？如果从这块存储里取 $\mathrm{offset}=6$、$\mathrm{shape}=[2,2]$、$\mathrm{strides}=[5,1]$ 的视图，它包含哪些下标？
+> $\mathrm{strides}=[5,1]$，所以 $(3,2)\longrightarrow 3\times 5+2=17$。视图包含 $6,7,11,12$，也就是原矩阵第 1–2 行、第 1–2 列组成的子块。子块不连续：7 和 11 之间隔了 3 个元素。
 
 > [!question]- 自测 1.2：为什么 PyTorch 要用 stride 这种“间接”的设计，而不是每个张量都老老实实存一份连续数据？
-> 因为大量操作（转置、切片、`expand`、`view`、`squeeze` 等）只需要改元数据，花费是 O(1)，而不是 O(N) 的复制。深度学习程序里这类“改形状”的操作非常多，全部复制会浪费大量时间和内存。代价是：底层算子必须能处理任意 stride，或者在需要时先调用 `contiguous()`。
+> 因为大量操作（转置、切片、`expand`、`view`、`squeeze` 等）只需要改元数据，花费是 $O(1)$，而不是 $O(N)$ 的复制。深度学习程序里这类“改形状”的操作非常多，全部复制会浪费大量时间和内存。代价是：底层算子必须能处理任意 stride，或者在需要时先调用 `contiguous()`。
 
 ---
 
@@ -102,14 +104,14 @@ flowchart LR
 
 ### 2.1 视图操作只改元数据
 
-| 操作                          | 新 shape                  | 新 strides             | 新 offset              | 复制吗                           |
-| ----------------------------- | ------------------------- | ---------------------- | ---------------------- | -------------------------------- |
-| `transpose(0,1)`              | 交换两维                  | 交换两维               | 不变                   | 否                               |
-| `permute(order)`              | `shape[order[i]]`         | `strides[order[i]]`    | 不变                   | 否                               |
-| `slice(d, start, stop, step)` | `ceil((stop-start)/step)` | `strides[d] × step`    | `+ start × strides[d]` | 否                               |
-| `broadcast_to(target)`        | target                    | 被拉伸的维度设为 **0** | 不变                   | 否                               |
-| `view(new_shape)`             | new_shape                 | 行优先 strides         | 不变                   | 否，但要求原张量连续             |
-| `contiguous()`                | 不变                      | 行优先 strides         | 0                      | **是**（已经连续时直接返回自己） |
+| 操作                          | 新 shape                                                                    | 新 strides                               | 新 offset                                  | 复制吗                           |
+| ----------------------------- | --------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------ | -------------------------------- |
+| `transpose(0,1)`              | 交换两维                                                                    | 交换两维                                 | 不变                                       | 否                               |
+| `permute(order)`              | $\mathrm{shape}[\mathrm{order}[i]]$                                         | $\mathrm{strides}[\mathrm{order}[i]]$    | 不变                                       | 否                               |
+| `slice(d, start, stop, step)` | $\left\lceil\frac{\mathrm{stop}-\mathrm{start}}{\mathrm{step}}\right\rceil$ | $\mathrm{strides}[d]\times\mathrm{step}$ | $+\mathrm{start}\times\mathrm{strides}[d]$ | 否                               |
+| `broadcast_to(target)`        | target                                                                      | 被拉伸的维度设为 **0**                   | 不变                                       | 否                               |
+| `view(new_shape)`             | new_shape                                                                   | 行优先 strides                           | 不变                                       | 否，但要求原张量连续             |
+| `contiguous()`                | 不变                                                                        | 行优先 strides                           | 0                                          | **是**（已经连续时直接返回自己） |
 
 一个切片例子：`arange(12).view({3,4})` 取第 1 维的 `1:4:2`，也就是第 1、3 列：
 
@@ -127,13 +129,15 @@ storage: [ 0 |*1*| 2 |*3*| 4 |*5*| 6 |*7*| 8 |*9*|10 |*11*]   *x* = reachable fr
 
 NumPy 的广播规则只有一条：**两个 shape 从右往左对齐，每一对要么相等，要么其中一个是 1**；缺失的维度当作 1。
 
-```
-a:      [3, 1, 5]
-b:         [4, 5]      -> padded on the left to [1, 4, 5]
-result: [3, 4, 5]
-```
+$$
+\begin{aligned}
+\mathrm{shape}(a) &= [3,1,5], \\
+\mathrm{shape}(b) &= [4,5] \longrightarrow [1,4,5]\quad\text{（在左侧补齐）}, \\
+\mathrm{shape}(\mathrm{result}) &= [3,4,5].
+\end{aligned}
+$$
 
-实现上，把大小为 1 的维度“拉伸”成 n，只需把它的 stride 设成 **0**：沿这一维无论走多少步，地址都不变，读到的永远是同一个元素。
+实现上，把大小为 1 的维度“拉伸”成 $n$，只需把它的 stride 设成 **0**：沿这一维无论走多少步，地址都不变，读到的永远是同一个元素。
 
 ```
 row = [1, 2, 3]   shape=[3] stride=[1]
@@ -146,7 +150,7 @@ logical view         storage index read
 [1 2 3]              0 1 2
 ```
 
-所以 `x + bias`（`x` 的 shape 为 [B, D]，`bias` 的 shape 为 [D]）不需要先把 bias 复制 B 份。lab A8 的 `zip` 就是这样做的：先把两个输入都广播成视图，再逐元素计算。
+所以 `x + bias`（`x` 的 shape 为 $[B,D]$，`bias` 的 shape 为 $[D]$）不需要先把 bias 复制 $B$ 份。lab A8 的 `zip` 就是这样做的：先把两个输入都广播成视图，再逐元素计算。
 
 ### 2.3 什么时候必须复制
 
@@ -157,11 +161,11 @@ logical view         storage index read
 > [!warning] 性能陷阱
 > 不连续的张量本身不慢，**访问模式**才决定速度。按行遍历一个转置视图，等于按列遍历原矩阵，每次跳 `stride` 个元素，缓存行几乎没法复用。§3 会量化这件事。
 
-> [!question]- 自测 2.1：`x` 的 shape 是 [8, 1, 6]，`y` 的 shape 是 [7, 1]。`x * y` 的结果 shape 是什么？y 广播后的 strides 是什么（假设 y 原本连续）？
-> 对齐：`[8,1,6]` 与 `[1,7,1]` → 结果 **[8, 7, 6]**。y 原 strides 为 `[1,1]`（shape [7,1]，最后一维大小为 1，按行优先是 [1,1]）。广播后：新增的第 0 维 stride 为 0；第 1 维 7==7，保留 1；第 2 维从 1 拉伸到 6，stride 为 0。结果是 **[0, 1, 0]**。
+> [!question]- 自测 2.1：`x` 的 shape 是 $[8,1,6]$，`y` 的 shape 是 $[7,1]$。`x * y` 的结果 shape 是什么？`y` 广播后的 strides 是什么（假设 `y` 原本连续）？
+> 对齐：$[8,1,6]$ 与 $[1,7,1]$，结果为 $[8,7,6]$。`y` 原 strides 为 $[1,1]$（shape $[7,1]$，最后一维大小为 1，按行优先是 $[1,1]$）。广播后：新增的第 0 维 stride 为 0；第 1 维 $7=7$，保留 1；第 2 维从 1 拉伸到 6，stride 为 0。结果是 $[0,1,0]$。
 
 > [!question]- 自测 2.2：`sum(x, dim=1, keepdim=True)` 和 `keepdim=False` 有什么区别？为什么 softmax 实现里常用 `keepdim=True`？
-> keepdim=True 时，被归约的维度保留为大小 1，于是结果能直接和原张量广播：`x / x.sum(-1, keepdim=True)`。keepdim=False 会删掉那一维，再想广播就要手动 `unsqueeze`。lab 里 `A_capstone_softmax_from_views` 用的就是这个技巧。
+> `keepdim=True` 时，被归约的维度保留为大小 1，于是结果能直接和原张量广播：`x / x.sum(-1, keepdim=True)`。`keepdim=False` 会删掉那一维，再想广播就要手动 `unsqueeze`。lab 里 `A_capstone_softmax_from_views` 用的就是这个技巧。
 
 **延伸阅读**：Edward Z. Yang 的 [PyTorch internals](https://blog.ezyang.com/2019/05/pytorch-internals/) 前半部分用图解释了 storage、stride、view，与本节内容一一对应（文中的内部类名较旧，概念没有变化）。
 
@@ -177,25 +181,25 @@ $$
 \text{峰值 FLOP/s} = \text{主频} \times \text{FMA 单元数} \times \text{SIMD 宽度（float 个数）} \times 2
 $$
 
-最后的 ×2 是因为一条 FMA（fused multiply-add，`a*b+c`）算作 2 次浮点运算。
+最后的 $\times 2$ 是因为一条 FMA（fused multiply-add，`a*b+c`）算作 2 次浮点运算。
 
-| CPU 核心                             | 主频         | FMA 单元 | SIMD 宽度    | 单核峰值         |
-| ------------------------------------ | ------------ | -------- | ------------ | ---------------- |
-| Intel Alder Lake P 核（AVX2）        | ~4.7 GHz     | 2        | 8（256 bit） | ~150 GFLOP/s     |
-| Apple M1/M2 性能核（NEON）           | ~3.2–3.5 GHz | 4        | 4（128 bit） | ~100–110 GFLOP/s |
-| AMD Zen 4（AVX-512，双发射 256 bit） | ~5 GHz       | 2        | 8            | ~160 GFLOP/s     |
+| CPU 核心                                         | 主频                                    | FMA 单元 | SIMD 宽度                | 单核峰值                                    |
+| ------------------------------------------------ | --------------------------------------- | -------- | ------------------------ | ------------------------------------------- |
+| Intel Alder Lake P 核（AVX2）                    | $\approx 4.7\,\mathrm{GHz}$             | 2        | 8（$256\,\mathrm{bit}$） | $\approx 150\,\mathrm{GFLOP/s}$             |
+| Apple M1/M2 性能核（NEON）                       | $\approx 3.2\text{--}3.5\,\mathrm{GHz}$ | 4        | 4（$128\,\mathrm{bit}$） | $\approx 100\text{--}110\,\mathrm{GFLOP/s}$ |
+| AMD Zen 4（AVX-512，双发射 $256\,\mathrm{bit}$） | $\approx 5\,\mathrm{GHz}$               | 2        | 8                        | $\approx 160\,\mathrm{GFLOP/s}$             |
 
 具体数值按你自己的 CPU 型号查（Intel ARK、Apple 规格页，或 [Agner Fog 的微架构手册](https://www.agner.org/optimize/microarchitecture.pdf)）。lab B0 要求你算出自己机器的这个数字。
 
 ### 3.2 内存层次：数据搬运才是真正的瓶颈
 
-| 层级        | 典型容量                                         | 延迟                   | 单核带宽量级                        |
-| ----------- | ------------------------------------------------ | ---------------------- | ----------------------------------- |
-| 寄存器      | 16 个 256-bit YMM（AVX2）/ 32 个 128-bit（NEON） | 0 周期                 | —                                   |
-| L1 数据缓存 | 32–64 KB / 核（Apple 128 KB）                    | ~4–5 周期 ≈ 1 ns       | ~200+ GB/s                          |
-| L2 缓存     | 1–2 MB / 核（Apple 是多核共享的十几 MB）         | ~14 周期 ≈ 3 ns        | ~100 GB/s                           |
-| L3 缓存     | 十几到几十 MB，多核共享                          | ~40–70 周期 ≈ 10–20 ns | ~50 GB/s                            |
-| DRAM        | GB 级                                            | ~80–100 ns             | 单核 ~10–30 GB/s，全核 ~50–100 GB/s |
+| 层级        | 典型容量                                                      | 延迟                                                                | 单核带宽量级                                                                              |
+| ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 寄存器      | 16 个 256-bit YMM（AVX2）/ 32 个 128-bit（NEON）              | 0 周期                                                              | —                                                                                         |
+| L1 数据缓存 | $32\text{--}64\,\mathrm{KB}$ / 核（Apple $128\,\mathrm{KB}$） | $\approx 4\text{--}5$ 周期 $\approx$ $1\,\mathrm{ns}$               | 约 $200\,\mathrm{GB/s}$ 或更高                                                            |
+| L2 缓存     | $1\text{--}2\,\mathrm{MB}$ / 核（Apple 是多核共享的十几 MB）  | $\approx 14$ 周期 $\approx$ $3\,\mathrm{ns}$                        | $\approx 100\,\mathrm{GB/s}$                                                              |
+| L3 缓存     | 十几到几十 MB，多核共享                                       | $\approx 40\text{--}70$ 周期 $\approx$ $10\text{--}20\,\mathrm{ns}$ | $\approx 50\,\mathrm{GB/s}$                                                               |
+| DRAM        | GB 级                                                         | $\approx 80\text{--}100\,\mathrm{ns}$                               | 单核 $\approx 10\text{--}30\,\mathrm{GB/s}$，全核 $\approx 50\text{--}100\,\mathrm{GB/s}$ |
 
 两个必须记住的事实：
 
@@ -235,11 +239,11 @@ $$
 
 两个例子（float32，每个元素 4 字节）：
 
-- **逐元素加** `c = a + b`：每个元素做 1 次加法，读 8 字节、写 4 字节，I = 1/12 ≈ **0.08**。远在拐点左边，性能完全由内存带宽决定。做 SIMD、开多线程，最多只能把带宽用满。
-- **矩阵乘** n×n×n：2n³ 次运算，最少只需搬运 3n² 个元素（A、B、C 各一次），I = 2n³/(12n²) = n/6。n=1024 时 I ≈ **170**，远在拐点右边，理论上可以压到计算峰值。
+- **逐元素加** `c = a + b`：每个元素做 1 次加法，读 8 字节、写 4 字节，$I=\frac{1}{12}\approx 0.08$。远在拐点左边，性能完全由内存带宽决定。做 SIMD、开多线程，最多只能把带宽用满。
+- **矩阵乘** $n\times n\times n$：$2n^3$ 次运算，最少只需搬运 $3n^2$ 个元素（$A$、$B$、$C$ 各一次），$I=\frac{2n^3}{12n^2}=\frac{n}{6}$。$n=1024$ 时 $I\approx 170$，远在拐点右边，理论上可以达到计算峰值。
 
 > [!important] Roofline 告诉你“能快到哪里”，而不只是“现在有多快”
-> 朴素 GEMM 只有 1 GFLOP/s，Roofline 却说它的上限是 150。差距不来自算法本身，而来自**实现没有达到最少的数据搬运**：朴素三重循环实际搬运的字节数远大于 3n²×4。§3.4–3.6 就是一步步把实际搬运量压向理论下界。
+> 朴素 GEMM 只有 $1\,\mathrm{GFLOP/s}$，Roofline 却说它的上限是 150。差距不来自算法本身，而来自**实现没有把数据搬运量降到最低**：朴素三重循环实际搬运的字节数远大于 $3n^2\times 4$。§3.4–3.6 就是一步步把实际搬运量压向理论下界。
 
 视觉化的 Roofline 讲解推荐 [JAX Scaling Book: Rooflines](https://jax-ml.github.io/scaling-book/roofline/)，它以 TPU/GPU 为例，但模型完全通用。原始论文是 [Williams, Waterman & Patterson, _Roofline_ (CACM 2009)](https://people.eecs.berkeley.edu/~kubitron/cs252/handouts/papers/RooflineVyNoYellow.pdf)。
 
@@ -251,10 +255,10 @@ $$
 for i: for j: for k:   C[i][j] += A[i][k] * B[k][j];
 ```
 
-看最内层循环，k 每加 1：
+看最内层循环，$k$ 每加 1：
 
 - `A[i][k]` 在内存里向后挪 1 个元素，连续访问，很好；
-- `B[k][j]` 向后跳一整行（N 个 float），**每次都落在新的缓存行上**。N=1024 时一行是 4 KB，B 的一列 1024 个元素分布在 1024 条不同的缓存行里，L1 根本装不下。
+- `B[k][j]` 向后跳一整行（$N$ 个 float），**每次都落在新的缓存行上**。$N=1024$ 时一行是 $4\,\mathrm{KB}$，$B$ 的一列 1024 个元素分布在 1024 条不同的缓存行里，L1 根本装不下。
 
 换成 i-k-j：
 
@@ -262,7 +266,7 @@ for i: for j: for k:   C[i][j] += A[i][k] * B[k][j];
 for i: for k: { a = A[i][k];  for j: C[i][j] += a * B[k][j]; }
 ```
 
-现在最内层沿 j 走，`B[k][j]` 和 `C[i][j]` 都是连续访问，编译器还可以把这个循环自动向量化，一次处理 8 个 j。只是交换了两层循环，速度就能提升 10–30 倍。
+现在最内层沿 $j$ 走，`B[k][j]` 和 `C[i][j]` 都是连续访问，编译器还可以把这个循环自动向量化，一次处理 8 个 $j$。只是交换了两层循环，速度就能提升 10–30 倍。
 
 ```
 i-j-k: inner loop reads a COLUMN of B     i-k-j: inner loop reads a ROW of B
@@ -275,9 +279,9 @@ i-j-k: inner loop reads a COLUMN of B     i-k-j: inner loop reads a ROW of B
 
 ### 3.5 第二步：分块（lab B2）
 
-i-k-j 循环中，对每个 i 都要把**整个 B**（N×N）扫一遍。N=1024 时 B 有 4 MB，大于 L2，于是每扫一遍 B，大部分数据都要从 L3 甚至 DRAM 重新读入。
+i-k-j 循环中，对每个 $i$ 都要把**整个 $B$**（$N\times N$）扫一遍。$N=1024$ 时 $B$ 有 $4\,\mathrm{MB}$，大于 L2，于是每扫一遍 $B$，大部分数据都要从 L3 甚至 DRAM 重新读入。
 
-**分块**（blocking / tiling）的思路是：把 B 切成能装进缓存的小块，让一块在被挤出缓存之前，尽量多地被复用。
+**分块**（blocking / tiling）的思路是：把 $B$ 切成能装进缓存的小块，在每一块被挤出缓存之前尽量多次复用它。
 
 ```
           N                        Cut C = A*B into blocks:
@@ -288,13 +292,13 @@ i-k-j 循环中，对每个 i 都要把**整个 B**（N×N）扫一遍。N=1024 
    +---+---+---+---+                  and reused by M/MC row blocks
 ```
 
-只套三层分块循环通常能再快 1.5 倍左右（lab 参考实现从 31 提到 47 GFLOP/s）。要离 BLAS 更近，还需要下一步。
+只套三层分块循环通常能再快 1.5 倍左右（lab 参考实现从 $31$ 提到 $47\,\mathrm{GFLOP/s}$）。要进一步接近 BLAS 的性能，还需要下一步。
 
 ### 3.6 第三步：Goto 算法——打包 + 寄存器微内核（lab B3）
 
 Kazushige Goto 的方法（[Goto & van de Geijn, TOMS 2008](https://www.cs.utexas.edu/users/flame/pubs/GotoTOMS_final.pdf)）是 OpenBLAS、BLIS、MKL 等现代 BLAS 的共同基础。它由三个想法组成：
 
-**想法 1：在寄存器里分块（微内核）。** 用 MR×NR 个累加器把 C 的一个小块整块留在寄存器里。每一步 k：
+**想法 1：在寄存器里分块（微内核）。** 用 $\mathrm{MR}\times\mathrm{NR}$ 个累加器把 $C$ 的一个小块整块留在寄存器里。每一步 $k$：
 
 ```
          NR=16 (2 YMM registers)
@@ -307,9 +311,9 @@ Kazushige Goto 的方法（[Goto & van de Geijn, TOMS 2008](https://www.cs.utexa
        a5 --> acc[5][0..15] += a5 * b
 ```
 
-寄存器预算（AVX2 共 16 个 YMM）：12 个累加器 + 2 个放 b + 1 个放广播的 a = **15 个**，刚好装下。每一步读 6+16 = 22 个 float，做 6×16 = 96 次 FMA，计算/访存比很高。
+寄存器预算（AVX2 共 16 个 YMM）：12 个累加器、2 个放 $b$、1 个放广播的 $a$，共 $12+2+1=15$ 个，刚好装下。每一步读 $6+16=22$ 个 float，做 $6\times 16=96$ 次 FMA，计算/访存比很高。
 
-**想法 2：打包（packing）。** 把 A 的 MC×KC 块和 B 的 KC×NC 块，事先复制成微内核要求的顺序（lab B3a、B3b）：
+**想法 2：打包（packing）。** 把 $A$ 的 $\mathrm{MC}\times\mathrm{KC}$ 块和 $B$ 的 $\mathrm{KC}\times\mathrm{NC}$ 块，事先复制成微内核要求的顺序（lab B3a、B3b）：
 
 ```
 packed A panel (MR rows, k-major)            packed B panel (NR cols, k-major)
@@ -324,33 +328,33 @@ k=1: a01 a11 a21 a31 a41 a51                 k=1: b10 b11 ... b1,15
 
 ```mermaid
 flowchart TB
-  L5["循环 5 · jc：取 B 的 NC 列面板"] --> L4["循环 4 · pc：取 KC 深度 → 打包 B 块 (KC×NC) ⟶ 住在 L3"]
-  L4 --> L3["循环 3 · ic：取 A 的 MC 行块 → 打包 A 块 (MC×KC) ⟶ 住在 L2"]
-  L3 --> L2["循环 2 · jr：取 B 块中 NR 宽的条 (KC×NR) ⟶ 住在 L1"]
-  L2 --> L1["循环 1 · ir：取 A 块中 MR 高的条"]
-  L1 --> MK["微内核：MR×NR 的 C 小块留在寄存器里，沿 KC 做 FMA"]
+  L5["Loop 5 (jc): take an NC-column panel of B"] --> L4["Loop 4 (pc): take depth KC; pack B (KC x NC) into L3"]
+  L4 --> L3["Loop 3 (ic): take an MC-row block of A; pack A (MC x KC) into L2"]
+  L3 --> L2["Loop 2 (jr): take an NR-wide strip of B (KC x NR) into L1"]
+  L2 --> L1["Loop 1 (ir): take an MR-high strip of A"]
+  L1 --> MK["Micro-kernel: keep an MR x NR tile of C in registers; FMA over KC"]
 ```
 
-lab 里五层循环的驱动 `gemm_packed` 已经提供，你只需实现两个打包函数和微内核。参考实现做到 MKL 单线程的 87%。
+lab 里五层循环的驱动 `gemm_packed` 已经提供，你只需实现两个打包函数和微内核。参考实现的性能达到 MKL 单线程的 $87\%$。
 
 > [!warning] 编译器向量化是脆弱的
-> 微内核要被编译成整齐的 `vfmadd231ps` 指令，需要累加器能留在寄存器里。lab 实测：GCC 13 下，把累加器写成二维数组 `float acc[6][16]`，或漏掉 `#pragma omp simd`，单核性能从 ~130 掉到 ~3 GFLOP/s。所以生产级 BLAS 的微内核都用 intrinsics 甚至汇编手写（lab 可选挑战 B3d）。
+> 要让编译器生成 `vfmadd231ps` 指令，微内核的累加器需要留在寄存器里。lab 实测：GCC 13 下，把累加器写成二维数组 `float acc[6][16]`，或漏掉 `#pragma omp simd`，单核性能从 $\approx 130$ 掉到 $\approx 3\,\mathrm{GFLOP/s}$。所以生产级 BLAS 的微内核都用 intrinsics 甚至汇编手写（lab 可选挑战 B3d）。
 
 ### 3.7 第四步：多线程（lab B4）
 
-C 的不同行块之间互不依赖，按行切块交给多个线程，不需要加锁。需要注意的有两点：
+$C$ 的不同行块之间互不依赖，按行切块交给多个线程，不需要加锁。需要注意的有两点：
 
-- 切块边界最好是 MR 的倍数，避免两个线程写同一个微块；
+- 切块边界最好是 $\mathrm{MR}$ 的倍数，避免两个线程写同一个微块；
 - Intel 大小核、Apple 性能核/能效核混合的 CPU 上，各核速度不同，均匀切块会被最慢的核拖住。动态调度（work stealing）能缓解这个问题。
 
-> [!question]- 自测 3.1：你的单核峰值是 120 GFLOP/s，单核带宽是 15 GB/s。拐点的算术强度是多少？一个每读 1 个 float 做 10 次运算的算子，受什么限制？
-> 拐点 I* = 120 / 15 = **8 FLOP/Byte**。每读 1 个 float（4 字节）做 10 次运算，I = 10/4 = 2.5 < 8，所以是**访存受限**，可达上限约 2.5 × 15 = 37.5 GFLOP/s。
+> [!question]- 自测 3.1：你的单核峰值是 $120\,\mathrm{GFLOP/s}$，单核带宽是 $15\,\mathrm{GB/s}$。拐点的算术强度是多少？一个每读 1 个 float 做 10 次运算的算子，受什么限制？
+> 拐点 $I^*=\frac{120}{15}=8\,\mathrm{FLOP/Byte}$。每读 1 个 float（4 字节）做 10 次运算，$I=\frac{10}{4}=2.5<8$，所以是**访存受限**，可达上限约 $2.5\times 15=37.5\,\mathrm{GFLOP/s}$。
 
-> [!question]- 自测 3.2：为什么微内核选 6×16，而不是 8×8 或 4×24？
-> 约束是寄存器数量。AVX2 有 16 个 YMM 寄存器，每个装 8 个 float。MR×NR/8 个累加器 + NR/8 个放 b + 1 个放广播的 a ≤ 16。6×16 用了 12+2+1 = 15 个。8×8：8+1+1 = 10 个，每步只有 8 条 FMA，而 FMA 有约 4 周期延迟、每周期能发射 2 条，需要至少 8–10 条独立 FMA 才能填满流水线，8×8 勉强够但余量小。4×24：12+3+1 = 16 个，可行，但 B 面板更宽，L1 压力更大。6×16 是在 Haswell 及之后的 x86 上被广泛采用的折中方案。
+> [!question]- 自测 3.2：为什么微内核选 $6\times 16$，而不是 $8\times 8$ 或 $4\times 24$？
+> 约束是寄存器数量。AVX2 有 16 个 YMM 寄存器，每个装 8 个 float。$\mathrm{MR}\times\mathrm{NR}/8$ 个累加器、$\mathrm{NR}/8$ 个放 $b$、1 个放广播的 $a$，需满足 $\mathrm{MR}\times\mathrm{NR}/8+\mathrm{NR}/8+1\le 16$。$6\times 16$ 用了 $12+2+1=15$ 个。$8\times 8$：$8+1+1=10$ 个，每步只有 8 条 FMA，而 FMA 有约 4 周期延迟、每周期能发射 2 条，需要至少 8–10 条独立 FMA 才能填满流水线，$8\times 8$ 勉强够但余量小。$4\times 24$：$12+3+1=16$ 个，可行，但 $B$ 面板更宽，L1 压力更大。$6\times 16$ 是在 Haswell 及之后的 x86 上被广泛采用的折中方案。
 
-> [!question]- 自测 3.3：GEMM 的理论算术强度是 n/6，为什么朴素实现完全达不到？
-> 理论值假设每个元素只从内存读一次。朴素实现中，B 的每个元素会被读 M 次（每个 i 一次），而且每次都要从 DRAM 或 L3 重新取，因为两次使用之间相隔太远，早已被挤出缓存。**实际搬运量**远大于 3n²，实际算术强度很低。分块的目的就是缩短同一数据两次使用之间的距离（**复用距离**），让第二次使用时它还在缓存里。
+> [!question]- 自测 3.3：GEMM 的理论算术强度是 $n/6$，为什么朴素实现完全达不到？
+> 理论值假设每个元素只从内存读一次。朴素实现中，$B$ 的每个元素会被读 $M$ 次（每个 $i$ 一次），而且每次都要从 DRAM 或 L3 重新取，因为两次使用之间相隔太远，早已被挤出缓存。**实际搬运量**远大于 $3n^2$，实际算术强度很低。分块的目的就是缩短同一数据两次使用之间的距离（**复用距离**），让第二次使用时它还在缓存里。
 
 **延伸阅读（按推荐顺序）**
 
@@ -373,20 +377,26 @@ y = relu(x * w + b)        # x, w, b each hold N floats
 
 eager 下它是 3 个 kernel：
 
-```
-kernel 1: t1 = x * w      read x, w  (8N bytes)   write t1 (4N)
-kernel 2: t2 = t1 + b     read t1, b (8N)         write t2 (4N)
-kernel 3: y  = relu(t2)   read t2    (4N)         write y  (4N)
-                          ------------------------------------
-                          total: read 20N, write 12N bytes; t1, t2 are temporaries
-```
+$$
+\begin{aligned}
+\text{kernel 1:}\quad t_1 &= x\odot w
+&&\text{读取 }x,w:\ 8N\,\mathrm{B};\quad\text{写入 }t_1:\ 4N\,\mathrm{B}, \\
+\text{kernel 2:}\quad t_2 &= t_1+b
+&&\text{读取 }t_1,b:\ 8N\,\mathrm{B};\quad\text{写入 }t_2:\ 4N\,\mathrm{B}, \\
+\text{kernel 3:}\quad y &= \operatorname{relu}(t_2)
+&&\text{读取 }t_2:\ 4N\,\mathrm{B};\quad\text{写入 }y:\ 4N\,\mathrm{B}.
+\end{aligned}
+$$
+
+合计读取 $20N\,\mathrm{B}$、写入 $12N\,\mathrm{B}$；$t_1,t_2$ 是临时张量。
 
 **融合**（fusion）成一个 kernel：
 
-```
-fused:   y[i] = relu(x[i]*w[i] + b[i])   read x,w,b (12N)  write y (4N)
-                                          total 16N bytes: half of unfused
-```
+$$
+y_i = \operatorname{relu}(x_iw_i+b_i).
+$$
+
+读取 $x,w,b$ 共 $12N\,\mathrm{B}$，写入 $y$ 共 $4N\,\mathrm{B}$；总流量为 $16N\,\mathrm{B}$，是未融合时的一半。
 
 每个元素只做 3 次运算，整个计算都在 Roofline 拐点的左边，**时间几乎正比于搬运的字节数**，所以流量减半就约等于提速一倍。链条越长（比如 GELU 有 9 个算子），省得越多。
 
@@ -421,19 +431,19 @@ flowchart LR
 | ----------------------------- | ---------------- | ------------------------------------------------ |
 | 根节点                        | 是               | 用户要结果                                       |
 | 归约（sum）                   | 是               | 归约之后形状变了，与后续逐元素运算的循环结构不同 |
-| 被 ≥ 2 个节点使用             | 是               | 否则要么重复计算，要么需要更复杂的调度           |
+| 被 $\ge 2$ 个节点使用         | 是               | 否则要么重复计算，要么需要更复杂的调度           |
 | 只被 1 个节点使用的逐元素运算 | 否，内联到使用者 | 留在寄存器里即可                                 |
 
-例如 `d = x*w; y = (d+1) * (d*2)`：d 被用了两次，所以先用一个 kernel 算出 d 写入内存，再用第二个 kernel 计算剩下的三个运算。
+例如 `d = x*w; y = (d+1) * (d*2)`：`d` 被用了两次，所以先用一个 kernel 算出 `d` 写入内存，再用第二个 kernel 计算剩下的三个运算。
 
 > [!note] 重算还是物化？
-> “被使用两次就物化”并不总是最优。如果 d 很便宜（比如一次乘法），在两个使用者里各**重算**一遍，往往比写回内存再读出来更快。真实编译器会用代价模型来权衡。FlashAttention（L2）的反向传播就是靠重算来节省内存的经典例子。
+> “被使用两次就物化”并不总是最优。如果 `d` 很便宜（比如一次乘法），在两个使用者里各**重算**一遍，往往比写回内存再读出来更快。真实编译器会用代价模型来权衡。FlashAttention（L2）的反向传播就是靠重算来节省内存的经典例子。
 
 ### 4.4 解释器为什么慢，分块为什么快
 
 lab 的标量解释器为每个元素把整个后缀程序跑一遍：每个元素、每条指令都有一次 `switch` 分支和一次栈操作。真正的运算只有一两条机器指令，开销却是它的几十倍。
 
-分块解释器（lab C4）把执行顺序倒过来：**每条指令处理一整块（512 个）元素**。分支开销被分摊到 512 个元素上，内层循环还能被编译器向量化。lab 实测，GELU 从 2.0 s 降到 0.79 s，和手写 C++ 循环一样快。
+分块解释器（lab C4）把执行顺序倒过来：**每条指令处理一整块（512 个）元素**。分支开销被分摊到 512 个元素上，内层循环还能被编译器向量化。lab 实测，GELU 从 $2.0\,\mathrm{s}$ 降到 $0.79\,\mathrm{s}$，和手写 C++ 循环一样快。
 
 这个思路很普遍：
 
@@ -442,12 +452,12 @@ lab 的标量解释器为每个元素把整个后缀程序跑一遍：每个元�
 
 ### 4.5 从 lab 到真实编译器
 
-| lab 里的简化      | 真实系统                                                               |
-| ----------------- | ---------------------------------------------------------------------- |
-| 只融合逐元素链    | 也融合 reduction、broadcast、matmul 的 epilogue（如 matmul+bias+relu） |
-| 后缀指令 + 解释器 | 生成 C++/CUDA/Triton 源码，再交给编译器（lab 可选挑战 C5）             |
-| 固定的调度规则    | 代价模型、自动调优（TVM、Ansor），甚至全局搜索（Mirage）               |
-| 单线程            | 并行化、向量化、tiling 都由编译器决定                                  |
+| lab 里的简化      | 真实系统                                                                 |
+| ----------------- | ------------------------------------------------------------------------ |
+| 只融合逐元素链    | 也融合 reduction、broadcast、matmul 的 epilogue（如 `matmul+bias+relu`） |
+| 后缀指令 + 解释器 | 生成 C++/CUDA/Triton 源码，再交给编译器（lab 可选挑战 C5）               |
+| 固定的调度规则    | 代价模型、自动调优（TVM、Ansor），甚至全局搜索（Mirage）                 |
+| 单线程            | 并行化、向量化、tiling 都由编译器决定                                    |
 
 ---
 
@@ -464,16 +474,16 @@ lab 的标量解释器为每个元素把整个后缀程序跑一遍：每个元�
 
 ### 5.2 深度学习编译器：从手写规则到自动搜索
 
-| 年份  | 工作                                                                                                                                            | 核心思想                                                                                                                                                         | 和本讲的联系                                                                              |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 2013  | [Halide](https://halide-lang.org/)（PLDI'13）                                                                                                   | **算法与调度分离**：写一次“算什么”，另写“怎么算”（分块、融合、并行）                                                                                             | lab B 的循环变换，正是 Halide 中的调度原语                                                |
-| 2017  | XLA（TensorFlow）                                                                                                                               | 整图编译，自动做逐元素融合                                                                                                                                       | §4.3 的规则                                                                               |
-| 2018  | [TVM](https://arxiv.org/abs/1802.04799)（OSDI'18）                                                                                              | 把 Halide 的思路用于深度学习，加入学习型代价模型和自动调优                                                                                                       | 用搜索替代人手选择 MC/KC/MR/NR                                                            |
-| 2019  | [Triton](https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf)（MAPL'19）                                                | 以 **tile** 为编程单位，块内细节交给编译器                                                                                                                       | L2 的主要工具                                                                             |
-| 2020– | [tinygrad](https://github.com/tinygrad/tinygrad)                                                                                                | 极简的 lazy 张量 + 调度器 + 代码生成，代码量小、可读性强                                                                                                         | **lab C 几乎就是 tinygrad 调度器的玩具版**；运行时加 `DEBUG=4` 能看到它的调度和生成的代码 |
-| 2024  | [PyTorch 2 / TorchInductor](https://pytorch.org/assets/pytorch2-2.pdf)（ASPLOS'24）                                                             | Dynamo 捕获 Python 图，Inductor 生成 Triton/C++ 代码                                                                                                             | `torch.compile` 的背后                                                                    |
-| 2025  | [Mirage](https://arxiv.org/abs/2405.05751)（OSDI'25）                                                                                           | **多层超优化**：在 kernel、线程块、线程三个层次上**搜索**等价的计算图（μGraph），用概率方法验证等价性，能自动发现像 FlashAttention 这样需要专家手写的融合 kernel | 把 §4.3 “按规则决定怎么融合”升级为“在所有可能的融合方案里搜索”                            |
-| 2025– | Megakernel：[Hazy Research “No Bubbles”](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)、[MPK](https://arxiv.org/abs/2512.22219) | 把整个模型的前向计算编译成**一个**常驻 GPU 的 kernel，消除 kernel 之间的启动开销和气泡；MPK 能自动完成这个编译                                                   | 融合的终极形态：从“几个算子一个 kernel”走到“整个模型一个 kernel”                          |
+| 年份  | 工作                                                                                                                                            | 核心思想                                                                                                                                                             | 和本讲的联系                                                                              |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 2013  | [Halide](https://halide-lang.org/)（PLDI'13）                                                                                                   | **算法与调度分离**：写一次“算什么”，另写“怎么算”（分块、融合、并行）                                                                                                 | lab B 的循环变换，正是 Halide 中的调度原语                                                |
+| 2017  | XLA（TensorFlow）                                                                                                                               | 整图编译，自动做逐元素融合                                                                                                                                           | §4.3 的规则                                                                               |
+| 2018  | [TVM](https://arxiv.org/abs/1802.04799)（OSDI'18）                                                                                              | 把 Halide 的思路用于深度学习，加入学习型代价模型和自动调优                                                                                                           | 用搜索替代人手选择 $\mathrm{MC}$、$\mathrm{KC}$、$\mathrm{MR}$、$\mathrm{NR}$             |
+| 2019  | [Triton](https://www.eecs.harvard.edu/~htk/publication/2019-mapl-tillet-kung-cox.pdf)（MAPL'19）                                                | 以 **tile** 为编程单位，块内细节交给编译器                                                                                                                           | L2 的主要工具                                                                             |
+| 2020– | [tinygrad](https://github.com/tinygrad/tinygrad)                                                                                                | 极简的 lazy 张量 + 调度器 + 代码生成，代码量小、可读性强                                                                                                             | **lab C 几乎就是 tinygrad 调度器的玩具版**；运行时加 `DEBUG=4` 能看到它的调度和生成的代码 |
+| 2024  | [PyTorch 2 / TorchInductor](https://pytorch.org/assets/pytorch2-2.pdf)（ASPLOS'24）                                                             | Dynamo 捕获 Python 图，Inductor 生成 Triton/C++ 代码                                                                                                                 | `torch.compile` 的背后                                                                    |
+| 2025  | [Mirage](https://arxiv.org/abs/2405.05751)（OSDI'25）                                                                                           | **多层超优化**：在 kernel、线程块、线程三个层次上**搜索**等价的计算图（$\mu$Graph），用概率方法验证等价性，能自动发现像 FlashAttention 这样需要专家手写的融合 kernel | 把 §4.3 “按规则决定怎么融合”升级为“在所有可能的融合方案里搜索”                            |
+| 2025– | Megakernel：[Hazy Research “No Bubbles”](https://hazyresearch.stanford.edu/blog/2025-05-27-no-bubbles)、[MPK](https://arxiv.org/abs/2512.22219) | 把整个模型的前向计算编译成**一个**常驻 GPU 的 kernel，消除 kernel 之间的启动开销和气泡；MPK 能自动完成这个编译                                                       | 融合的终极形态：从“几个算子一个 kernel”走到“整个模型一个 kernel”                          |
 
 > [!info] 和苗旭鹏老师组的联系
 > Mirage 和 MPK 是苗老师参与的代表性工作，代码在 [mirage-project/mirage](https://github.com/mirage-project/mirage)。本讲的调度规则是理解它们的起点；L3 的 lab 会让你实现一个 mini-Mirage：在一个小的融合方案空间里搜索，并用随机测试验证等价性。

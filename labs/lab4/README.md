@@ -98,7 +98,7 @@ Rust 只要会写结构体、`Vec`、`HashMap`、`match`、`Option` 就够用了
 **通过标准**：`cargo test --release --test model` 通过。
 
 - teacher forcing 下，每个位置的 logits 与 HF fp32 的余弦相似度 > 0.99，top-1 一致率 ≥ 90%。参考实现：余弦相似度 ≥ 0.998，一致率 99.6–100%。
-- greedy 生成的前 8 个 token 与 HF 相同。参考实现中，4 个 prompt 有 3 个 24 个 token 全部相同，第 4 个前 13 个相同。分歧发生在 bf16 与 fp32 恰好打平的位置，这是正常的。
+- greedy 生成的前 8 个 token 与 HF 相同。参考实现中，4 个 prompt 中有 3 个的 24 个 token 全部相同，第 4 个的前 13 个相同。分歧发生在 bf16 与 fp32 恰好打平的位置，这是正常的。
 - `cargo run --release --bin generate` 能输出通顺的回答。
 
 ---

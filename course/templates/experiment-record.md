@@ -38,7 +38,7 @@ tags: [mlsys, template, experiment]
 
 目前不能推出的结论：
 
-下一次最小区分实验：
+下一次能区分这些解释的最小实验：
 
 ## 自检
 

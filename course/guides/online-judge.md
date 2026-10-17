@@ -8,7 +8,7 @@ updated: 2026-10-05
 
 [返回大纲](../syllabus.md)
 
-在线评测适合给算子实现增加外部正确性检查、远端硬件测量和陌生输入。课程优先选择与现有工具相容的 NVIDIA/Triton 平台；TensorOJ 用来探索 Ascend C / 昇腾。先选一个平台打通提交，不同时维护四套环境。
+在线评测适合对算子实现做外部正确性检查、在远端硬件上测量，并测试陌生输入。课程优先选择与现有工具相容的 NVIDIA/Triton 平台；TensorOJ 用来探索 Ascend C / 昇腾。先选一个平台完成提交，不同时维护四套环境。
 
 ## 核对范围与推荐顺序
 
@@ -39,7 +39,7 @@ OJ 评测环境通常围绕单个算子设计。lab3–lab7 的引擎、到达�
 
 ## TensorOJ 的具体使用方案
 
-这是额外编程模型的学习。先读 [Ascend C 官方编程范式入门](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/83RC1alpha002/opdevg/Ascendcopdevg/atlas_ascendc_10_0035.html)，理解 host 的分块信息怎样传到 device，以及搬入、计算、搬出如何组织。该链接是 8.3 版概念材料；实际 API 必须切到平台指定版本，不能把旧样例原样当作 9.0 可运行代码。
+选择 TensorOJ，需要额外学习一种编程模型。先读 [Ascend C 官方编程范式入门](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/83RC1alpha002/opdevg/Ascendcopdevg/atlas_ascendc_10_0035.html)，理解 host 的分块信息怎样传到 device，以及搬入、计算、搬出如何组织。该链接是 8.3 版概念材料；实际 API 必须切到平台指定版本，不能把旧样例原样当作 9.0 可运行代码。
 
 建议先选 Relu。公式简单，便于把精力用在 Ascend C 工具链；但完整题面含多 dtype、动态形状、特殊值，**并不是一个只需改几行的玩具题**。Add 还要求广播，只有同形向量加法通过时不能宣称完成 Add。
 

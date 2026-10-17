@@ -12,12 +12,12 @@ results/lab1/explicit-r1/
   environment.json
   environment.txt
   stdout.log
-  raw.csv (或 raw.json)
+  raw.csv (or raw.json)
   summary.csv
-  correctness.json / 图 / 其他证据
+  correctness.json / plots / other evidence
 ```
 
-lab7 的 `exp.run` 会自动建立这样的目录；目录已存在就拒绝运行，重跑另起名称。其他命令可以用 capture 包一层：
+lab7 的 `exp.run` 会自动建立这样的目录；目录已存在就拒绝运行，重跑时另取目录名。其他命令可以通过 capture 运行：
 
 ```bash
 python -m tools.capture --out results/your-new-run --config path/to/config.json -- your-command arguments
@@ -43,7 +43,7 @@ lab4、lab5 的 `bin/bench` 每次运行输出一行汇总：吞吐、TTFT/TPOT/
 
 ## 绘图和归档
 
-`tools.plot` 提供散点图起点，各轮点都保留；在章节分析中补充分组中位数/范围、合适标签和必要的指标 join。没有计算置信区间就不要这样命名误差线。
+`tools.plot` 提供基础散点图，保留各轮数据点；在章节分析中补充分组中位数/范围、合适的标签，并按需关联指标数据。没有计算置信区间，就不要将误差线标为置信区间。
 
 `results/` 被 Git 忽略是为了保护缓存和大原始文件，不是免交证据。每章完成后把选定小型原始记录、汇总、图和报告复制到你建立的 `evidence/labN/` 并提交；大文件另存归档介质，在 [归档清单](../portfolio/artifacts.md) 记录可访问位置、文件清单、SHA256 和重建命令。不要提交模型、环境、token 或私密请求。用 Python `hashlib` 或系统校验工具计算归档哈希。失败数据也要保留。
 

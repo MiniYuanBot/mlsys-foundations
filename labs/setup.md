@@ -1,6 +1,6 @@
 # 环境配置
 
-整个课程只用**一套环境**：一个 Python 虚拟环境 `mlsys`，再加上 C++ 编译器、CUDA、Rust 和 MPI。本页命令都在 `labs/` 目录执行。版本统一锁定在 [tools/env-versions.env](tools/env-versions.env)。环境**按 lab 分阶段安装**：每开始一个新 lab，就用更大的 lab 编号再运行一次安装脚本，它只补装还缺的东西。
+整个课程只用**一套环境**：一个 Python 虚拟环境 `mlsys`，再加上 C++ 编译器、CUDA、Rust 和 MPI。本页命令都在 `labs/` 目录执行。版本统一锁定在 [tools/env-versions.env](tools/env-versions.env)。环境**按 lab 分阶段安装**：每开始一个新 lab，就用更大的 lab 编号再运行一次安装脚本，它只补装还缺的依赖。
 
 | 平台                                | 能做的 lab       | 安装与检查（在 `labs/` 目录执行）                                                                                                              |
 | ----------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,7 +66,7 @@
 
 ## macOS
 
-先执行 `xcode-select --install`，再安装 [Homebrew](https://brew.sh)。然后运行 `bash tools/setup_env.sh --lab 0`（做 lab6 时用 `--lab 6`）。脚本会用 Homebrew 的 Python 3.12 创建 `~/venvs/mlsys`。在 macOS 上传 `--lab 1` 到 `--lab 5` 会直接报错退出。
+先执行 `xcode-select --install`，再安装 [Homebrew](https://brew.sh)。然后运行 `bash tools/setup_env.sh --lab 0`（做 lab6 时用 `--lab 6`）。脚本会用 Homebrew 的 Python 3.12 创建 `~/venvs/mlsys`。在 macOS 上，传入 `--lab 1` 到 `--lab 5` 会直接报错退出。
 
 ## Windows 原生（lab0、lab7）
 

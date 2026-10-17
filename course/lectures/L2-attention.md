@@ -12,7 +12,7 @@ tags: [lecture, attention, softmax, flashattention, triton, decoding]
 > [!abstract] 这一讲要解决的三个问题
 >
 > 1. **为什么 attention 是访存受限的？** 它的计算明明主要是两次矩阵乘。
-> 2. **softmax 要求“先看完整行才能归一化”，怎样把它拆成块来算？** 这就是 online softmax，FlashAttention 的全部魔法都从这里来。
+> 2. **softmax 要求“先看完整行才能归一化”，怎样把它拆成块来算？** 这就是 online softmax，也是 FlashAttention 的基础。
 > 3. **训练、推理 prefill、推理 decode 三种场景，最优的 attention kernel 为什么各不相同？** 从 FlashAttention 1/2/3/4 到 FlashDecoding、FlashInfer，每一代各自解决了什么问题？
 
 | 节  | 内容                                                  | 对应 lab |
@@ -31,18 +31,22 @@ tags: [lecture, attention, softmax, flashattention, triton, decoding]
 
 ### 1.1 为什么要减最大值
 
-$$\text{softmax}(x)_i = \frac{e^{x_i}}{\sum_j e^{x_j}}$$
+$$
+\operatorname{softmax}(x)_i = \frac{e^{x_i}}{\sum_j e^{x_j}}
+$$
 
-fp32 能表示的最大值约为 3.4×10³⁸，而 e⁸⁹ 就已经超过它了。attention 的分数达到几十是很常见的事，直接算会溢出成 inf，inf/inf 再得到 NaN。
+fp32 能表示的最大值约为 $3.4 \times 10^{38}$，而 $e^{89}$ 就已经超过它了。attention 的分数达到几十是很常见的事，直接算会溢出成 `inf`，`inf/inf` 再得到 `NaN`。
 
-利用恒等式 softmax(x) = softmax(x − c)，取 c = max(x)，所有指数都 ≤ 0，结果落在 (0, 1]，永远不会溢出：
+利用恒等式 $\operatorname{softmax}(x) = \operatorname{softmax}(x-c)$，取 $c = \max(x)$，所有指数都 $\le 0$，结果落在 $(0,1]$，永远不会溢出：
 
-```
-x        = [1000, 1001,  999]
-x - max  = [  -1,    0,   -2]
-exp      = [0.37, 1.00, 0.14]   sum = 1.50
-softmax  = [0.24, 0.67, 0.09]
-```
+$$
+\begin{aligned}
+x &= [1000,1001,999] \\
+x-\max(x) &= [-1,0,-2] \\
+\exp(x-\max(x)) &= [0.37,1.00,0.14], \qquad \text{sum} = 1.50 \\
+\operatorname{softmax}(x) &= [0.24,0.67,0.09]
+\end{aligned}
+$$
 
 lab A1 的 `test_A1_large_values_do_not_overflow` 测的就是这件事。
 
@@ -74,32 +78,51 @@ Triton 编译器负责把块级操作映射到线程上，并决定 shared memor
 
 ### 2.2 推导
 
-定义处理完前 k 个元素后的两个量：
+定义处理完前 $k$ 个元素后的两个量：
 
-$$m_k = \max_{j \le k} x_j, \qquad l_k = \sum_{j \le k} e^{x_j - m_k}$$
+$$
+m_k = \max_{j \le k} x_j, \qquad l_k = \sum_{j \le k} e^{x_j - m_k}
+$$
 
-新来一个元素（或一整块）x_{k+1} 时：
+新来一个元素（或一整块）$x_{k+1}$ 时：
 
-$$m_{k+1} = \max(m_k, x_{k+1})$$
+$$
+m_{k+1} = \max(m_k, x_{k+1})
+$$
 
-$$l_{k+1} = \sum_{j \le k+1} e^{x_j - m_{k+1}} = \underbrace{e^{m_k - m_{k+1}}}_{\alpha} \cdot \underbrace{\sum_{j\le k} e^{x_j - m_k}}_{l_k} + e^{x_{k+1} - m_{k+1}}$$
+$$
+l_{k+1} = \sum_{j \le k+1} e^{x_j - m_{k+1}} = \underbrace{e^{m_k - m_{k+1}}}_{\alpha} \cdot \underbrace{\sum_{j\le k} e^{x_j - m_k}}_{l_k} + e^{x_{k+1} - m_{k+1}}
+$$
 
-关键在于 e^{x_j - m_{k+1}} = e^{x_j - m_k} · e^{m_k - m_{k+1}}：**旧的和只需乘上一个修正因子 α，不必重新计算**。α ≤ 1，所以不会溢出。
+关键在于 $e^{x_j-m_{k+1}} = e^{x_j-m_k} \cdot e^{m_k-m_{k+1}}$：**旧的和只需乘上一个修正因子 $\alpha$，不必重新计算**。$\alpha \le 1$，所以不会溢出。
 
-```
-chunk 1: [2, 5, 1]   m = 5          l = e^-3 + e^0 + e^-4                  = 1.068
-chunk 2: [7, 3]      m_new = 7      alpha = e^(5-7) = 0.135
-                     l = 1.068 * 0.135 + e^0 + e^-4                        = 1.163
-check: sum_j e^(x_j - 7) over all 5 = e^-5 + e^-2 + e^-6 + e^0 + e^-4      = 1.163  OK
-```
+$$
+\begin{aligned}
+\text{chunk 1}:\quad &[2,5,1],\quad m = 5,\quad l = e^{-3}+e^0+e^{-4} = 1.068 \\
+\text{chunk 2}:\quad &[7,3],\quad m_{\mathrm{new}} = 7,\quad \alpha = e^{5-7} = 0.135 \\
+&l = 1.068 \times 0.135 + e^0 + e^{-4} = 1.163 \\
+\text{check}:\quad &\sum_{j=1}^{5} e^{x_j-7} = e^{-5}+e^{-2}+e^{-6}+e^0+e^{-4} = 1.163
+\end{aligned}
+$$
 
-扫完一遍就得到 m 和 l，第二遍直接写出 e^{x−m}/l。lab A2 就这样处理任意长度的行，并顺带输出 **log-sum-exp**：lse = m + log l = log Σ e^{x_j}。它在 §4 和反向传播中都至关重要。
+扫完一遍就得到 $m$ 和 $l$，第二遍直接写出 $e^{x-m}/l$。lab A2 就这样处理任意长度的行，并顺带输出 **log-sum-exp**：$\operatorname{lse} = m + \log l = \log \sum_j e^{x_j}$。§4 的结果合并和反向传播都会用到它。
 
-> [!question]- 自测 2.1：A2 读了两遍输入，为什么在 1024×16384 的矩阵上只比 A1 慢约 20%？
-> 每个 program 处理一行，1024 × 16384 × 4 B = 64 MB，大于 L2（32 MB）。但同一时刻只有几十个 program 在运行，它们正在处理的那些行（每行 64 KB）在第一遍时刚被读进 L2，第二遍几乎全部命中 L2。真正的 DRAM 流量接近“读一遍、写一遍”。
+> [!question]- 自测 2.1：A2 读了两遍输入，为什么在 $1024 \times 16384$ 的矩阵上只比 A1 慢约 20%？
+> 每个 program 处理一行，$1024 \times 16384 \times 4\,\mathrm{B} = 64\,\mathrm{MB}$，大于 L2（32 MB）。但同一时刻只有几十个 program 在运行，它们正在处理的那些行（每行 64 KB）在第一遍时刚被读进 L2，第二遍几乎全部命中 L2。真正的 DRAM 流量接近“读一遍、写一遍”。
 
-> [!question]- 自测 2.2（证明）：用归纳法证明，按任意分块方式处理完整行后，l 都等于 Σ_j e^{x_j − m}，其中 m 是全局最大值。
-> 归纳假设：处理完前 k 块后，l = Σ_{已处理} e^{x_j − m_k}，m_k 为已处理部分的最大值。处理第 k+1 块 c：m' = max(m_k, max c)；l' = l · e^{m_k − m'} + Σ_{j∈c} e^{x_j − m'} = Σ_{已处理} e^{x_j − m_k} · e^{m_k − m'} + Σ_{j∈c} e^{x_j − m'} = Σ_{已处理 ∪ c} e^{x_j − m'}。初始 m = −∞、l = 0 时，第一块的 α = e^{−∞} = 0，同样满足。证毕。这个结论与分块方式无关，所以 lab 的 `test_A2_result_independent_of_block` 必然成立（只差浮点舍入）。
+> [!question]- 自测 2.2（证明）：用归纳法证明，按任意分块方式处理完整行后，$l$ 都等于 $\sum_j e^{x_j-m}$，其中 $m$ 是全局最大值。
+> 归纳假设：处理完前 $k$ 块后，$l = \sum_{\text{已处理}} e^{x_j-m_k}$，$m_k$ 为已处理部分的最大值。处理第 $k+1$ 块 $c$：
+>
+> $$
+> \begin{aligned}
+> m' &= \max(m_k,\max c), \\
+> l' &= l \cdot e^{m_k-m'} + \sum_{j\in c} e^{x_j-m'} \\
+> &= \sum_{\text{已处理}} e^{x_j-m_k} \cdot e^{m_k-m'} + \sum_{j\in c} e^{x_j-m'} \\
+> &= \sum_{\text{已处理}\,\cup\,c} e^{x_j-m'}.
+> \end{aligned}
+> $$
+>
+> 初始 $m = -\infty$、$l = 0$ 时，第一块的 $\alpha = e^{-\infty} = 0$，同样满足。证毕。这个结论与分块方式无关，所以 lab 的 `test_A2_result_independent_of_block` 必然成立（只差浮点舍入）。
 
 ---
 
@@ -107,24 +130,23 @@ check: sum_j e^(x_j - 7) over all 5 = e^-5 + e^-2 + e^-6 + e^0 + e^-4      = 1.1
 
 ### 3.1 标准 attention 的访存账
 
-单个 head，序列长 S，head dim 为 d，fp16（每个元素 2 字节）：
+单个 head，序列长 $S$，head dim 为 $d$，fp16（每个元素 2 字节）。标准 attention 分成 3 个 kernel，HBM 流量如下：
 
-```
-standard attention (3 kernels)                    bytes moved (HBM)
-  S_ = Q K^T        read Q,K (2*S*d) write S_ (S^2)     2(2Sd + S^2)
-  P  = softmax(S_)  read S_ (S^2)    write P (S^2)      2(2 S^2)
-  O  = P V          read P,V (S^2+Sd) write O (Sd)      2(S^2 + 2Sd)
-  total ~ 2 * (4 S^2 + 4 S d)
+| 计算                                       | 读取（元素数）        | 写入（元素数）        | HBM 流量（字节） |
+| ------------------------------------------ | --------------------- | --------------------- | ---------------- |
+| $\mathrm{S\_} = QK^\top$                   | $Q,K$：$2Sd$          | $\mathrm{S\_}$：$S^2$ | $2(2Sd+S^2)$     |
+| $P = \operatorname{softmax}(\mathrm{S\_})$ | $\mathrm{S\_}$：$S^2$ | $P$：$S^2$            | $2(2S^2)$        |
+| $O = PV$                                   | $P,V$：$S^2+Sd$       | $O$：$Sd$             | $2(S^2+2Sd)$     |
 
-S = 4096, d = 64:  S^2 = 16.8M  ->  ~134 MB of HBM traffic per head
-FLOPs: 4 S^2 d = 4.3 GFLOP  -> arithmetic intensity ~ 32 FLOP/Byte  (< ridge 115 on a 4060)
-```
+总流量约为 $2(4S^2+4Sd)$ 字节。$S = 4096$、$d = 64$ 时，$S^2 = 16.8 \times 10^6$，每个 head 的 HBM 流量约为 134 MB。计算量 $4S^2d = 4.3\,\mathrm{GFLOP}$，算术强度约为 $32\,\mathrm{FLOP/Byte}$，低于 4060 的拐点 $115\,\mathrm{FLOP/Byte}$。
 
-两次矩阵乘本身是计算密集的，但中间的 S×S 矩阵要经过显存来回三次，把整个计算拖成了访存受限。lab 中的 `sdpa_math` 后端就是这种写法，比 FlashAttention 慢约 100 倍。S=4096 时更严重，因为 S² 的中间矩阵已经超出了 L2。
+两次矩阵乘本身是计算密集的，但中间的 $S \times S$ 矩阵要经过显存来回三次，使整个计算受到访存限制。lab 中的 `sdpa_math` 后端就是这种写法，比 FlashAttention 慢约 100 倍。$S = 4096$ 时更严重，因为 $S^2$ 的中间矩阵已经超出了 L2。
 
 ### 3.2 FlashAttention 的思路
 
-**不物化 S×S 矩阵**。把 Q 按行切成 BM 行一块，K、V 按行切成 BN 行一块。每个 program 负责一块 Q，依次读入 K、V 的每一块，用 §2 的 online softmax 累积结果：
+**不物化 $S \times S$ 矩阵**。把 $Q$ 按行切成 $B_M$ 行一块，$K$、$V$ 按行切成 $B_N$ 行一块。每个 program 负责一块 $Q$，依次读入 $K$、$V$ 的每一块，用 §2 的 online softmax 累积结果：
+
+这里的 $B_M$、$B_N$ 分别对应图和代码中的 `BM`、`BN`。
 
 ```
           K^T blocks (BN keys each) ---->
@@ -140,24 +162,24 @@ per row of the Q block keep:  m (running max), l (running sum), acc (d floats)
 
 每读入一块 K/V，都做这五步：
 
-1. s = q kᵀ · scale（BM×BN，在片上）
-2. m_new = max(m, rowmax(s))
-3. α = exp(m − m_new)，p = exp(s − m_new)
-4. l = l·α + rowsum(p)，**acc = acc·α + p v**
-5. m = m_new
+1. $s = qk^\top \cdot \operatorname{scale}$（$B_M \times B_N$，在片上）
+2. $m_{\mathrm{new}} = \max(m,\operatorname{rowmax}(s))$
+3. $\alpha = \exp(m-m_{\mathrm{new}})$，$p = \exp(s-m_{\mathrm{new}})$
+4. $l = l \cdot \alpha + \operatorname{rowsum}(p)$，**$\operatorname{acc} = \operatorname{acc} \cdot \alpha + pv$**
+5. $m = m_{\mathrm{new}}$
 
-最后 out = acc / l。第 4 步中 acc 也要乘以 α，这和 §2 中 l 乘以 α 是同一个道理：acc 是用旧的 m 算出来的 Σ e^{x_j − m} v_j。
+最后 $\operatorname{out} = \operatorname{acc}/l$。第 4 步中 $\operatorname{acc}$ 也要乘以 $\alpha$，这和 §2 中 $l$ 乘以 $\alpha$ 是同一个道理：$\operatorname{acc}$ 是用旧的 $m$ 算出来的 $\sum_j e^{x_j-m}v_j$。
 
-**访存账**：Q 读一次、O 写一次；K、V 则被每个 Q 块各读一次，共 S/BM = 64 遍。粗看总量约为 2·(2Sd + 2Sd·S/BM) 字节 ≈ 68 MB，只比标准写法少一半。但这里有个关键细节：同一个 head 的 K、V 合计只有 2·S·d·2 B = 1 MB，**能装进 L2**（4060 的 L2 有 32 MB），同一个 head 的 64 个 Q 块几乎同时在运行，所以重复的 K/V 读取大多命中 L2。真正落到 HBM 的流量约为 4·S·d·2 B ≈ **2 MB**，是标准写法（134 MB）的约 1/60。
+**访存账**：$Q$ 读一次、$O$ 写一次；$K$、$V$ 则被每个 $Q$ 块各读一次，共 $S/B_M = 64$ 遍。粗看总量约为 $2(2Sd+2Sd \cdot S/B_M)\,\mathrm{B} \approx 68\,\mathrm{MB}$，只比标准写法少一半。但这里有个关键细节：同一个 head 的 $K$、$V$ 合计只有 $2 \cdot S \cdot d \cdot 2\,\mathrm{B} = 1\,\mathrm{MB}$，**能装进 L2**（4060 的 L2 有 32 MB），同一个 head 的 64 个 $Q$ 块几乎同时在运行，所以重复的 K/V 读取大多命中 L2。真正落到 HBM 的流量约为 $4 \cdot S \cdot d \cdot 2\,\mathrm{B} \approx \mathbf{2\,\mathrm{MB}}$，是标准写法（134 MB）的约 $1/60$。
 
-这也说明了 FlashAttention 为什么必须让 S×S 矩阵“永远不出片”：标准写法的 S×S 矩阵有 32 MB，L2 装不下，只能去 HBM。
+这也说明了 FlashAttention 为什么必须让 $S \times S$ 矩阵“永远不出片”：标准写法的 $S \times S$ 矩阵有 32 MB，L2 装不下，只能去 HBM。
 
 > [!important] FlashAttention 做了更多的计算
-> 每个块都要多算 α 和 acc·α，所以 FLOPs 反而略多。但它的目标本来就不是减少 FLOPs，而是减少 HBM 访问。这是理解所有 IO-aware 算法的关键：**在访存受限的场景里，用计算换带宽是划算的**。
+> 每个块都要多算 $\alpha$ 和 $\operatorname{acc} \cdot \alpha$，所以 FLOPs 反而略多。但它的目标本来就不是减少 FLOPs，而是减少 HBM 访问。这是理解所有 IO-aware 算法的关键：**在访存受限的场景里，用计算换带宽是划算的**。
 
 ### 3.3 Causal：mask 与跳过
 
-在 causal attention 中，query i 只能看到 key j ≤ i。分数矩阵的上三角全是 −∞，对应的 K/V 块对结果毫无贡献：
+在 causal attention 中，query $i$ 只能看到 key $j \le i$。分数矩阵的上三角全是 $-\infty$，对应的 K/V 块对结果毫无贡献：
 
 ```
 query block ->   0   1   2   3
@@ -167,37 +189,41 @@ key block 2    [ . ][ . ][ d ][ F ]     . = skipped entirely (above the diagonal
 key block 3    [ . ][ . ][ . ][ d ]
 ```
 
-每个 Q 块的循环到对角线所在的块为止，工作量减半。lab 实测 causal 的耗时约为非 causal 的 54%。
+每个 $Q$ 块的循环到对角线所在的块为止，工作量减半。lab 实测 causal 的耗时约为非 causal 的 54%。
 
 ### 3.4 FA1 与 FA2 的区别
 
-|           | FlashAttention-1 (2022)         | FlashAttention-2 (2023)                                  |
-| --------- | ------------------------------- | -------------------------------------------------------- |
-| 外层循环  | K/V 块（每个 Q 块要反复读写 O） | **Q 块**（O 留在寄存器里，只写一次）                     |
-| 归一化    | 每个块都除以 l                  | **最后才除一次**                                         |
-| 并行维度  | batch × head                    | batch × head × **Q 块**（长序列、小 batch 也能填满 GPU） |
-| warp 分工 | 按 K 切分，最后在 warp 间归约   | **按 Q 切分**，warp 之间不需要通信                       |
+|           | FlashAttention-1 (2022)             | FlashAttention-2 (2023)                                                               |
+| --------- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| 外层循环  | K/V 块（每个 $Q$ 块要反复读写 $O$） | **$Q$ 块**（$O$ 留在寄存器里，只写一次）                                              |
+| 归一化    | 每个块都除以 $l$                    | **最后才除一次**                                                                      |
+| 并行维度  | $\text{batch} \times \text{head}$   | $\text{batch} \times \text{head} \times Q\text{ 块}$（长序列、小 batch 也能填满 GPU） |
+| warp 分工 | 按 $K$ 切分，最后在 warp 间归约     | **按 $Q$ 切分**，warp 之间不需要通信                                                  |
 
-lab B2 实现的就是 FA2 的结构：grid = (Q 块数, B×H)。
+lab B2 实现的就是 FA2 的结构：$\operatorname{grid} = (Q\text{ 块数}, B \times H)$。
 
 ---
 
 ## §4 合并部分结果：log-sum-exp 代数
 
-如果把一行 key 分成两段，分别算出各自的归一化输出 o₁、o₂ 和 lse₁、lse₂，能否合并成全局的结果？
+如果把一行 key 分成两段，分别算出各自的归一化输出 $o_1$、$o_2$ 和 $\operatorname{lse}_1$、$\operatorname{lse}_2$，能否合并成全局的结果？
 
-$$o = \frac{\sum_{j} e^{s_j} v_j}{\sum_j e^{s_j}}, \quad e^{\text{lse}_1} = \sum_{j\in 1} e^{s_j}, \quad o_1 = \frac{\sum_{j\in 1} e^{s_j}v_j}{e^{\text{lse}_1}}$$
+$$
+o = \frac{\sum_{j} e^{s_j} v_j}{\sum_j e^{s_j}}, \quad e^{\operatorname{lse}_1} = \sum_{j\in 1} e^{s_j}, \quad o_1 = \frac{\sum_{j\in 1} e^{s_j}v_j}{e^{\operatorname{lse}_1}}
+$$
 
-所以 Σ_{j∈1} e^{s_j} v_j = e^{lse₁} o₁，于是：
+所以 $\sum_{j\in 1} e^{s_j}v_j = e^{\operatorname{lse}_1}o_1$，于是：
 
-$$\text{lse} = \log(e^{\text{lse}_1} + e^{\text{lse}_2}), \qquad o = e^{\text{lse}_1 - \text{lse}}\, o_1 + e^{\text{lse}_2 - \text{lse}}\, o_2$$
+$$
+\operatorname{lse} = \log(e^{\operatorname{lse}_1} + e^{\operatorname{lse}_2}), \qquad o = e^{\operatorname{lse}_1 - \operatorname{lse}}\, o_1 + e^{\operatorname{lse}_2 - \operatorname{lse}}\, o_2
+$$
 
-计算 lse 时同样先减去最大值，以保证数值稳定。这个合并规则**满足结合律**：任意多段可以按任意顺序合并。它是以下这些技术的共同基础：
+计算 $\operatorname{lse}$ 时同样先减去最大值，以保证数值稳定。这个合并规则**满足结合律**：任意多段可以按任意顺序合并。它是以下这些技术的共同基础：
 
 - **FlashDecoding** 的 split-KV（lab C2）；
 - **Ring Attention / Context Parallel**（L6）：每个 GPU 持有一段 KV，算完部分结果后互相传递、合并；
 - **FlashInfer 的 cascade attention**：共享前缀的 KV 只算一次，再与各请求私有部分的结果合并；
-- **反向传播**：保存 lse，就不必保存 P，反向时用 lse 重算即可。
+- **反向传播**：保存 $\operatorname{lse}$，就不必保存 $P$，反向时用 $\operatorname{lse}$ 重算即可。
 
 ---
 
@@ -207,13 +233,13 @@ Triton 替你完成了“块 → 线程”的映射。lab C1 要你自己动手�
 
 ### 5.1 工作划分
 
-一个 block 有 4 个 warp，负责 64 行 query；每个 warp 负责 16 行，正好是一个 mma 的 m16。每个 warp 对每个 64-key 的 K tile 计算 16×64 的分数块，即 8 个 m16n8 的累加器 tile。
+一个 block 有 4 个 warp，负责 64 行 query；每个 warp 负责 16 行，正好是一个 mma 的 m16。每个 warp 对每个 64-key 的 $K$ tile 计算 $16 \times 64$ 的分数块，即 8 个 m16n8 的累加器 tile。
 
-### 5.2 S = QKᵀ：K 不需要转置
+### 5.2 $S = QK^\top$：$K$ 不需要转置
 
-mma 的 B 操作数是 B[k][n]，这里 k = d、n = key，所以 B = Kᵀ，B[d][key] = K[key][d]。K 在 shared memory 中按 `[key][d]` 行优先存放，**一行 key 的 d 维是连续的**，这正是 mma 要求的“B 按列连续”（col-major），所以用不转置的 `ldmatrix` 就能直接得到 B fragment。
+mma 的 $B$ 操作数是 `B[k][n]`，这里 $k = d$、$n = \mathrm{key}$，所以 $B = K^\top$，`B[d][key] = K[key][d]`。$K$ 在 shared memory 中按 `[key][d]` 行优先存放，**一行 key 的 $d$ 维是连续的**，这正是 mma 要求的“$B$ 按列连续”（col-major），所以用不转置的 `ldmatrix` 就能直接得到 $B$ fragment。
 
-一条 `ldmatrix.x4` 加载 4 个 8×8 矩阵，正好覆盖两个 n-tile 在一个 k-step 上的数据：
+一条 `ldmatrix.x4` 加载 4 个 $8 \times 8$ 矩阵，正好覆盖两个 n-tile 在一个 k-step 上的数据：
 
 ```
 matrix 0: keys nt*8 .. +7,   d kk*16 + 0..7    -> b[nt][0]
@@ -227,7 +253,7 @@ lane i supplies row (i % 8) of matrix (i / 8):
 
 ### 5.3 寄存器上的 online softmax
 
-m16n8 累加器中，每个线程持有第 g 行和第 g+8 行（g = lane/4）各 2 个元素。一行的 64 个元素（8 个 n-tile × 每个 tile 8 列）分布在 **4 个线程**上（t = lane%4 = 0..3），每个线程持有其中 16 个：
+m16n8 累加器中，每个线程持有第 $g$ 行和第 $g+8$ 行（$g = \lfloor\mathrm{lane}/4\rfloor$，对应代码中的整数除法）各 2 个元素。一行的 64 个元素（$8\text{ 个 n-tile} \times \text{每个 tile }8\text{ 列}$）分布在 **4 个线程**上（$t = \mathrm{lane} \bmod 4$，$t = 0,\ldots,3$），每个线程持有其中 16 个：
 
 ```
 row g:   tile0: t0 t0 t1 t1 t2 t2 t3 t3 | tile1: t0 t0 t1 t1 ... | ... tile7
@@ -241,7 +267,7 @@ row max: local max of my 16 values, then
 
 ### 5.4 关键技巧：P 直接当作 A fragment
 
-算出 p 之后，要计算 P·V，P 是 mma 的 A 操作数（16×16 一块，k = key）。对照两种布局：
+算出 $p$ 之后，要计算 $P \cdot V$，$P$ 是 mma 的 $A$ 操作数（$16 \times 16$ 一块，$k = \mathrm{key}$）。对照两种布局：
 
 ```
 accumulator of n-tile 2j   (keys 16j .. 16j+7):     (g, 2t..2t+1), (g+8, 2t..2t+1)
@@ -252,7 +278,7 @@ A fragment of k-step j (keys 16j .. 16j+15):
   a[2] = (g,   2t+8..2t+9)     a[3] = (g+8, 2t+8..2t+9)     <- from tile 2j+1
 ```
 
-**完全吻合**。每个线程把自己持有的 p 值两两打包成 fp16x2，就得到了 A fragment，不需要写回 shared memory，也不需要线程间交换数据。FlashAttention-2 的 CUDA 实现正是这样做的，这也是它比 FA1 快的原因之一。V 按 `[key][d]` 存放，相当于 B[k = key][n = d]，用 lab1 中学过的 `ldmatrix.trans` 来加载。
+两种布局**完全吻合**。每个线程把自己持有的 $p$ 值两两打包成 fp16x2，就得到了 $A$ fragment，不需要写回 shared memory，也不需要线程间交换数据。FlashAttention-2 的 CUDA 实现正是这样做的，这也是它比 FA1 快的原因之一。$V$ 按 `[key][d]` 存放，相当于 `B[k = key][n = d]`，用 lab1 中学过的 `ldmatrix.trans` 来加载。
 
 lab 实测，这个约 150 行的 kernel 达到 PyTorch FlashAttention 后端的 94%。剩下的差距来自 cp.async 流水线（可选挑战 C4）和更精细的指令调度。
 
@@ -262,18 +288,18 @@ lab 实测，这个约 150 行的 kernel 达到 PyTorch FlashAttention 后端的
 
 ### 6.1 prefill 与 decode
 
-|          | prefill（处理 prompt）       | decode（逐个生成 token） |
-| -------- | ---------------------------- | ------------------------ |
-| query 数 | S 个                         | **1 个**（每个序列每步） |
-| 计算形态 | 矩阵乘（Tensor Core 能用满） | 矩阵 × 向量              |
-| 瓶颈     | 计算                         | **读 KV cache 的带宽**   |
-| 并行度   | B × H × (S/BM) 个 program    | 只有 B × H 个            |
+|          | prefill（处理 prompt）                 | decode（逐个生成 token）         |
+| -------- | -------------------------------------- | -------------------------------- |
+| query 数 | $S$ 个                                 | **1 个**（每个序列每步）         |
+| 计算形态 | 矩阵乘（Tensor Core 能用满）           | $\text{矩阵} \times \text{向量}$ |
+| 瓶颈     | 计算                                   | **读 KV cache 的带宽**           |
+| 并行度   | $B \times H \times (S/B_M)$ 个 program | 只有 $B \times H$ 个             |
 
-decode 时，每生成一个 token 都要把整个 KV cache 读一遍：Qwen3-0.6B 有 28 层、8 个 KV head、d=128，fp16 下每个 token 的 KV 约占 112 KB，4096 个 token 的上下文就要读 458 MB。所以 decode 的速度上限约等于显存带宽 ÷ KV 大小。
+decode 时，每生成一个 token 都要把整个 KV cache 读一遍：Qwen3-0.6B 有 28 层、8 个 KV head、$d = 128$，fp16 下每个 token 的 KV 约占 112 KB，4096 个 token 的上下文就要读 458 MB。所以 decode 的速度上限约等于 $\text{显存带宽} \div \text{KV 大小}$。
 
 ### 6.2 FlashDecoding：沿 KV 切分
 
-B=1、H=8 时，只有 8 个 program，而 4060 有 24 个 SM，大部分 SM 空闲。FlashDecoding 把 KV 切成 NSPLIT 段，并行算出各段的部分结果，再用 §4 的规则合并：
+$B = 1$、$H = 8$ 时，只有 8 个 program，而 4060 有 24 个 SM，大部分 SM 空闲。FlashDecoding 把 KV 切成 `NSPLIT` 段，并行算出各段的部分结果，再用 §4 的规则合并：
 
 ```
 no split:      program (b,h) reads keys 0 .. S-1             -> 8 programs total
@@ -281,7 +307,7 @@ split = 6:     program (b,h,s) reads keys s*S/6 .. (s+1)*S/6 -> 48 programs
                + a tiny combine kernel (lse-weighted sum of 6 partial outputs)
 ```
 
-lab 实测：B=1、H=8、S=32768 时，切分后从 86 GB/s 提升到 193 GB/s（memcpy 为 213）。B=16、H=32 时已有 512 个 program，切分毫无收益。所以**切分数应该由“已有的并行度是否足够”来决定**，lab 中的 `default_num_splits` 就是一个简单的启发式规则。
+lab 实测：$B = 1$、$H = 8$、$S = 32768$ 时，切分后从 86 GB/s 提升到 193 GB/s（memcpy 为 213）。$B = 16$、$H = 32$ 时已有 512 个 program，切分毫无收益。所以**切分数应该由“已有的并行度是否足够”来决定**，lab 中的 `default_num_splits` 就是一个简单的启发式规则。
 
 ### 6.3 Paged KV cache 预告
 
@@ -294,9 +320,9 @@ lab 实测：B=1、H=8、S=32768 时，切分后从 86 GB/s 提升到 193 GB/s�
 | 年份 | 工作                                                                                                     | 解决了上一步的什么问题                                                                  |
 | ---- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | 2018 | [Online softmax](https://arxiv.org/abs/1805.02867)（Milakov & Gimelshein）                               | 一遍扫描同时求 max 和归一化因子                                                         |
-| 2021 | [Self-attention does not need O(n²) memory](https://arxiv.org/abs/2112.05682)                            | 证明分块计算 attention 只需要 O(√n) 或 O(1) 的额外内存                                  |
+| 2021 | [Self-attention does not need $O(n^2)$ memory](https://arxiv.org/abs/2112.05682)                         | 证明分块计算 attention 只需要 $O(\sqrt{n})$ 或 $O(1)$ 的额外内存                        |
 | 2022 | [FlashAttention](https://arxiv.org/abs/2205.14135)（NeurIPS）                                            | IO-aware 分块，第一个比标准实现更快的精确 attention；反向传播靠重算                     |
-| 2023 | [FlashAttention-2](https://arxiv.org/abs/2307.08691)（ICLR'24）                                          | 外层循环换成 Q、沿序列方向并行、减少非 matmul 运算，**本讲 §3–§5 的内容**               |
+| 2023 | [FlashAttention-2](https://arxiv.org/abs/2307.08691)（ICLR'24）                                          | 外层循环换成 $Q$、沿序列方向并行、减少非 matmul 运算，**本讲 §3–§5 的内容**             |
 | 2023 | [FlashDecoding](https://crfm.stanford.edu/2023/10/12/flashdecoding.html)                                 | decode 时沿 KV 切分，填满 GPU                                                           |
 | 2023 | [PagedAttention / vLLM](https://arxiv.org/abs/2309.06180)（SOSP）                                        | KV 分页管理，L4 的主题                                                                  |
 | 2024 | [FlashAttention-3](https://arxiv.org/abs/2407.08608)（NeurIPS）                                          | Hopper：TMA + WGMMA + warp 特化（生产者/消费者）+ 两个 warpgroup 的 ping-pong 调度；FP8 |
@@ -309,9 +335,9 @@ lab 实测：B=1、H=8、S=32768 时，切分后从 86 GB/s 提升到 193 GB/s�
 
 ### 研究问题种子
 
-- **tile 配置的自动选择**：lab B4 中 D=128 的最优配置与 D=64 完全不同。能否用简单的寄存器和 shared memory 模型预测最优配置，而不是暴力搜索？这正是 L3 编译器要解决的问题。
-- **decode 的切分策略**：变长序列（每个请求的 S 不同）下，怎样切分才能均衡负载？FlashInfer 用 “load-balanced scheduling” 解决了这个问题，它的代价模型是什么？
-- **在 GeForce GPU 上**：FP16 累加 mma 的吞吐是 FP32 累加的 2 倍。attention 中的 PV 乘法能否用 FP16 累加而不损失精度？
+- **tile 配置的自动选择**：lab B4 中 $D = 128$ 的最优配置与 $D = 64$ 完全不同。能否用简单的寄存器和 shared memory 模型预测最优配置，而不是暴力搜索？这正是 L3 编译器要解决的问题。
+- **decode 的切分策略**：变长序列（每个请求的 $S$ 不同）下，怎样切分才能均衡负载？FlashInfer 用 “load-balanced scheduling” 解决了这个问题，它的代价模型是什么？
+- **在 GeForce GPU 上**：FP16 累加 mma 的吞吐是 FP32 累加的 2 倍。attention 中的 $PV$ 乘法能否用 FP16 累加而不损失精度？
 
 ## 可视化资料汇总
 
@@ -331,7 +357,7 @@ lab 实测：B=1、H=8、S=32768 时，切分后从 86 GB/s 提升到 193 GB/s�
 
 - [ ] 能写出 online softmax 的递推式，并证明它与分块方式无关
 - [ ] 能算出标准 attention 与 FlashAttention 的 HBM 流量，说明后者省在哪里
-- [ ] 能解释 acc 为什么也要乘以 α，以及为什么最后只除一次 l
+- [ ] 能解释 $\operatorname{acc}$ 为什么也要乘以 $\alpha$，以及为什么最后只除一次 $l$
 - [ ] 能画出 causal attention 中对角块与被跳过的块
 - [ ] 能写出两段部分结果的 lse 合并公式，并说出它的三个应用
 - [ ] 能说明 m16n8 累加器布局为什么可以直接当作 A fragment 使用

@@ -111,7 +111,7 @@ build/lab1/bench_basics > results/lab1/basics.csv
 | B3   | `sgemm_blocktile_1d` | 每个线程算 8 行（1D 寄存器分块）                        | kernel 4     | 3.9（50%）                                                   |
 | B4   | `sgemm_blocktile_2d` | 每个线程算 8×8 + float4 访存 + A 转置存入 shared memory | kernels 5–6  | 7.8（~100%）；cuBLAS 为 7.8                                  |
 
-每一步都按这个循环走：**写 kernel → 改 `implemented` → `test_b_sgemm Bx` → `bench_gemm --only sgemm` → 记录数字 → 用讲义里的 “每次 FMA 需要几次访存” 来解释**。
+每一步都按这个流程完成：**写 kernel → 改 `implemented` → `test_b_sgemm Bx` → `bench_gemm --only sgemm` → 记录数字 → 用讲义里的 “每次 FMA 需要几次访存” 来解释**。
 
 B3、B4 只接受 tile 整倍数的形状（launcher 会检查），这样 kernel 里不需要处理边界。真实库是怎么处理边界的，见文末可选挑战。
 
@@ -181,7 +181,7 @@ build/lab1/bench_gemm --only hgemm > results/lab1/hgemm.csv
 
 验收清单见 [grade.md](grade.md)。
 
-> **笔记本 GPU 的测量注意事项**：插上电源，使用高性能模式，关掉其他占用 GPU 的程序。作者实测：满载时功耗稳定在 80 W 的墙上，SM 频率在 2.2–2.6 GHz 间波动（标称最高 3.1 GHz）。因此 n=4096 的数字比 n=2048 低几个百分点，而且波动更大。同一组实验要连续跑完，每个数字至少重复 3 次。性能目标以 n=2048 为准。
+> **笔记本 GPU 的测量注意事项**：插上电源，使用高性能模式，关掉其他占用 GPU 的程序。作者实测：满载时功耗稳定在 80 W，达到功耗上限，SM 频率在 2.2–2.6 GHz 间波动（标称最高 3.1 GHz）。因此 n=4096 的数字比 n=2048 低几个百分点，而且波动更大。同一组实验要连续跑完，每个数字至少重复 3 次。性能目标以 n=2048 为准。
 
 ## 参考资料
 

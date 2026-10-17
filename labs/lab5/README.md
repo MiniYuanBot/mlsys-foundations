@@ -52,7 +52,7 @@ lab5/
 +-- tests/verify.rs  tests/spec.rs
 ```
 
-**Session 的不变量**（所有的轮次都要维护它）：`num_computed == tokens.len() - 1`。最后一个 token 已经采样出来，但还没有送进模型。一轮推测会把 `[last, d1, ..., dk]` 一次性送进模型，这些位置的 KV 也都写进了 cache；被拒绝的那部分 KV 用 `truncate` “忘掉”即可，下一轮会覆盖它们。
+**Session 的不变量**（每一轮都要维护它）：`num_computed == tokens.len() - 1`。最后一个 token 已经采样出来，但还没有送进模型。一轮推测会把 `[last, d1, ..., dk]` 一次性送进模型，这些位置的 KV 也都写进了 cache；被拒绝的那部分 KV 用 `truncate` “忘掉”即可，下一轮会覆盖它们。
 
 ---
 

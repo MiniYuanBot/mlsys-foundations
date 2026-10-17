@@ -11,13 +11,13 @@ tags: [lecture, distributed, allreduce, ring, ddp, zero, fsdp, tensor-parallel, 
 
 > [!abstract] 这一讲要解决的三个问题
 >
-> 1. **怎样高效地把 P 份数据加起来？** ring、tree、recursive doubling 各适合什么场景？用什么模型判断？
+> 1. **怎样高效地把 $P$ 份数据加起来？** ring、tree、recursive doubling 各适合什么场景？用什么模型判断？
 > 2. **数据并行训练怎样把通信藏起来？** PyTorch DDP 的 bucket 和重叠是怎么回事？
 > 3. **模型大到一张卡装不下时怎么办？** ZeRO、FSDP、张量并行、流水线并行各切的是什么，各付出了什么代价？苗老师组的 Galvatron 怎样自动选择组合？
 
 | 节  | 内容                                             | 对应 lab    |
 | --- | ------------------------------------------------ | ----------- |
-| §1  | 集合通信原语与 α-β 模型                          | Part A、B3  |
+| §1  | 集合通信原语与 $\alpha$-$\beta$ 模型             | Part A、B3  |
 | §2  | allreduce 算法：star、ring、recursive doubling   | Part B      |
 | §3  | 用模型选算法：交叉点                             | Part B 报告 |
 | §4  | 数据并行：DDP 的 bucket 与重叠                   | Part C1     |
@@ -27,7 +27,7 @@ tags: [lecture, distributed, allreduce, ring, ddp, zero, fsdp, tensor-parallel, 
 
 ---
 
-## §1 集合通信原语与 α-β 模型
+## §1 集合通信原语与 $\alpha$-$\beta$ 模型
 
 ### 1.1 五个原语
 
@@ -36,40 +36,47 @@ tags: [lecture, distributed, allreduce, ring, ddp, zero, fsdp, tensor-parallel, 
 broadcast  r0:[a]  r1:[ ]  r2:[ ]          r0:[a]  r1:[a]  r2:[a]
 reduce     r0:[a]  r1:[b]  r2:[c]          r0:[a+b+c]
 allreduce  r0:[a]  r1:[b]  r2:[c]          all:[a+b+c]
-reduce-    r0:[a0 a1 a2]                   r0:[s0]    s_i = a_i + b_i + c_i
+reduce-    r0:[a0 a1 a2]                   r0:[s0]
  scatter   r1:[b0 b1 b2]                   r1:[s1]
            r2:[c0 c1 c2]                   r2:[s2]
 all-gather r0:[x0] r1:[x1] r2:[x2]         all:[x0 x1 x2]
 
-key identity:  allreduce = reduce-scatter + all-gather
 ```
 
-最后这个恒等式贯穿整讲：ring allreduce 是它，ZeRO 也是它。
+其中，$s_i = a_i + b_i + c_i$。关键恒等式是：
 
-### 1.2 α-β 模型
+$$
+\text{allreduce} = \text{reduce-scatter} + \text{all-gather}
+$$
 
-点对点发送 n 个字节的耗时：
+最后这个恒等式贯穿整讲：ring allreduce 和 ZeRO 都用到了它。
 
-$$T(n) = \alpha + n\beta$$
+### 1.2 $\alpha$-$\beta$ 模型
 
-- **α**（延迟）：建立一次通信的固定开销，包括软件栈、同步、网络往返；
-- **β**（每字节时间）= 1 / 带宽。
+点对点发送 $n$ 个字节的耗时：
 
-| 环境                                      | α                        | 1/β               |
-| ----------------------------------------- | ------------------------ | ----------------- |
-| 同一台机器的进程间（lab6 实测，共享内存） | ~0.25 µs                 | ~19 GB/s          |
-| NVLink（H100）                            | ~几 µs（含 kernel 启动） | ~450 GB/s（单向） |
-| InfiniBand 跨节点                         | ~2–5 µs                  | ~25–50 GB/s       |
+$$
+T(n) = \alpha + n\beta
+$$
 
-**半带宽消息大小** n_{1/2} = α/β：消息比它小时，耗时主要是延迟；比它大时，主要是带宽。lab 中约为 4.5 KB。
+- **$\alpha$**（延迟）：建立一次通信的固定开销，包括软件栈、同步、网络往返；
+- **$\beta$**（每字节时间）$= 1 / \text{带宽}$。
 
-归约还有计算开销 γ（每字节相加的时间），本讲的公式先忽略它。lab 实测，模型预测的耗时约为实测的 1/2 到 1/3，γ 和内存拷贝就是主要原因。
+| 环境                                      | $\alpha$                               | $1/\beta$                                |
+| ----------------------------------------- | -------------------------------------- | ---------------------------------------- |
+| 同一台机器的进程间（lab6 实测，共享内存） | $\approx 0.25\,\mu\mathrm{s}$          | $\approx 19\,\mathrm{GB/s}$              |
+| NVLink（H100）                            | 约几 $\mu\mathrm{s}$（含 kernel 启动） | $\approx 450\,\mathrm{GB/s}$（单向）     |
+| InfiniBand 跨节点                         | $\approx (2\text{--}5)\,\mu\mathrm{s}$ | $\approx (25\text{--}50)\,\mathrm{GB/s}$ |
+
+**半带宽消息大小** $n_{1/2} = \alpha/\beta$：消息比它小时，耗时主要是延迟；比它大时，主要是带宽。lab 中约为 4.5 KB。
+
+归约还有计算开销 $\gamma$（每字节相加的时间），本讲的公式先忽略它。lab 实测，模型预测的耗时约为实测的 $1/2$ 到 $1/3$，$\gamma$ 和内存拷贝就是主要原因。
 
 ---
 
 ## §2 allreduce 算法
 
-设 P 个 rank、每个 rank 有 n 字节。
+设 $P$ 个 rank、每个 rank 有 $n$ 字节。
 
 ### 2.1 star：全部汇到 rank 0
 
@@ -77,14 +84,19 @@ $$T(n) = \alpha + n\beta$$
 r1 --\
 r2 ---+--> r0 (adds) --+--> r1, r2, r3
 r3 --/                 |
-     2 (P-1) messages of n bytes, all through r0:   T = 2 (P-1) (alpha + n beta)
 ```
 
-rank 0 的链路是瓶颈，P 越大越慢。lab 实测：64 MB、P=4 时比 ring 慢 2.4 倍。
+共有 $2(P-1)$ 条消息，每条 $n$ 字节，都经过 rank 0：
+
+$$
+T = 2(P-1)(\alpha + n\beta)
+$$
+
+rank 0 的链路是瓶颈，$P$ 越大越慢。lab 实测：64 MB、$P=4$ 时比 ring 慢 2.4 倍。
 
 ### 2.2 ring：先 reduce-scatter，再 all-gather
 
-把数据切成 P 块。P=4 时，reduce-scatter 的三步（每一格表示该 rank 在这一块上已经累加了哪些 rank 的数据）：
+把数据切成 $P$ 块。$P=4$ 时，reduce-scatter 的三步（每一格表示该 rank 在这一块上已经累加了哪些 rank 的数据）：
 
 ```
 chunk:        0        1        2        3
@@ -93,43 +105,54 @@ start  r0:   a0       a1       a2       a3
        r2:   c0       c1       c2       c3
        r3:   d0       d1       d2       d3
 
-step s: rank r sends chunk (r - s - 1) mod 4 to the right, adds what it receives
-
 after step 0:  r0 has d0+a0      r1 has a1+b1      r2 has b2+c2      r3 has c3+d3
 after step 1:  r0 has c0+d0+a0   r1 has d1+a1+b1   r2 has a2+b2+c2   r3 has b3+c3+d3
 after step 2:  r0 has b0+c0+d0+a0 = full chunk 0 ;  r1 full chunk 1 ;  r2 chunk 2 ;  r3 chunk 3
 ```
 
-all-gather 再沿环转 P−1 步，把每个完整的块传给所有人。
+第 $s$ 步，rank $r$ 向右发送块 $(r-s-1) \bmod 4$，并将收到的数据累加。
 
-$$T_{\text{ring}} = 2(P-1)\alpha + 2\frac{P-1}{P}n\beta$$
+all-gather 再沿环转 $P-1$ 步，把每个完整的块传给所有人。
 
-**带宽项与 P 几乎无关**：每个 rank 发送约 2n 字节，无论 P 有多大。这正是 ring 成为大消息默认算法的原因（[Baidu 2017](https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/) 把它引入深度学习）。代价是延迟项随 P 线性增长。
+$$
+T_{\text{ring}} = 2(P-1)\alpha + 2\frac{P-1}{P}n\beta
+$$
+
+**带宽项与 $P$ 几乎无关**：每个 rank 发送约 $2n$ 字节，无论 $P$ 有多大。这正是 ring 成为大消息默认算法的原因（[Baidu 2017](https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/) 把它引入深度学习）。代价是延迟项随 $P$ 线性增长。
 
 ### 2.3 recursive doubling
 
 ```
 P = 4, mask = 1:  r0 <-> r1,  r2 <-> r3    exchange everything, add
        mask = 2:  r0 <-> r2,  r1 <-> r3    exchange everything, add  -> done
-T_rd = log2(P) * (alpha + n beta)
 ```
 
-只需 log₂P 步，延迟最低；但每一步都传输**整个**缓冲区，带宽项是 ring 的 log₂P / 2 倍。
+$$
+T_{\mathrm{rd}} = \log_2 P \cdot (\alpha + n\beta)
+$$
+
+只需 $\log_2 P$ 步，延迟最低；但每一步都传输**整个**缓冲区，带宽项是 ring 的 $\log_2 P / 2$ 倍。
 
 ### 2.4 汇总
 
-| 算法                               | 延迟项       | 带宽项     | 适合                       |
-| ---------------------------------- | ------------ | ---------- | -------------------------- |
-| star                               | 2(P−1)α      | 2(P−1)nβ   | 什么都不适合（只作基线）   |
-| recursive doubling                 | log₂P · α    | log₂P · nβ | 小消息                     |
-| ring                               | 2(P−1)α      | ≈ 2nβ      | 大消息                     |
-| tree（NCCL 的 double binary tree） | ≈ 2log₂P · α | ≈ 2nβ      | 大规模集群上的中等大小消息 |
+| 算法                               | 延迟项                           | 带宽项                  | 适合                       |
+| ---------------------------------- | -------------------------------- | ----------------------- | -------------------------- |
+| star                               | $2(P-1)\alpha$                   | $2(P-1)n\beta$          | 什么都不适合（只作基线）   |
+| recursive doubling                 | $\log_2 P \cdot \alpha$          | $\log_2 P \cdot n\beta$ | 小消息                     |
+| ring                               | $2(P-1)\alpha$                   | $\approx 2n\beta$       | 大消息                     |
+| tree（NCCL 的 double binary tree） | $\approx 2\log_2 P \cdot \alpha$ | $\approx 2n\beta$       | 大规模集群上的中等大小消息 |
 
 ---
 
 ## §3 用模型选算法：交叉点
 
-令 T_rd = T_ring，解出交叉点。P=4 时：2α + 2nβ = 6α + 1.5nβ，得 n = 8α/β ≈ 8 × 4.5 KB ≈ 36 KB。lab 实测：在 16 KB 处 RD 仍然更快（8.4 对 13.1 µs），到 64 KB 时两者相当（22 对 21 µs），到 256 KB 时 ring 明显更快。**模型给出了正确的量级**。
+令 $T_{\mathrm{rd}} = T_{\mathrm{ring}}$，解出交叉点。$P=4$ 时：
+
+$$
+2\alpha + 2n\beta = 6\alpha + 1.5n\beta, \qquad n = 8\alpha/\beta \approx 8 \times 4.5\ \text{KB} \approx 36\ \text{KB}
+$$
+
+lab 实测：在 16 KB 处 RD 仍然更快（$8.4$ 对 $13.1\,\mu\mathrm{s}$），到 64 KB 时两者相当（$22$ 对 $21\,\mu\mathrm{s}$），到 256 KB 时 ring 明显更快。**模型给出了正确的量级**。
 
 ```
 time (log)                                        star
@@ -144,7 +167,7 @@ time (log)                                        star
         ~36 KB crossover rd vs ring (P = 4)
 ```
 
-这正是 MPI 库和 NCCL 内部做的事：按消息大小和 P 选择算法。NCCL 的 `NCCL_ALGO` 环境变量可以强制指定算法（见 lab6 `hpc/README.md`）。
+这正是 MPI 库和 NCCL 内部做的事：按消息大小和 $P$ 选择算法。NCCL 的 `NCCL_ALGO` 环境变量可以强制指定算法（见 lab6 `hpc/README.md`）。
 
 ---
 
@@ -174,7 +197,7 @@ comm                      [ AR b0 (L3+L2) ][ AR b1 (L1) ][ AR b2 (L0) ]
 
 bucket 的大小是一个权衡：
 
-- **太小**：每个 bucket 都要付一次 α，次数多了延迟累积；
+- **太小**：每个 bucket 都要付一次 $\alpha$，次数多了延迟累积；
 - **太大**：第一个 bucket 要等很久才凑齐，重叠的机会少。极端情况下只有一个 bucket，就退化成朴素做法。
 
 PyTorch 的默认值是 25 MB。lab 实测（12 MB 梯度、4 层）：4 MB 的 bucket 把暴露的通信从 6.2 ms 降到 3.7 ms；16 MB 时只有一个 bucket，没有重叠。
@@ -188,51 +211,50 @@ PyTorch 的默认值是 25 MB。lab 实测（12 MB 梯度、4 层）：4 MB 的 
 
 ### 5.1 显存都花在哪里
 
-用 Adam、混合精度训练一个 Ψ 个参数的模型，每个参数要占用：
+用 Adam 和混合精度训练一个有 $\Psi$ 个参数的模型，每个参数要占用：
 
-| 内容                       | 字节           |
-| -------------------------- | -------------- |
-| fp16 参数                  | 2              |
-| fp16 梯度                  | 2              |
-| fp32 主参数 + Adam 的 m、v | 4 + 4 + 4 = 12 |
-| **合计**                   | **16 Ψ**       |
+| 内容                           | 字节             |
+| ------------------------------ | ---------------- |
+| fp16 参数                      | 2                |
+| fp16 梯度                      | 2                |
+| fp32 主参数 + Adam 的 $m$、$v$ | $4 + 4 + 4 = 12$ |
+| **合计**                       | **$16\Psi$**     |
 
-7B 的模型需要 112 GB，单张 80 GB 的卡装不下。而数据并行时，P 张卡上各存一份**完全相同**的状态，显存被白白浪费了 P−1 份。
+7B 的模型需要 112 GB，单张 80 GB 的卡装不下。而数据并行时，$P$ 张卡上各存一份**完全相同**的状态，显存被白白浪费了 $P-1$ 份。
 
 ### 5.2 [ZeRO](https://arxiv.org/abs/1910.02054)（SC'20）：分片，而不是复制
 
-```
-                    params   grads   optimizer   per-GPU bytes      extra communication
-DDP                 full     full    full        16 Psi             -
-ZeRO-1 (os)         full     full    1/P         4 Psi + 12 Psi/P   none (RS + AG = one allreduce)
-ZeRO-2 (os+g)       full     1/P     1/P         2 Psi + 14 Psi/P   none
-ZeRO-3 (os+g+p)     1/P      1/P     1/P         16 Psi / P         all-gather params in fwd and bwd: +50%
-```
+| Method          | Params | Grads | Optimizer | Per-GPU bytes      | Extra communication                                                   |
+| --------------- | ------ | ----- | --------- | ------------------ | --------------------------------------------------------------------- |
+| DDP             | full   | full  | full      | $16\Psi$           | -                                                                     |
+| ZeRO-1 (os)     | full   | full  | $1/P$     | $4\Psi + 12\Psi/P$ | none ($\operatorname{RS} + \operatorname{AG} = \text{one allreduce}$) |
+| ZeRO-2 (os+g)   | full   | $1/P$ | $1/P$     | $2\Psi + 14\Psi/P$ | none                                                                  |
+| ZeRO-3 (os+g+p) | $1/P$  | $1/P$ | $1/P$     | $16\Psi/P$         | all-gather params in fwd and bwd: $+50\%$                             |
 
 ZeRO-1 的流程（lab C2）：
 
-1. **reduce-scatter** 梯度：rank r 只得到第 r 块梯度的总和；
-2. 只在第 r 块上做 Adam 更新，m、v 只需要 1/P 的大小；
+1. **reduce-scatter** 梯度：rank $r$ 只得到第 $r$ 块梯度的总和；
+2. 只在第 $r$ 块上做 Adam 更新，$m$、$v$ 只需要 $1/P$ 的大小；
 3. **all-gather** 参数，每个 rank 重新拿到完整的参数。
 
-RS + AG 正好等于一次 allreduce，所以**通信量没有增加**。lab 的意外发现：在 CPU 上，ZeRO-1 反而是最快的（15.3 对 23.1 ms），因为 Adam 的计算也被分成了 1/P。GPU 上的 Adam 很便宜，这个优势并不明显，ZeRO 的主要价值还是省显存。
+$\operatorname{RS} + \operatorname{AG}$ 正好等于一次 allreduce，所以**通信量没有增加**。lab 的意外发现：在 CPU 上，ZeRO-1 反而是最快的（15.3 对 23.1 ms），因为 Adam 的计算也被分成了 $1/P$。GPU 上的 Adam 很便宜，这个优势并不明显，ZeRO 的主要价值还是省显存。
 
 ### 5.3 [FSDP](https://arxiv.org/abs/2304.11277)（VLDB'23）
 
-FSDP 是 PyTorch 对 ZeRO-3 的实现：按层（或按模块）分片参数，前向和反向用到某一层时才 all-gather 它的参数，用完就释放；反向传播之后用 reduce-scatter 得到分片的梯度。关键工程问题是**预取**：在计算第 l 层时，提前 all-gather 第 l+1 层的参数，把通信藏起来。
+FSDP 是 PyTorch 对 ZeRO-3 的实现：按层（或按模块）分片参数，前向和反向用到某一层时才 all-gather 它的参数，用完就释放；反向传播之后用 reduce-scatter 得到分片的梯度。关键工程问题是**预取**：在计算第 $l$ 层时，提前 all-gather 第 $l+1$ 层的参数，把通信藏起来。
 
 ---
 
 ## §6 其他并行维度（选读）
 
-| 并行方式                                                         | 切什么                              | 通信                              | 通信量                       | 通常放在                  |
-| ---------------------------------------------------------------- | ----------------------------------- | --------------------------------- | ---------------------------- | ------------------------- |
-| 数据并行（DP/ZeRO/FSDP）                                         | 数据（以及状态）                    | 梯度 allreduce / RS + AG          | 每步 ~2Ψ                     | 跨节点                    |
-| 张量并行（[Megatron TP](https://arxiv.org/abs/1909.08053)）      | 每个矩阵按行或列切                  | 每层前向、反向各一次 allreduce    | 每层 ~激活大小               | **节点内**（需要 NVLink） |
-| 序列并行（[SP](https://arxiv.org/abs/2205.05198)）               | LayerNorm、Dropout 处的激活按序列切 | 把 TP 的 allreduce 拆成 RS + AG   | 与 TP 相同，激活显存减为 1/P | 与 TP 一起                |
-| 流水线并行（[PP](https://arxiv.org/abs/2104.04473)）             | 按层切成若干 stage                  | stage 之间点对点传激活            | 小                           | 跨节点                    |
-| 上下文并行（[Ring Attention](https://arxiv.org/abs/2310.01889)） | 长序列按 token 切                   | KV 沿环传递，用 L2 §4 的 lse 合并 | 每层 KV                      | 长上下文                  |
-| 专家并行（EP，[DeepEP](https://github.com/deepseek-ai/DeepEP)）  | MoE 的专家分到不同的卡              | token 的 all-to-all               | 每层激活                     | MoE 模型                  |
+| 并行方式                                                         | 切什么                              | 通信                                                            | 通信量                         | 通常放在                  |
+| ---------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------- | ------------------------------ | ------------------------- |
+| 数据并行（DP/ZeRO/FSDP）                                         | 数据（以及状态）                    | 梯度 allreduce / $\operatorname{RS} + \operatorname{AG}$        | 每步 $\approx 2\Psi$           | 跨节点                    |
+| 张量并行（[Megatron TP](https://arxiv.org/abs/1909.08053)）      | 每个矩阵按行或列切                  | 每层前向、反向各一次 allreduce                                  | 每层 $\approx \text{激活大小}$ | **节点内**（需要 NVLink） |
+| 序列并行（[SP](https://arxiv.org/abs/2205.05198)）               | LayerNorm、Dropout 处的激活按序列切 | 把 TP 的 allreduce 拆成 $\operatorname{RS} + \operatorname{AG}$ | 与 TP 相同，激活显存减为 $1/P$ | 与 TP 一起                |
+| 流水线并行（[PP](https://arxiv.org/abs/2104.04473)）             | 按层切成若干 stage                  | stage 之间点对点传激活                                          | 小                             | 跨节点                    |
+| 上下文并行（[Ring Attention](https://arxiv.org/abs/2310.01889)） | 长序列按 token 切                   | KV 沿环传递，用 L2 §4 的 lse 合并                               | 每层 KV                        | 长上下文                  |
+| 专家并行（EP，[DeepEP](https://github.com/deepseek-ai/DeepEP)）  | MoE 的专家分到不同的卡              | token 的 all-to-all                                             | 每层激活                       | MoE 模型                  |
 
 流水线并行的“气泡”：
 
@@ -242,10 +264,17 @@ stage 0  F1 F2 F3 F4 .  .  .  .  .  .  B4 B3 B2 B1
 stage 1  .  F1 F2 F3 F4 .  .  .  .  B4 B3 B2 B1 .
 stage 2  .  .  F1 F2 F3 F4 .  .  B4 B3 B2 B1 .  .
 stage 3  .  .  .  F1 F2 F3 F4 B4 B3 B2 B1 .  .  .
-bubble fraction = (p - 1) / (m + p - 1);  1F1B keeps the same bubble but needs less activation memory
 ```
 
-真实的大模型训练把它们组合起来，称为“3D 并行”（DP × TP × PP），再加上 SP、CP、EP。
+气泡比例为：
+
+$$
+\text{bubble fraction} = \frac{p-1}{m+p-1}
+$$
+
+1F1B 的气泡比例相同，但需要的激活显存更少。
+
+实际的大模型训练把 DP、TP、PP 组合成“3D 并行”（$\mathrm{DP} \times \mathrm{TP} \times \mathrm{PP}$），再加上 SP、CP、EP。
 
 ---
 
@@ -253,7 +282,7 @@ bubble fraction = (p - 1) / (m + p - 1);  1F1B keeps the same bubble but needs l
 
 | 年份    | 工作                                                                                                                                                                                                               | 解决了上一步的什么问题                                                               |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| 2005    | [Thakur et al.](https://web.cels.anl.gov/~thakur/papers/ijhpca-coll.pdf)（MPICH）                                                                                                                                  | 集合通信算法的 α-β 分析与按消息大小的选择                                            |
+| 2005    | [Thakur et al.](https://web.cels.anl.gov/~thakur/papers/ijhpca-coll.pdf)（MPICH）                                                                                                                                  | 集合通信算法的 $\alpha$-$\beta$ 分析与按消息大小的选择                               |
 | 2017    | [Baidu ring allreduce](https://andrew.gibiansky.com/blog/machine-learning/baidu-allreduce/)、Horovod                                                                                                               | 把 HPC 的 ring 引入深度学习                                                          |
 | 2019    | [Megatron-LM](https://arxiv.org/abs/1909.08053)                                                                                                                                                                    | 张量并行：节点内切分 Transformer 层                                                  |
 | 2020    | [ZeRO](https://arxiv.org/abs/1910.02054)（SC）、[PyTorch DDP](https://arxiv.org/abs/2006.15704)（VLDB）                                                                                                            | 状态分片；bucket 与重叠                                                              |
@@ -267,8 +296,8 @@ bubble fraction = (p - 1) / (m + p - 1);  1F1B keeps the same bubble but needs l
 
 ### 研究问题种子
 
-- **更好的 bucket 策略**：bucket 的划分能否根据实测的 α、β 和每层反向传播的耗时，用动态规划求出最优切分，而不用固定的 25 MB？
-- **ZeRO-1 在 CPU 和 GPU 上的差异**：lab 发现，在 CPU 上分片优化器计算本身就是收益。在 GPU 上，Adam 的耗时占 step 的比例是多少？什么样的模型和 batch 下，这个比例会变得重要？
+- **更好的 bucket 策略**：bucket 的划分能否根据实测的 $\alpha$、$\beta$ 和每层反向传播的耗时，用动态规划求出最优切分，而不用固定的 25 MB？
+- **ZeRO-1 在 CPU 和 GPU 上的差异**：lab 发现，在 CPU 上，分片优化器计算本身就能带来收益。在 GPU 上，Adam 的耗时占 step 的比例是多少？什么样的模型和 batch 下，这个比例会变得重要？
 - **异构集群的并行规划**：Galvatron 假设所有 GPU 相同。如果集群里混合了不同型号的 GPU 和不同带宽的链路（苗老师组 Helix 的推理场景），训练的并行方案应该怎样调整？
 
 ## 可视化资料汇总
@@ -284,8 +313,8 @@ bubble fraction = (p - 1) / (m + p - 1);  1F1B keeps the same bubble but needs l
 
 ## 自测清单
 
-- [ ] 能画出五个集合通信原语，并说明 allreduce = reduce-scatter + all-gather
-- [ ] 能写出 star、ring、RD 的 α-β 代价，并解释 ring 的带宽项为什么与 P 无关
+- [ ] 能画出五个集合通信原语，并说明 $\text{allreduce} = \text{reduce-scatter} + \text{all-gather}$
+- [ ] 能写出 star、ring、RD 的 $\alpha$-$\beta$ 代价，并解释 ring 的带宽项为什么与 $P$ 无关
 - [ ] 能用模型算出 ring 与 RD 的交叉点
 - [ ] 能画出 DDP 的 bucket 重叠时间线，并说明 bucket 太大和太小的问题
 - [ ] 能算出 Adam 混合精度训练时每个参数的字节数，以及 ZeRO 1/2/3 各省了多少

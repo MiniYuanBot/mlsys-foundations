@@ -31,7 +31,7 @@ tags: [lecture, serving, kv-cache, paged-attention, batching, scheduling, prefix
 
 ## §1 一个 token 怎样流过 Qwen3
 
-Qwen3-0.6B：hidden = 1024，28 层，16 个 query head、8 个 KV head（GQA），head_dim = 128，MLP 中间维度 3072，词表 151936。
+Qwen3-0.6B：$\mathrm{hidden} = 1024$，28 层，16 个 query head、8 个 KV head（GQA），$\mathrm{head\_dim} = 128$，MLP 中间维度 3072，词表 151936。
 
 ```
 token ids [T]
@@ -52,38 +52,48 @@ next token = argmax(logits of the last position)
 
 **GQA**（grouped-query attention）：16 个 query head 共用 8 组 K/V，每 2 个 query head 读同一组 K/V。KV cache 因此缩小一半。
 
-**为什么要逐处对齐 bf16 舍入**：lab A1 的注释要求在 HF 舍入的位置同样舍入，比如 RMSNorm 在乘 weight 之前先转成 bf16。否则误差在 28 层中逐层累积，最终会改变 greedy 生成的结果。lab 的验收标准是：每个位置的 logits 与 HF fp32 的余弦相似度 > 0.99。
+**为什么要逐处对齐 bf16 舍入**：lab A1 的注释要求在 HF 舍入的位置同样舍入，比如 RMSNorm 在乘 weight 之前先转成 bf16。否则误差在 28 层中逐层累积，最终会改变 greedy 生成的结果。lab 的验收标准是：每个位置的 logits 与 HF fp32 的余弦相似度 $> 0.99$。
 
 ---
 
 ## §2 prefill 与 decode；性能的天花板
 
-|                | prefill                           | decode                                |
-| -------------- | --------------------------------- | ------------------------------------- |
-| 每步处理       | 整个 prompt（几百到几千个 token） | 每个序列 1 个 token                   |
-| GEMM 形状      | [T, 1024] × [1024, 3072]，T 很大  | [1, 1024] × [1024, 3072]，矩阵 × 向量 |
-| 瓶颈           | 计算（Tensor Core）               | **读权重和 KV cache 的带宽**          |
-| 关心的延迟指标 | **TTFT**（time to first token）   | **TPOT**（time per output token）     |
+|                | prefill                                   | decode                                              |
+| -------------- | ----------------------------------------- | --------------------------------------------------- |
+| 每步处理       | 整个 prompt（几百到几千个 token）         | 每个序列 1 个 token                                 |
+| GEMM 形状      | $[T, 1024] \times [1024, 3072]$，$T$ 很大 | $[1, 1024] \times [1024, 3072]$，矩阵 $\times$ 向量 |
+| 瓶颈           | 计算（Tensor Core）                       | **读权重和 KV cache 的带宽**                        |
+| 关心的延迟指标 | **TTFT**（time to first token）           | **TPOT**（time per output token）                   |
 
 ### 2.1 decode 的带宽上限
 
 decode 每生成一个 token，都要把**全部权重**读一遍：Qwen3-0.6B 有 1.5 GB（bf16），4060 Laptop 的实测带宽约 213 GB/s（lab1 中 cudaMemcpy 的结果）：
 
-$$\text{单请求 decode 上限} \approx \frac{213\ \text{GB/s}}{1.5\ \text{GB}} \approx 142\ \text{tokens/s}$$
+$$
+\text{单请求 decode 上限} \approx \frac{213\ \text{GB/s}}{1.5\ \text{GB}} \approx 142\ \text{tokens/s}
+$$
 
 lab 实测为 119 tok/s，达到上限的约 84%。剩下的差距来自 kernel 启动开销（每层十几个 kernel，28 层就有约 400 个）和小 kernel 用不满带宽。
 
-**怎样突破这个上限？** 同时 decode 多个序列（batching）：读一遍权重就能服务 B 个 token。在 B 达到 Roofline 拐点之前，吞吐几乎随 B 线性增长。这就是推理系统要做 batching 的根本原因。
+**怎样突破这个上限？** 同时 decode 多个序列（batching）：读一遍权重就能服务 $B$ 个 token。在 $B$ 达到 Roofline 拐点之前，吞吐几乎随 $B$ 线性增长。这就是推理系统要做 batching 的根本原因。
 
 ### 2.2 KV cache 的显存账
 
-每个 token 的 KV 占用：2（K 和 V）× 28 层 × 8 个 KV head × 128 × 2 字节 = **112 KB**。
+每个 token 的 KV 占用：
 
-```
-1 sequence of 4096 tokens  = 4096 * 112 KB = 458 MB
-2 GB of KV cache           = 18,700 tokens  (e.g. 12 sequences of 1.5k tokens)
-weights                    = 1.5 GB
-```
+$$
+\underbrace{2}_{K\text{ and }V} \times \underbrace{28}_{\text{layers}} \times \underbrace{8}_{\text{KV heads}} \times 128 \times 2\ \text{bytes} = 112\ \text{KB}
+$$
+
+$$
+\begin{aligned}
+\text{KV for 1 sequence of 4096 tokens} &= 4096 \times 112\ \text{KB} = 458\ \text{MB} \\
+\text{Token capacity of 2 GB KV cache} &= 18{,}700\ \text{tokens} \\
+\text{Weights} &= 1.5\ \text{GB}
+\end{aligned}
+$$
+
+例如可容纳 12 个长度为 $1.5\mathrm{k}$ token 的序列。
 
 8 GB 的 4060 上，扣除权重和激活，剩下能用来存 KV 的显存只有几 GB，并发数直接受它限制。所以 KV cache 是推理系统中**最稀缺的资源**，下面的所有优化都围绕它展开。
 
@@ -120,7 +130,7 @@ seq B (9 tokens):  block table [2]
 token at position p of seq A lives at slot  table[p / 16] * 16 + p % 16
 ```
 
-- 只有最后一块可能没用满，内部碎片 < 1 块；
+- 只有最后一块可能没用满，内部碎片 $< 1$ 块；
 - 任何空闲块都能用，没有外部碎片；
 - 块带有引用计数，多个序列可以指向同一个物理块（§6）。
 
@@ -128,7 +138,7 @@ token at position p of seq A lives at slot  table[p / 16] * 16 + p % 16
 
 ### 3.3 attention kernel：每个 warp 负责一个 query
 
-lab 的朴素版本让一个线程串行算完一个 (token, head) 的全部计算，用三遍 softmax，因此 K 要读两遍。B2 的版本改成：
+lab 的朴素版本用一个线程串行完成一个 (token, head) 的计算，用三遍 softmax，因此 K 要读两遍。B2 的版本改成：
 
 ```
 one warp per (query token, head);  lane l owns dims 4l .. 4l+3 (8 bytes)
@@ -171,7 +181,7 @@ req 3              [P][d][d][d][d][d]              joins as soon as req 0 leaves
 req 4                       [P][d][d]...
 ```
 
-一个关键细节：同一步里的序列长度各不相同，有的在 prefill，有的在 decode。lab 把这一步所有序列的 token 拼平成一个 [T] 的数组（见 `batch.rs`），GEMM 一次算完，attention 再按各自的 block table 和位置分别处理。这正是 paged KV 让 continuous batching 变得简单的原因：每个序列的 KV 位置互相独立，不需要对齐。
+一个关键细节：同一步中，各序列的长度不同，有的处于 prefill 阶段，有的处于 decode 阶段。lab 把这一步所有序列的 token 拼平成一个 $[T]$ 的数组（见 `batch.rs`），GEMM 一次算完，attention 再按各自的 block table 和位置分别处理。这正是 paged KV 让 continuous batching 变得简单的原因：每个序列的 KV 位置互相独立，不需要对齐。
 
 lab 实测（64 个请求，输出长度在 32–224 之间均匀分布）：continuous 的吞吐是 static 的 2.4 倍，TTFT 中位数从 10.9 s 降到 2.7 s。
 
@@ -185,7 +195,7 @@ lab 实测（64 个请求，输出长度在 32–224 之间均匀分布）：con
 
 ### 5.1 问题：prefill 与 decode 抢占同一步
 
-continuous batching 中，一个 1536 token 的 prefill 加入某一步后，这一步要算 1536 个 token，同一步里所有 decode 中的序列都要等它，它们的 TPOT 瞬间变成平常的好几倍：
+continuous batching 中，一个 1536 token 的 prefill 加入某一步后，这一步要算 1536 个 token，同一步中处于 decode 阶段的所有序列都要等它，它们的 TPOT 瞬间变成平常的好几倍：
 
 ```
 step:     1    2    3       4                5    6
@@ -208,8 +218,8 @@ TPOT      25        25        25        25        25        25
 
 ### 5.3 lab 中的两个发现
 
-1. **准入控制是必需的**：如果只要空闲块够放第一块就接纳请求，就会同时混进太多只 prefill 了一半的请求。之后的块需要更多显存，它们互相抢占，抢占次数高达 63–201 次，反而比不分块更慢。正确的做法是：接纳时，空闲块要能装下**整个** prompt。
-2. **收益与模型大小有关**：lab 中 chunked prefill 让 TPOT p99 降低了约 13%（61 → 53 ms）。论文中 13B 模型的收益要大得多。原因是：0.6B 模型的 decode 步主要受启动开销和权重读取的限制，prefill 块所增加的耗时，相对它已经很长的步长并不显著。模型越大，“一个长 prefill 步”和“一个 decode 步”的耗时差得越多，切块的收益也越大。
+1. **准入控制是必需的**：如果只要空闲块够放第一块就接纳请求，就会有太多请求同时处于 prefill 只完成了一半的状态。之后的块需要更多显存，它们互相抢占，抢占次数高达 63–201 次，反而比不分块更慢。正确的做法是：接纳时，空闲块要能装下**整个** prompt。
+2. **收益与模型大小有关**：lab 中 chunked prefill 让 TPOT p99 降低了约 13%（$61 \to 53\ \text{ms}$）。论文中 13B 模型的收益要大得多。原因是：0.6B 模型的 decode 步主要受启动开销和权重读取的限制，prefill 块增加的耗时，相对于已经很长的 decode 步耗时并不显著。模型越大，“一个长 prefill 步”和“一个 decode 步”的耗时差得越多，切块的收益也越大。
 
 ---
 
@@ -221,7 +231,7 @@ TPOT      25        25        25        25        25        25
 
 ### 6.2 块级前缀缓存（vLLM APC）
 
-每个**写满**的块计算一个内容 hash，并且与前一块的 hash 串成链：H(前一块的 hash, 本块的 16 个 token)。维护一张表：hash → 物理块。
+为每个**写满**的块计算一个内容 hash，并将它与前一块的 hash 串成链：$H(\text{前一块的 hash}, \text{本块的 16 个 token})$。维护一张表：hash → 物理块。
 
 ```
 request A: [sys sys sys sys | sys sys sys sys | sys q1 q1 q1 | q1 ...]
@@ -234,7 +244,7 @@ request B: [sys sys sys sys | sys sys sys sys | sys q2 q2 q2 | ...]
 - **最后一个 token 永远不复用**：需要它的 logits 来采样下一个 token，所以至少要重新计算一个 token。
 - **延迟释放**：引用计数降到 0 的已缓存块不立即回收，而是进入 LRU 队列，只有显存不够时才被驱逐。下一个使用相同前缀的请求，很可能还能命中它。
 
-lab 实测（512 token 的 prompt 中有 448 token 是共享的）：吞吐 3.1 倍，TTFT 中位数从 2084 ms 降到 658 ms，块命中率 96%。
+lab 实测（512 token 的 prompt 中有 448 token 是共享的）：吞吐提升到原来的 3.1 倍，TTFT 中位数从 2084 ms 降到 658 ms，块命中率 96%。
 
 ### 6.3 RadixAttention（[SGLang](https://arxiv.org/abs/2312.07104)，NeurIPS'24）
 
@@ -274,13 +284,13 @@ lab 可选挑战 C3 要求你把块级 hash 换成基数树。
 | 2023– | KV 压缩：[H2O](https://arxiv.org/abs/2306.14048)、[SnapKV](https://arxiv.org/abs/2404.14469)、[KVQuant](https://arxiv.org/abs/2401.18079)、[PQCache](https://arxiv.org/abs/2407.12820)（SIGMOD'25，苗旭鹏等） | 丢弃不重要的 token，或者把 KV 量化/乘积量化，用少量精度换取大得多的并发                             |
 | 2025  | [SGLang 大规模 EP + PD 分离](https://lmsys.org/blog/2025-05-05-large-scale-ep/)                                                                                                                               | 在 DeepSeek-V3 这样的 MoE 模型上，把专家并行与 PD 分离结合起来                                      |
 
-苗老师组的[推理服务综述](https://arxiv.org/abs/2312.15234)把这些工作按“算法”和“系统”两个维度做了系统分类，适合作为本讲的延伸阅读。
+苗老师组的[推理服务综述](https://arxiv.org/abs/2312.15234)把这些工作按“算法”和“系统”两个维度归类，适合作为本讲的延伸阅读。
 
 ### 研究问题种子
 
-- **调度的代价模型**：一步的耗时可以近似为 a × (prefill token 数) + b × (decode 序列数) + c × (attention 读取的 KV 总量) + d 吗？用 lab4 的数据拟合出这几个参数，再用模型来选择最优的 chunk 大小，能否比固定值更好？
+- **调度的代价模型**：一步的耗时可以近似为 $a \times (\text{prefill token 数}) + b \times (\text{decode 序列数}) + c \times (\text{attention 读取的 KV 总量}) + d$ 吗？用 lab4 的数据拟合出这几个参数，再用模型来选择最优的 chunk 大小，能否比固定值更好？
 - **前缀缓存与公平性**：cache-aware 调度会优先调度能命中缓存的请求。没有共享前缀的请求会不会因此被饿死？怎样设计调度策略，在命中率和公平性之间取得平衡？
-- **小模型上的 PD 分离**：lab 中 chunked prefill 对 0.6B 模型的收益很小。PD 分离对小模型是否也没有意义？分离的收益与“prefill 步 / decode 步”的耗时比之间是什么关系？
+- **小模型上的 PD 分离**：lab 中 chunked prefill 对 0.6B 模型的收益很小。PD 分离对小模型是否也没有意义？分离的收益与 $\text{prefill 步耗时} / \text{decode 步耗时}$ 之间是什么关系？
 
 ## 可视化资料汇总
 
