@@ -2,12 +2,14 @@
 //!
 //!   cargo run --release --bin generate -- "Explain PagedAttention in two sentences."
 //!   cargo run --release --bin generate -- --model Qwen3-1.7B --max-tokens 200 "..."
+//!   cargo run --release --bin generate -- --attention naive "..."   (before B2 is done)
 use std::io::Write;
 use std::time::Instant;
 
 use anyhow::Result;
 use minillm::config::model_dir;
 use minillm::engine::{Engine, EngineConfig};
+use minillm::ops::AttnImpl;
 use minillm::sequence::Status;
 use minillm::text::Text;
 
@@ -15,10 +17,18 @@ fn main() -> Result<()> {
     let mut args = std::env::args().skip(1).collect::<Vec<_>>();
     let mut model = "Qwen3-0.6B".to_string();
     let mut max_tokens = 128usize;
+    let mut attention = AttnImpl::Fast;
     while args.len() >= 2 && args[0].starts_with("--") {
         match args[0].as_str() {
             "--model" => model = args[1].clone(),
             "--max-tokens" => max_tokens = args[1].parse()?,
+            "--attention" => {
+                attention = match args[1].as_str() {
+                    "naive" => AttnImpl::Naive,
+                    "fast" => AttnImpl::Fast,
+                    other => anyhow::bail!("--attention naive|fast, not {other}"),
+                }
+            }
             other => anyhow::bail!("unknown flag {other}"),
         }
         args.drain(..2);
@@ -35,6 +45,8 @@ fn main() -> Result<()> {
         &dir,
         EngineConfig {
             kv_cache_bytes: 1 << 30,
+            prefix_caching: false, // one prompt: nothing to share (and runs before C2)
+            attention,
             ..Default::default()
         },
     )?;

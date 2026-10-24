@@ -22,6 +22,9 @@ pub struct EngineConfig {
     pub kv_cache_bytes: usize,
     pub sched: SchedulerConfig,
     pub prefix_caching: bool,
+    /// Overrides `Qwen3::attn`. The default is the provided naive kernel, so the
+    /// correctness tests of B3/C do not depend on B2; `generate` and `bench`
+    /// select Fast explicitly.
     pub attention: AttnImpl,
 }
 
@@ -32,7 +35,7 @@ impl Default for EngineConfig {
             kv_cache_bytes: 2 << 30,
             sched: SchedulerConfig::default(),
             prefix_caching: true,
-            attention: AttnImpl::Fast,
+            attention: AttnImpl::Naive,
         }
     }
 }

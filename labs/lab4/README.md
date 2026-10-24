@@ -41,7 +41,7 @@ cargo build --release                          # first build ~1 min (downloads c
 python scripts/make_reference.py               # once: HF reference logits -> ../build/lab4/ref/ (~2 min)
 cargo test --release                           # nearly everything fails at first
 cargo test --release --test kernels a1b        # a single test
-cargo run --release --bin generate -- "Explain PagedAttention in two sentences."
+cargo run --release --bin generate -- "Explain PagedAttention in two sentences."   # after B3
 ```
 
 kernel 源码由 `include_str!` 嵌入程序，启动时用 NVRTC 编译。`.cu` 文件里的编译错误会在**运行时**报出来，错误信息中带有文件名和行号。
@@ -93,13 +93,14 @@ Rust 只要会写结构体、`Vec`、`HashMap`、`match`、`Option` 就够用了
 
 ### A2 前向传播（`src/model_student.rs`）
 
-把 cuBLAS GEMM（`ops::linear`，已提供）和你的 kernel 拼成 28 层。注意 Qwen3 特有的 **QK-norm**：q、k 在做 RoPE 之前，要先按 head 各做一次 RMSNorm。
+把 cuBLAS GEMM（`ops::linear`，已提供）和你的 kernel 拼成 28 层。注意 Qwen3 特有的 **QK-norm**：q、k 在做 RoPE 之前，要先按 head 各做一次 RMSNorm。attention 调用 `ops::paged_attention(gpu, self.attn, ..)` 即可：`Qwen3::load` 默认 `self.attn = AttnImpl::Naive`，用的是已提供的 `paged_attention_naive`，所以 A2 不依赖 B2。
 
-**通过标准**：`cargo test --release --test model` 通过。
+**通过标准**：`cargo test --release --test model` 两项全部通过。这两项只用到 A1 和 A2：测试直接调用 `Qwen3::forward`，使用固定的 block table（0, 1, 2, …），不经过 `Engine`、块管理器和调度器。
 
-- teacher forcing 下，每个位置的 logits 与 HF fp32 的余弦相似度 > 0.99，top-1 一致率 ≥ 90%。参考实现：余弦相似度 ≥ 0.998，一致率 99.6–100%。
-- greedy 生成的前 8 个 token 与 HF 相同。参考实现中，4 个 prompt 中有 3 个的 24 个 token 全部相同，第 4 个的前 13 个相同。分歧发生在 bf16 与 fp32 恰好打平的位置，这是正常的。
-- `cargo run --release --bin generate` 能输出通顺的回答。
+- teacher forcing 下，每个位置的 logits 与 HF fp32 的余弦相似度 > 0.99，top-1 一致率 ≥ 90%。参考实现（naive attention）：余弦相似度 ≥ 0.996，一致率 95.5–100%。
+- greedy 生成（一次 prefill 后逐 token decode，复用 KV cache）的前 8 个 token 与 HF 相同。参考实现中，4 个 prompt 中有 3 个的 24 个 token 全部相同，第 4 个的前 13 个相同。分歧发生在 bf16 与 fp32 恰好打平的位置，这是正常的。
+
+`bin/generate` 要经过 `Engine`，需要 B1 和 B3，所以放到 Part B 再验收。
 
 ---
 
@@ -122,6 +123,8 @@ KV cache 是一个由 `num_blocks` 个块组成的池子，每块存放 16 个 t
 
 `provided.cu` 中的 `paged_attention_naive` 让每个线程串行算完一个 (token, head)，并且对 K 读两遍。你要写的版本是**一个 warp 负责一个 (token, head)**：每个 lane 负责 4 个维度，用 8 字节的合并加载，配合 lab2 的 online softmax，只需一遍。
 
+正确性测试（`model`、`engine`）用的都是 naive 版本，B2 只由 `kernels` 中的 `b2_*` 验收；`generate` 和 `bench` 默认使用 Fast（`--attention naive` 可切回）。
+
 ### B3 调度器（`src/scheduler_student.rs`，纯 CPU）
 
 文件顶部的注释就是完整的规格说明（与 vLLM v1 的策略一致）：
@@ -131,7 +134,7 @@ KV cache 是一个由 `num_blocks` 个块组成的池子，每块存放 16 个 t
 - 显存不够时，抢占最后加入的那个序列（释放它的全部块，之后重算）；
 - `static_batching` 模式作为基线：一批跑完之后才接纳下一批。
 
-`tests/scheduler.rs` 在 CPU 上模拟引擎，逐步检查调度决策。
+`tests/scheduler.rs` 在 CPU 上模拟引擎，逐步检查调度决策。B3 的测试都关闭了前缀缓存，`match_prefix` 和 `register_full_blocks` 在 `prefix_caching == false` 时直接返回（已提供），所以不需要先写 C2。
 
 **测量**
 
@@ -145,6 +148,7 @@ cargo run --release --bin bench -- --label continuous --requests 64 --prompt 256
 **通过标准**
 
 - `kernels`、`kv`、`scheduler` 中的 B 系列测试，以及 `engine` 中的 `b3_*` 全部通过。
+- `cargo run --release --bin generate` 能输出通顺的回答（B2 未完成时加 `--attention naive`）。
 - 快速 attention 的输出吞吐 ≥ 朴素版本的 **5×**（参考实现 224 对 19 tok/s，11.8×）。
 - continuous batching 的吞吐 ≥ static 的 **1.8×**（参考实现 858 对 363 tok/s，2.4×；TTFT 中位数从 10.9 s 降到 2.7 s）。
 - 报告中回答：单请求 decode 的速度（`generate` 打印的 tok/s，参考实现约 119）离显存带宽给出的上限还有多远？上限的算法是：权重字节数 ÷ lab1 测得的 memcpy 带宽。

@@ -1,12 +1,13 @@
 //! The whole model against Hugging Face transformers (fp32 reference).
 //! Run `python lab4/scripts/make_reference.py` once first.
 //!   cargo test --release --test model
+//! Needs only A1 + A2: the model runs alone on a fixed block table with the
+//! provided naive attention (no Engine, BlockManager, Scheduler or B2 kernel).
 mod common;
 
 use common::*;
 use minillm::batch::{BatchInput, DeviceBatch};
 use minillm::config::model_dir;
-use minillm::engine::{Engine, EngineConfig};
 use minillm::gpu::Gpu;
 use minillm::kvcache::KvCache;
 use minillm::model_student::Qwen3;
@@ -112,22 +113,38 @@ fn a2_teacher_forced_logits_match_hf() {
     }
 }
 
+/// Greedy decoding with the model alone: one prefill step, then one decode step
+/// per token, on a fixed block table 0, 1, 2, ... (no Engine, scheduler or
+/// block manager, which are Part B).
+fn greedy(gpu: &Gpu, model: &Qwen3, prompt: &[u32], n: usize) -> Vec<u32> {
+    let bs = 16;
+    let num_blocks = (prompt.len() + n).div_ceil(bs);
+    let mut cache = KvCache::new(gpu, &model.cfg, num_blocks, bs).unwrap();
+    let table: Vec<u32> = (0..num_blocks as u32).collect();
+    let mut tokens = prompt.to_vec();
+    let mut computed = 0;
+    while tokens.len() < prompt.len() + n {
+        let batch = BatchInput::build(&[(&tokens[computed..], computed, &table, true)], bs);
+        let db = DeviceBatch::upload(gpu, &batch).unwrap();
+        let logits = model.forward(gpu, &db, &mut cache).unwrap();
+        let mut next = gpu.alloc::<i32>(1).unwrap();
+        ops::argmax_rows(gpu, &logits, &mut next, 1, model.cfg.vocab_size).unwrap();
+        computed = tokens.len();
+        tokens.push(gpu.download(&next).unwrap()[0] as u32);
+    }
+    tokens.split_off(prompt.len())
+}
+
 #[test]
 fn a2_greedy_generation_matches_hf() {
     let _gpu = common::gpu_lock();
     let Some(refs) = load_ref("Qwen3-0.6B") else {
         return;
     };
-    let mut engine = Engine::new(
-        &model_dir("Qwen3-0.6B"),
-        EngineConfig {
-            kv_cache_bytes: 256 << 20,
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    let gpu = Gpu::new().unwrap();
+    let model = Qwen3::load(&gpu, &model_dir("Qwen3-0.6B")).unwrap();
     for (e, _) in &refs {
-        let got = engine.generate(&e.ids, e.greedy.len(), &[]).unwrap();
+        let got = greedy(&gpu, &model, &e.ids, e.greedy.len());
         let same = got
             .iter()
             .zip(&e.greedy)

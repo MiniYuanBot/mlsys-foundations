@@ -33,6 +33,8 @@ use crate::weights::Weights;
 pub struct Qwen3 {
     pub cfg: Qwen3Config,
     pub w: Weights,
+    /// Attention kernel. Defaults to the provided `paged_attention_naive`, so
+    /// that A2 does not depend on your B2 kernel (`generate` / `bench` pick Fast).
     pub attn: AttnImpl,
 }
 
@@ -43,7 +45,7 @@ impl Qwen3 {
         Ok(Self {
             cfg,
             w,
-            attn: AttnImpl::Fast,
+            attn: AttnImpl::Naive,
         })
     }
 

@@ -133,6 +133,10 @@ impl BlockManager {
     //   Set seq.num_computed = seq.num_cached_tokens = matched_blocks * B.
     // Returns the number of reused tokens.
     pub fn match_prefix(&mut self, seq: &mut Sequence) -> usize {
+        // Provided guard: lets B3 (prefix_caching off) run before C2 is written.
+        if !self.prefix_caching {
+            return 0;
+        }
         let _ = seq;
         todo!("C2a match_prefix")
     }
@@ -145,6 +149,10 @@ impl BlockManager {
     // same prefix at the same time), leave this one unregistered.
     // Only when prefix_caching is on.
     pub fn register_full_blocks(&mut self, seq: &Sequence) {
+        // Provided guard: lets B3 (prefix_caching off) run before C2 is written.
+        if !self.prefix_caching {
+            return;
+        }
         let _ = seq;
         todo!("C2b register_full_blocks")
     }

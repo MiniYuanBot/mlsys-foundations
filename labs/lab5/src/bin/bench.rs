@@ -8,6 +8,7 @@
 use anyhow::Result;
 use minillm::config::model_dir;
 use minillm::model_student::Qwen3;
+use minillm::ops::AttnImpl;
 use minillm::text::Text;
 use specdec::decode::{generate, Method};
 use specdec::ops5;
@@ -36,8 +37,10 @@ fn main() -> Result<()> {
     let tokens: usize = get("--tokens", "192").parse()?;
     let which = get("--prompts", "all");
     let gpu = ops5::gpu()?;
-    let target = Qwen3::load(&gpu, &model_dir("Qwen3-1.7B"))?;
-    let draft = Qwen3::load(&gpu, &model_dir("Qwen3-0.6B"))?;
+    let mut target = Qwen3::load(&gpu, &model_dir("Qwen3-1.7B"))?;
+    let mut draft = Qwen3::load(&gpu, &model_dir("Qwen3-0.6B"))?;
+    target.attn = AttnImpl::Fast;
+    draft.attn = AttnImpl::Fast;
     let text = Text::load(&model_dir("Qwen3-1.7B"))?;
     let prompts: Vec<(&str, Vec<u32>)> = vec![
         (
