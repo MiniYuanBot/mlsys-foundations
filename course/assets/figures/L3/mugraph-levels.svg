@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="440" viewBox="0 0 840 440" role="img">
+<title>Mirage: three levels of a μGraph</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="440" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Mirage: three levels of a μGraph</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="50" y="110" width="740" height="75" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="141.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Kernel graph  ·  Which operators form a kernel?</text>
+<text x="420" y="166.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">lab3 Part B</text>
+<line x1="420" y1="189" x2="420" y2="206" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="206" x2="416.085" y2="197.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="206" x2="423.915" y2="197.896" stroke="#526579" stroke-width="2"/>
+<rect x="50" y="210" width="740" height="75" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="241.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Thread-block graph  ·  Tiles, shared memory and loop order</text>
+<text x="420" y="266.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">FlashAttention search lives here</text>
+<line x1="420" y1="289" x2="420" y2="306" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="306" x2="416.085" y2="297.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="306" x2="423.915" y2="297.896" stroke="#526579" stroke-width="2"/>
+<rect x="50" y="310" width="740" height="75" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="420" y="341.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Thread graph  ·  Each thread’s register computation</text>
+<text x="420" y="366.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Fine-grained work assignment</text>
+<text x="30" y="420" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Arrows expand execution granularity; they do not denote a sequence of kernel launches.</text>
+</svg>

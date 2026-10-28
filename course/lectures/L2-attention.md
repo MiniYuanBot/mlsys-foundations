@@ -58,13 +58,26 @@ PyTorch 的“朴素”写法 `e = exp(x - x.max()); e / e.sum()` 会启动 4–
 
 CUDA 中你给**每个线程**写代码；Triton 中你给**每个 program**（大致相当于一个线程块）写代码，操作的是整块的张量：
 
+CUDA 的标量线程伪代码：
+
+```cpp
+int i = blockIdx.x * blockDim.x + tid;
+if (i < n) y[i] = f(x[i]);
 ```
-CUDA thread view                     Triton program view
-  i = blockIdx.x*blockDim.x + tid      offs = pid*BLOCK + tl.arange(0, BLOCK)   # a vector
-  if (i < n) y[i] = f(x[i])            x = tl.load(x_ptr + offs, mask=offs < n)  # a block
-                                       tl.store(y_ptr + offs, f(x), mask=offs < n)
-  you choose: threads, smem, sync      compiler chooses: thread mapping, smem, vector width
+
+Triton 的块级程序片段：
+
+```python
+offs = pid * BLOCK + tl.arange(0, BLOCK)
+x = tl.load(x_ptr + offs, mask=offs < n)
+tl.store(y_ptr + offs, f(x), mask=offs < n)
 ```
+
+CUDA 由程序员安排线程、shared memory 与同步；Triton 编译器决定具体线程映射、shared memory 和向量宽度。
+
+![CUDA 与 Triton 编程视角](../assets/figures/L2/cuda-triton-view.svg)
+
+图：CUDA 与 Triton 编程视角（示意，不按耗时或容量比例）。
 
 Triton 编译器负责把块级操作映射到线程上，并决定 shared memory 的使用、向量化和流水线。你仍然要决定**分块方式**（BLOCK 大小、grid）和**数据流**，这两样决定了性能的上限。L3 会讲编译器是怎么做到这些的。
 
@@ -148,17 +161,9 @@ $$
 
 这里的 $B_M$、$B_N$ 分别对应图和代码中的 `BM`、`BN`。
 
-```
-          K^T blocks (BN keys each) ---->
-         +------+------+------+------+
-Q block  | S_00 | S_01 | S_02 | S_03 |    each S_ij is BM x BN, lives only in
-(BM rows)+------+------+------+------+    registers / shared memory, then dies
-            |      |      |      |
-            v      v      v      v
-   acc  = acc*alpha0 + P_00 V_0 -> acc*alpha1 + P_01 V_1 -> ... -> out = acc / l
+![FlashAttention 分块累积](../assets/figures/L2/flashattention-blocks.svg)
 
-per row of the Q block keep:  m (running max), l (running sum), acc (d floats)
-```
+图：一次 K/V tile 迭代的数据依赖。Q 与 K 生成分数，V 只进入加权累加；紫色回路表示下一块继承更新后的 m、l、acc。所有 K/V 块共用同一 Q 块，最后用 acc/l 归一化。
 
 每读入一块 K/V，都做这五步：
 
@@ -179,15 +184,11 @@ per row of the Q block keep:  m (running max), l (running sum), acc (d floats)
 
 ### 3.3 Causal：mask 与跳过
 
-在 causal attention 中，query $i$ 只能看到 key $j \le i$。分数矩阵的上三角全是 $-\infty$，对应的 K/V 块对结果毫无贡献：
+在 causal attention 中，query $i$ 只能看到 key $j \le i$。通常按 `S[query,key]` 排列时，上三角被置为 $-\infty$。下图为了沿列跟踪每个 Q 块，改用 **key 为行、query 为列**；因此整块跳过区位于左下方（key 块号大于 query 块号），对角块仍需逐元素 mask：
 
-```
-query block ->   0   1   2   3
-key block 0    [ d ][ F ][ F ][ F ]     d = diagonal block: needs the element mask
-key block 1    [ . ][ d ][ F ][ F ]     F = full block: no mask needed
-key block 2    [ . ][ . ][ d ][ F ]     . = skipped entirely (above the diagonal)
-key block 3    [ . ][ . ][ . ][ d ]
-```
+![行 key、列 query 的 causal mask](../assets/figures/L2/causal-mask.svg)
+
+图：行是 key 块、列是 query 块，所以整块跳过区在左下方（key 块号大于 query 块号）。同号块还要逐元素保留 key≤query；常见 S[query,key] 记法的轴与这里相反。
 
 每个 $Q$ 块的循环到对角线所在的块为止，工作量减半。lab 实测 causal 的耗时约为非 causal 的 54%。
 
@@ -241,27 +242,32 @@ mma 的 $B$ 操作数是 `B[k][n]`，这里 $k = d$、$n = \mathrm{key}$，所�
 
 一条 `ldmatrix.x4` 加载 4 个 $8 \times 8$ 矩阵，正好覆盖两个 n-tile 在一个 k-step 上的数据：
 
-```
-matrix 0: keys nt*8 .. +7,   d kk*16 + 0..7    -> b[nt][0]
-matrix 1: keys nt*8 .. +7,   d kk*16 + 8..15   -> b[nt][1]
-matrix 2: keys nt*8+8 .. +7, d kk*16 + 0..7    -> b[nt+1][0]
-matrix 3: keys nt*8+8 .. +7, d kk*16 + 8..15   -> b[nt+1][1]
+行地址提供者的整数索引公式保留为：
 
-lane i supplies row (i % 8) of matrix (i / 8):
-  key = nt*8 + (i / 16)*8 + i % 8,   d = kk*16 + ((i / 8) % 2)*8
+```python
+matrix = i // 8
+key = nt * 8 + (i // 16) * 8 + i % 8
+d = kk * 16 + ((i // 8) % 2) * 8
 ```
+
+![K 的 ldmatrix.x4 映射](../assets/figures/L2/k-fragment-load.svg)
+
+图：K 的四个 8×8 子块与目标寄存器组。范围全部使用左闭右开区间，matrix 2/3 的 key 明确为 [8nt+8,8nt+16)；图中 lane 公式描述行地址提供者。
 
 ### 5.3 寄存器上的 online softmax
 
 m16n8 累加器中，每个线程持有第 $g$ 行和第 $g+8$ 行（$g = \lfloor\mathrm{lane}/4\rfloor$，对应代码中的整数除法）各 2 个元素。一行的 64 个元素（$8\text{ 个 n-tile} \times \text{每个 tile }8\text{ 列}$）分布在 **4 个线程**上（$t = \mathrm{lane} \bmod 4$，$t = 0,\ldots,3$），每个线程持有其中 16 个：
 
-```
-row g:   tile0: t0 t0 t1 t1 t2 t2 t3 t3 | tile1: t0 t0 t1 t1 ... | ... tile7
-         a row is spread over the 4 lanes of a "quad" (lanes 4g .. 4g+3)
+每个 lane 先求自己 16 个值的局部最大值，再用以下两次交换完成 quad 归约（伪代码）：
 
-row max: local max of my 16 values, then
-         mx = max(mx, shfl_xor(mx, 1));  mx = max(mx, shfl_xor(mx, 2))   -> all 4 lanes agree
+```cpp
+mx = max(mx, shfl_xor(mx, 1));
+mx = max(mx, shfl_xor(mx, 2));
 ```
+
+![Quad 内 online softmax](../assets/figures/L2/quad-softmax.svg)
+
+图：Quad 内 online softmax（按本节参数推导，非实测）。
 
 `__shfl_xor_sync(.., 1)` 交换相邻 lane 的值，`(.., 2)` 交换相隔 2 的 lane 的值，两步之后，quad 内的 4 个线程都得到了整行的最大值。行和的求法相同。
 
@@ -269,14 +275,18 @@ row max: local max of my 16 values, then
 
 算出 $p$ 之后，要计算 $P \cdot V$，$P$ 是 mma 的 $A$ 操作数（$16 \times 16$ 一块，$k = \mathrm{key}$）。对照两种布局：
 
-```
-accumulator of n-tile 2j   (keys 16j .. 16j+7):     (g, 2t..2t+1), (g+8, 2t..2t+1)
-accumulator of n-tile 2j+1 (keys 16j+8 .. 16j+15):  (g, 2t..2t+1), (g+8, 2t..2t+1)
+打包坐标保留如下，列下标相对于当前 16-key 的 k-step j：
 
-A fragment of k-step j (keys 16j .. 16j+15):
-  a[0] = (g,   2t..2t+1)       a[1] = (g+8, 2t..2t+1)       <- from tile 2j
-  a[2] = (g,   2t+8..2t+9)     a[3] = (g+8, 2t+8..2t+9)     <- from tile 2j+1
-```
+| 来源 n-tile | key 范围（含端点） | 目标寄存器 | 行 | 两个列下标 |
+| --- | --- | --- | --- | --- |
+| `2j` | `16j..16j+7` | `a[0]` | `g` | `2t,2t+1` |
+| `2j` | `16j..16j+7` | `a[1]` | `g+8` | `2t,2t+1` |
+| `2j+1` | `16j+8..16j+15` | `a[2]` | `g` | `2t+8,2t+9` |
+| `2j+1` | `16j+8..16j+15` | `a[3]` | `g+8` | `2t+8,2t+9` |
+
+![P 累加器转 A fragment](../assets/figures/L2/p-to-a-fragment.svg)
+
+图：P 累加器转 A fragment（按本节参数推导，非实测）。
 
 两种布局**完全吻合**。每个线程把自己持有的 $p$ 值两两打包成 fp16x2，就得到了 $A$ fragment，不需要写回 shared memory，也不需要线程间交换数据。FlashAttention-2 的 CUDA 实现正是这样做的，这也是它比 FA1 快的原因之一。$V$ 按 `[key][d]` 存放，相当于 `B[k = key][n = d]`，用 lab1 中学过的 `ldmatrix.trans` 来加载。
 
@@ -301,11 +311,18 @@ decode 时，每生成一个 token 都要把整个 KV cache 读一遍：Qwen3-0.
 
 $B = 1$、$H = 8$ 时，只有 8 个 program，而 4060 有 24 个 SM，大部分 SM 空闲。FlashDecoding 把 KV 切成 `NSPLIT` 段，并行算出各段的部分结果，再用 §4 的规则合并：
 
+对于 `B=1, H=8`，不分段时有 8 个 `(b,h)` program，每个读取 `[0,S)`。分成 6 段后有 48 个 `(b,h,s)` program；第 s 段的精确边界为：
+
+```python
+start = s * S // 6
+end = (s + 1) * S // 6  # keys in [start, end)
 ```
-no split:      program (b,h) reads keys 0 .. S-1             -> 8 programs total
-split = 6:     program (b,h,s) reads keys s*S/6 .. (s+1)*S/6 -> 48 programs
-               + a tiny combine kernel (lse-weighted sum of 6 partial outputs)
-```
+
+随后用一个小的 combine kernel，对 6 个局部输出做 lse 加权合并。
+
+![Split-KV 并行与合并](../assets/figures/L2/split-kv.svg)
+
+图：Split-KV 并行与合并。图中用 S=37 展示非整除情况，区间明确为左闭右开；原文代码与报告性能值保留，未重新测量。
 
 lab 实测：$B = 1$、$H = 8$、$S = 32768$ 时，切分后从 86 GB/s 提升到 193 GB/s（memcpy 为 213）。$B = 16$、$H = 32$ 时已有 512 个 program，切分毫无收益。所以**切分数应该由“已有的并行度是否足够”来决定**，lab 中的 `default_num_splits` 就是一个简单的启发式规则。
 

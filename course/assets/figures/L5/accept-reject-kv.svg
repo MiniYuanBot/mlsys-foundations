@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="585" viewBox="0 0 840 585" role="img">
+<title>Greedy verification: accepted tokens and valid KV</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="585" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Greedy verification: accepted tokens and valid KV</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="40" y="115" font-size="19" font-weight="400" text-anchor="start" fill="#163047">Before: committed “… The cat sat”; KV for sat is not computed yet.</text>
+<text x="40" y="189" font-size="18" font-weight="700" text-anchor="start" fill="#163047">Target input</text>
+<rect x="225" y="155" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="290" y="190.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">sat</text>
+<rect x="370" y="155" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="435" y="190.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">on</text>
+<rect x="515" y="155" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="580" y="190.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">the</text>
+<rect x="660" y="155" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="725" y="190.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">mat</text>
+<line x1="290" y1="217" x2="290" y2="233" stroke="#526579" stroke-width="2"/>
+<line x1="290" y1="233" x2="286.085" y2="224.896" stroke="#526579" stroke-width="2"/>
+<line x1="290" y1="233" x2="293.915" y2="224.896" stroke="#526579" stroke-width="2"/>
+<line x1="435" y1="217" x2="435" y2="233" stroke="#526579" stroke-width="2"/>
+<line x1="435" y1="233" x2="431.085" y2="224.896" stroke="#526579" stroke-width="2"/>
+<line x1="435" y1="233" x2="438.915" y2="224.896" stroke="#526579" stroke-width="2"/>
+<line x1="580" y1="217" x2="580" y2="233" stroke="#526579" stroke-width="2"/>
+<line x1="580" y1="233" x2="576.085" y2="224.896" stroke="#526579" stroke-width="2"/>
+<line x1="580" y1="233" x2="583.915" y2="224.896" stroke="#526579" stroke-width="2"/>
+<line x1="725" y1="217" x2="725" y2="233" stroke="#526579" stroke-width="2"/>
+<line x1="725" y1="233" x2="721.085" y2="224.896" stroke="#526579" stroke-width="2"/>
+<line x1="725" y1="233" x2="728.915" y2="224.896" stroke="#526579" stroke-width="2"/>
+<text x="40" y="271" font-size="18" font-weight="700" text-anchor="start" fill="#163047">Next argmax</text>
+<rect x="225" y="237" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="290" y="272.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">on</text>
+<rect x="370" y="237" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="435" y="272.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">the</text>
+<rect x="515" y="237" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="580" y="272.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">rug</text>
+<rect x="660" y="237" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="725" y="272.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">.</text>
+<text x="40" y="353" font-size="18" font-weight="700" text-anchor="start" fill="#163047">Draft decision</text>
+<rect x="225" y="319" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="290" y="354.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">accept on</text>
+<rect x="370" y="319" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="435" y="354.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">accept the</text>
+<rect x="515" y="319" width="130" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="580" y="354.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">reject mat</text>
+<rect x="660" y="319" width="130" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="725" y="354.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">not checked</text>
+<text x="40" y="435" font-size="18" font-weight="700" text-anchor="start" fill="#163047">KV after truncate</text>
+<rect x="225" y="401" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="290" y="436.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">sat: valid</text>
+<rect x="370" y="401" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="435" y="436.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">on: valid</text>
+<rect x="515" y="401" width="130" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="580" y="436.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">the: valid</text>
+<rect x="660" y="401" width="130" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="725" y="436.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">mat: stale</text>
+<rect x="155" y="500" width="540" height="48" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="425" y="531.14" font-size="21" font-weight="400" text-anchor="middle" fill="#163047">New output: on → the → rug (bonus)</text>
+<text x="30" y="574" font-size="17" font-weight="400" text-anchor="start" fill="#526579">The bonus rug has no KV yet. Next round inputs rug and overwrites the stale mat slot.</text>
+</svg>

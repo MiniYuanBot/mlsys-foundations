@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="475" viewBox="0 0 840 475" role="img">
+<title>Dev → lock → held-out evaluation</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="475" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Dev → lock → held-out evaluation</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="90" y="110" width="660" height="75" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="140.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">DEV: inspect, tune, debug, iterate</text>
+<text x="420" y="167.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">Use development conditions repeatedly</text>
+<line x1="420" y1="194" x2="420" y2="220" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="220" x2="416.085" y2="211.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="220" x2="423.915" y2="211.896" stroke="#526579" stroke-width="2"/>
+<rect x="90" y="230" width="660" height="75" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="420" y="260.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">LOCK: freeze the preregistered plan</text>
+<text x="420" y="287.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">Hypothesis, effect margin and held-out conditions</text>
+<line x1="420" y1="315" x2="420" y2="342" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="342" x2="416.085" y2="333.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="342" x2="423.915" y2="333.896" stroke="#526579" stroke-width="2"/>
+<rect x="90" y="350" width="660" height="75" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="380.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">HELD-OUT: run the planned evaluation once</text>
+<text x="420" y="407.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">Report all outcomes, including null or negative results</text>
+<text x="30" y="460" font-size="17" font-weight="400" text-anchor="start" fill="#526579">“Once” means one locked evaluation; it still includes the preregistered repeat count.</text>
+</svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="470" viewBox="0 0 840 470" role="img">
+<title>P becomes an A fragment in the same lane</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="470" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">P becomes an A fragment in the same lane</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived layout · local coordinates within the 16-key step j</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="40" y="115" width="330" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="138.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">P from n-tile 2j</text>
+<text x="205" y="164.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">keys 16j … 16j+7</text>
+<rect x="470" y="115" width="330" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="635" y="138.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">P from n-tile 2j+1</text>
+<text x="635" y="164.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">keys 16j+8 … 16j+15</text>
+<line x1="205" y1="182" x2="205" y2="220" stroke="#a45b0b" stroke-width="2"/>
+<line x1="205" y1="220" x2="201.085" y2="211.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="205" y1="220" x2="208.915" y2="211.896" stroke="#a45b0b" stroke-width="2"/>
+<rect x="40" y="235" width="330" height="55" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="256.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a[0]: row g</text>
+<text x="205" y="281.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">cols 2t+0, 2t+1</text>
+<rect x="40" y="305" width="330" height="55" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="326.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a[1]: row g+8</text>
+<text x="205" y="351.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">cols 2t+0, 2t+1</text>
+<line x1="635" y1="182" x2="635" y2="220" stroke="#087f78" stroke-width="2"/>
+<line x1="635" y1="220" x2="631.085" y2="211.896" stroke="#087f78" stroke-width="2"/>
+<line x1="635" y1="220" x2="638.915" y2="211.896" stroke="#087f78" stroke-width="2"/>
+<rect x="470" y="235" width="330" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="635" y="256.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a[2]: row g</text>
+<text x="635" y="281.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">cols 2t+8, 2t+9</text>
+<rect x="470" y="305" width="330" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="635" y="326.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a[3]: row g+8</text>
+<text x="635" y="351.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">cols 2t+8, 2t+9</text>
+<text x="30" y="410" font-size="17" font-weight="400" text-anchor="start" fill="#526579">g = lane // 4; t = lane % 4. Pack each pair as fp16x2.</text>
+<text x="30" y="435" font-size="17" font-weight="400" text-anchor="start" fill="#526579">No shared-memory round trip or cross-lane exchange is needed for this layout conversion.</text>
+</svg>

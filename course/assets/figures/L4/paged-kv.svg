@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="525" viewBox="0 0 840 525" role="img">
+<title>Paged KV: logical positions → physical blocks</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="525" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Paged KV: logical positions → physical blocks</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived addresses · block size = 16 token slots</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="40" y="110" width="285" height="59" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="182.5" y="133.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">A: positions 0–15</text>
+<text x="182.5" y="158.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">logical block 0</text>
+<line x1="335" y1="139" x2="430" y2="139" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="139" x2="421.896" y2="142.915" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="139" x2="421.896" y2="135.085" stroke="#526579" stroke-width="2"/>
+<rect x="440" y="110" width="350" height="59" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="615" y="133.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Physical block 7</text>
+<text x="615" y="158.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">16/16 slots used</text>
+<rect x="40" y="193" width="285" height="59" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="182.5" y="216.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">A: positions 16–31</text>
+<text x="182.5" y="241.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">logical block 1</text>
+<line x1="335" y1="222" x2="430" y2="222" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="222" x2="421.896" y2="225.915" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="222" x2="421.896" y2="218.085" stroke="#526579" stroke-width="2"/>
+<rect x="440" y="193" width="350" height="59" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="615" y="216.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Physical block 3</text>
+<text x="615" y="241.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">16/16 slots used</text>
+<rect x="40" y="276" width="285" height="59" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="182.5" y="299.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">A: positions 32–36</text>
+<text x="182.5" y="324.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">logical block 2</text>
+<line x1="335" y1="305" x2="430" y2="305" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="305" x2="421.896" y2="308.915" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="305" x2="421.896" y2="301.085" stroke="#526579" stroke-width="2"/>
+<rect x="440" y="276" width="350" height="59" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="615" y="299.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Physical block 11</text>
+<text x="615" y="324.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">5/16 slots used</text>
+<rect x="40" y="359" width="285" height="59" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="182.5" y="382.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">B: positions 0–8</text>
+<text x="182.5" y="407.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">logical block 0</text>
+<line x1="335" y1="388" x2="430" y2="388" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="388" x2="421.896" y2="391.915" stroke="#526579" stroke-width="2"/>
+<line x1="430" y1="388" x2="421.896" y2="384.085" stroke="#526579" stroke-width="2"/>
+<rect x="440" y="359" width="350" height="59" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="615" y="382.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Physical block 2</text>
+<text x="615" y="407.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">9/16 slots used</text>
+<text x="30" y="475" font-size="17" font-weight="400" text-anchor="start" fill="#526579">A table = [7, 3, 11]; B table = [2]. Only referenced blocks are drawn.</text>
+<text x="30" y="500" font-size="17" font-weight="400" text-anchor="start" fill="#526579">slot(p) = table[floor(p / 16)] × 16 + (p mod 16). Example A: p=36 → slot 180.</text>
+</svg>

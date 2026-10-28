@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="660" viewBox="0 0 840 660" role="img">
+<title>FlashAttention: reuse Q, stream K and V</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="660" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">FlashAttention: reuse Q, stream K and V</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">One Q block per program · repeat the dataflow below for each K/V tile j</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="45" y="115" width="220" height="75" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="155" y="145.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Q: BM × d</text>
+<text x="155" y="171.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">held across tiles</text>
+<rect x="310" y="115" width="220" height="75" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="145.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">K_j: BN × d</text>
+<text x="420" y="171.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">keys for tile j</text>
+<rect x="575" y="115" width="220" height="75" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="685" y="145.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">V_j: BN × d</text>
+<text x="685" y="171.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">values for tile j</text>
+<line x1="155" y1="195" x2="155" y2="228" stroke="#1769aa" stroke-width="2"/>
+<line x1="155" y1="228" x2="151.085" y2="219.896" stroke="#1769aa" stroke-width="2"/>
+<line x1="155" y1="228" x2="158.915" y2="219.896" stroke="#1769aa" stroke-width="2"/>
+<line x1="420" y1="195" x2="420" y2="228" stroke="#087f78" stroke-width="2"/>
+<line x1="420" y1="228" x2="416.085" y2="219.896" stroke="#087f78" stroke-width="2"/>
+<line x1="420" y1="228" x2="423.915" y2="219.896" stroke="#087f78" stroke-width="2"/>
+<rect x="45" y="235" width="490" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="290" y="260.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Scores s = Q K_jᵀ × scale</text>
+<text x="290" y="286.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">BM × BN; stays on chip</text>
+<line x1="420" y1="307" x2="420" y2="335" stroke="#1769aa" stroke-width="2"/>
+<line x1="420" y1="335" x2="416.085" y2="326.896" stroke="#1769aa" stroke-width="2"/>
+<line x1="420" y1="335" x2="423.915" y2="326.896" stroke="#1769aa" stroke-width="2"/>
+<line x1="685" y1="195" x2="685" y2="335" stroke="#087f78" stroke-width="2"/>
+<line x1="685" y1="335" x2="681.085" y2="326.896" stroke="#087f78" stroke-width="2"/>
+<line x1="685" y1="335" x2="688.915" y2="326.896" stroke="#087f78" stroke-width="2"/>
+<rect x="45" y="355" width="240" height="105" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="165" y="387.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Previous row state</text>
+<text x="165" y="413.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">m, l, acc</text>
+<text x="165" y="439.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Initially: −∞, 0, 0</text>
+<line x1="290" y1="407" x2="325" y2="407" stroke="#7543a3" stroke-width="2"/>
+<line x1="325" y1="407" x2="316.896" y2="410.915" stroke="#7543a3" stroke-width="2"/>
+<line x1="325" y1="407" x2="316.896" y2="403.085" stroke="#7543a3" stroke-width="2"/>
+<rect x="330" y="345" width="465" height="140" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="562.5" y="383.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">m_new = max(m, rowmax(s))</text>
+<text x="562.5" y="408.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">α = exp(m − m_new); p = exp(s − m_new)</text>
+<text x="562.5" y="433.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">l_new = α l + rowsum(p)</text>
+<text x="562.5" y="458.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">acc_new = α acc + p V_j</text>
+<line x1="560" y1="490" x2="560" y2="518" stroke="#a45b0b" stroke-width="2"/>
+<line x1="560" y1="518" x2="556.085" y2="509.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="560" y1="518" x2="563.915" y2="509.896" stroke="#a45b0b" stroke-width="2"/>
+<rect x="330" y="525" width="465" height="55" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="562.5" y="558.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Next state: (m_new, l_new, acc_new)</text>
+<polyline points="330,552 165,552 165,485" fill="none" stroke="#7543a3" stroke-width="2"/>
+<line x1="165" y1="485" x2="165" y2="467" stroke="#7543a3" stroke-width="2"/>
+<line x1="165" y1="467" x2="168.915" y2="475.104" stroke="#7543a3" stroke-width="2"/>
+<line x1="165" y1="467" x2="161.085" y2="475.104" stroke="#7543a3" stroke-width="2"/>
+<text x="45" y="586" font-size="18" font-weight="400" text-anchor="start" fill="#7543a3">Carry to tile j+1</text>
+<text x="30" y="625" font-size="17" font-weight="400" text-anchor="start" fill="#526579">State per query row: two scalars + d values. After the last tile: out = acc / l.</text>
+</svg>

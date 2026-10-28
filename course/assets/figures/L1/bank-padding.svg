@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="485" viewBox="0 0 840 485" role="img">
+<title>Padding: separate 32 lanes across 32 banks</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="485" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Padding: separate 32 lanes across 32 banks</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived FP32 model · column j = 0; 4-byte banks; distinct addresses</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="45" y="110" width="355" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="222.5" y="135.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">float tile[32][32]</text>
+<text x="222.5" y="161.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">bank(r) = (32r + j) mod 32</text>
+<text x="45" y="210" font-size="18" font-weight="400" text-anchor="start" fill="#163047">Lane groups reading one column:</text>
+<rect x="45" y="230" width="82" height="42" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="86" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–7</text>
+<rect x="135" y="230" width="82" height="42" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="176" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">8–15</text>
+<rect x="225" y="230" width="82" height="42" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="266" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–23</text>
+<rect x="315" y="230" width="82" height="42" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="356" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">24–31</text>
+<line x1="86" y1="280" x2="222" y2="310" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="213.243" y2="312.077" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="214.929" y2="304.432" stroke="#a45b0b" stroke-width="2"/>
+<line x1="176" y1="280" x2="222" y2="310" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="213.074" y2="308.852" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="217.35" y2="302.294" stroke="#a45b0b" stroke-width="2"/>
+<line x1="266" y1="280" x2="222" y2="310" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="226.49" y2="302.2" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="230.901" y2="308.669" stroke="#a45b0b" stroke-width="2"/>
+<line x1="356" y1="280" x2="222" y2="310" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="229.053" y2="304.409" stroke="#a45b0b" stroke-width="2"/>
+<line x1="222" y1="310" x2="230.764" y2="312.05" stroke="#a45b0b" stroke-width="2"/>
+<rect x="152" y="320" width="140" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="222" y="346.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">bank 0</text>
+<text x="222" y="389" font-size="17" font-weight="400" text-anchor="middle" fill="#526579">Destination bank IDs</text>
+<text x="222" y="425" font-size="20" font-weight="700" text-anchor="middle" fill="#a45b0b">32 requests to bank 0</text>
+<rect x="440" y="110" width="355" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="617.5" y="135.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">float tile[32][33]</text>
+<text x="617.5" y="161.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">bank(r) = (33r + j) mod 32</text>
+<text x="440" y="210" font-size="18" font-weight="400" text-anchor="start" fill="#163047">Lane groups reading one column:</text>
+<rect x="440" y="230" width="82" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="481" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–7</text>
+<rect x="530" y="230" width="82" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="571" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">8–15</text>
+<rect x="620" y="230" width="82" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="661" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–23</text>
+<rect x="710" y="230" width="82" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="751" y="256.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">24–31</text>
+<line x1="481" y1="280" x2="481" y2="310" stroke="#087f78" stroke-width="2"/>
+<line x1="481" y1="310" x2="477.085" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<line x1="481" y1="310" x2="484.915" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<rect x="440" y="320" width="82" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="481" y="345.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–7</text>
+<line x1="571" y1="280" x2="571" y2="310" stroke="#087f78" stroke-width="2"/>
+<line x1="571" y1="310" x2="567.085" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<line x1="571" y1="310" x2="574.915" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<rect x="530" y="320" width="82" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="571" y="345.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">8–15</text>
+<line x1="661" y1="280" x2="661" y2="310" stroke="#087f78" stroke-width="2"/>
+<line x1="661" y1="310" x2="657.085" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<line x1="661" y1="310" x2="664.915" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<rect x="620" y="320" width="82" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="661" y="345.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–23</text>
+<line x1="751" y1="280" x2="751" y2="310" stroke="#087f78" stroke-width="2"/>
+<line x1="751" y1="310" x2="747.085" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<line x1="751" y1="310" x2="754.915" y2="301.896" stroke="#087f78" stroke-width="2"/>
+<rect x="710" y="320" width="82" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="751" y="345.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">24–31</text>
+<text x="617" y="389" font-size="17" font-weight="400" text-anchor="middle" fill="#526579">Destination bank IDs</text>
+<text x="617" y="425" font-size="20" font-weight="700" text-anchor="middle" fill="#087f78">One request per bank</text>
+<text x="30" y="464" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Top numbers are lane IDs; bottom numbers are bank IDs, not memory addresses.</text>
+</svg>

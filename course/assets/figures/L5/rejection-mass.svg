@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="520" viewBox="0 0 840 520" role="img">
+<title>Rejection sampling: overlap plus residual</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="520" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Rejection sampling: overlap plus residual</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic probability mass · bar lengths illustrate the two cases</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="45" y="115" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Over-proposed token: q(y) &gt; p(y)</text>
+<text x="45" y="166" font-size="19" font-weight="400" text-anchor="start" fill="#163047">p(y)</text>
+<rect x="115" y="140" width="230" height="32" rx="0" fill="#e3f4ef" stroke="#087f78"/>
+<text x="45" y="214" font-size="19" font-weight="400" text-anchor="start" fill="#163047">q(y)</text>
+<rect x="115" y="188" width="230" height="32" rx="0" fill="#e3f4ef" stroke="#087f78"/>
+<rect x="345" y="188" width="200" height="32" rx="0" fill="#fff0da" stroke="#a45b0b"/>
+<text x="575" y="164" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">Overlap:</text>
+<text x="575" y="191" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">min(p(y), q(y))</text>
+<text x="115" y="259" font-size="18" font-weight="400" text-anchor="start" fill="#a45b0b">Excess proposal can be rejected</text>
+<text x="45" y="300" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Under-proposed token: p(y) &gt; q(y)</text>
+<text x="45" y="351" font-size="19" font-weight="400" text-anchor="start" fill="#163047">p(y)</text>
+<rect x="115" y="325" width="230" height="32" rx="0" fill="#e3f4ef" stroke="#087f78"/>
+<rect x="345" y="325" width="200" height="32" rx="0" fill="#fff0da" stroke="#a45b0b"/>
+<text x="45" y="399" font-size="19" font-weight="400" text-anchor="start" fill="#163047">q(y)</text>
+<rect x="115" y="373" width="230" height="32" rx="0" fill="#e3f4ef" stroke="#087f78"/>
+<text x="575" y="349" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">Overlap:</text>
+<text x="575" y="376" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">min(p(y), q(y))</text>
+<text x="115" y="444" font-size="18" font-weight="400" text-anchor="start" fill="#a45b0b">Residual mass: p(y) − q(y)</text>
+<text x="30" y="485" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Accepted mass min(p,q) + residual max(0,p−q) = target p, for every token y.</text>
+</svg>

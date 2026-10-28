@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="530" viewBox="0 0 840 530" role="img">
+<title>Quad reduction: every lane gets the row result</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="530" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Quad reduction: every lane gets the row result</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived source sets · synchronous XOR exchanges</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="245" y="125" font-size="18" font-weight="700" text-anchor="middle" fill="#163047">lane 4g+0</text>
+<text x="400" y="125" font-size="18" font-weight="700" text-anchor="middle" fill="#163047">lane 4g+1</text>
+<text x="555" y="125" font-size="18" font-weight="700" text-anchor="middle" fill="#163047">lane 4g+2</text>
+<text x="710" y="125" font-size="18" font-weight="700" text-anchor="middle" fill="#163047">lane 4g+3</text>
+<text x="40" y="187" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Local</text>
+<rect x="180" y="155" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="245" y="190.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{0}</text>
+<line x1="245" y1="218" x2="245" y2="243" stroke="#526579" stroke-width="2"/>
+<line x1="245" y1="243" x2="241.085" y2="234.896" stroke="#526579" stroke-width="2"/>
+<line x1="245" y1="243" x2="248.915" y2="234.896" stroke="#526579" stroke-width="2"/>
+<rect x="335" y="155" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="400" y="190.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{1}</text>
+<line x1="400" y1="218" x2="400" y2="243" stroke="#526579" stroke-width="2"/>
+<line x1="400" y1="243" x2="396.085" y2="234.896" stroke="#526579" stroke-width="2"/>
+<line x1="400" y1="243" x2="403.915" y2="234.896" stroke="#526579" stroke-width="2"/>
+<rect x="490" y="155" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="555" y="190.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{2}</text>
+<line x1="555" y1="218" x2="555" y2="243" stroke="#526579" stroke-width="2"/>
+<line x1="555" y1="243" x2="551.085" y2="234.896" stroke="#526579" stroke-width="2"/>
+<line x1="555" y1="243" x2="558.915" y2="234.896" stroke="#526579" stroke-width="2"/>
+<rect x="645" y="155" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="710" y="190.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{3}</text>
+<line x1="710" y1="218" x2="710" y2="243" stroke="#526579" stroke-width="2"/>
+<line x1="710" y1="243" x2="706.085" y2="234.896" stroke="#526579" stroke-width="2"/>
+<line x1="710" y1="243" x2="713.915" y2="234.896" stroke="#526579" stroke-width="2"/>
+<text x="40" y="282" font-size="20" font-weight="700" text-anchor="start" fill="#163047">XOR 1</text>
+<rect x="180" y="250" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="245" y="285.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{0,1}</text>
+<line x1="245" y1="313" x2="245" y2="338" stroke="#526579" stroke-width="2"/>
+<line x1="245" y1="338" x2="241.085" y2="329.896" stroke="#526579" stroke-width="2"/>
+<line x1="245" y1="338" x2="248.915" y2="329.896" stroke="#526579" stroke-width="2"/>
+<rect x="335" y="250" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="400" y="285.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{0,1}</text>
+<line x1="400" y1="313" x2="400" y2="338" stroke="#526579" stroke-width="2"/>
+<line x1="400" y1="338" x2="396.085" y2="329.896" stroke="#526579" stroke-width="2"/>
+<line x1="400" y1="338" x2="403.915" y2="329.896" stroke="#526579" stroke-width="2"/>
+<rect x="490" y="250" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="555" y="285.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{2,3}</text>
+<line x1="555" y1="313" x2="555" y2="338" stroke="#526579" stroke-width="2"/>
+<line x1="555" y1="338" x2="551.085" y2="329.896" stroke="#526579" stroke-width="2"/>
+<line x1="555" y1="338" x2="558.915" y2="329.896" stroke="#526579" stroke-width="2"/>
+<rect x="645" y="250" width="130" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="710" y="285.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{2,3}</text>
+<line x1="710" y1="313" x2="710" y2="338" stroke="#526579" stroke-width="2"/>
+<line x1="710" y1="338" x2="706.085" y2="329.896" stroke="#526579" stroke-width="2"/>
+<line x1="710" y1="338" x2="713.915" y2="329.896" stroke="#526579" stroke-width="2"/>
+<text x="40" y="377" font-size="20" font-weight="700" text-anchor="start" fill="#163047">XOR 2</text>
+<rect x="180" y="345" width="130" height="58" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="245" y="380.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{0,1,2,3}</text>
+<rect x="335" y="345" width="130" height="58" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="400" y="380.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{0,1,2,3}</text>
+<rect x="490" y="345" width="130" height="58" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="555" y="380.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{0,1,2,3}</text>
+<rect x="645" y="345" width="130" height="58" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="710" y="380.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">{0,1,2,3}</text>
+<text x="30" y="445" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Each set uses local t = 0, 1, 2, 3; its global lane is 4g+t.</text>
+<text x="30" y="470" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Each lane first reduces 16 values: 2 columns × 8 n-tiles (64 values per quad).</text>
+<text x="30" y="495" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Vertical arrows show state progression; XOR exchanges with the peer t XOR mask.</text>
+</svg>

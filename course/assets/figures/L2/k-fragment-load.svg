@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="515" viewBox="0 0 840 515" role="img">
+<title>K load: four 8 × 8 matrices, two n-tiles</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="515" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">K load: four 8 × 8 matrices, two n-tiles</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived address map · all intervals are half-open [start, end)</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="45" y="116" font-size="20" font-weight="700" text-anchor="start" fill="#163047">K stored as K[key, d]; key base = 8nt, d base = 16kk</text>
+<rect x="45" y="145" width="360" height="110" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="225" y="180.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">matrix 0 → b[nt][0]</text>
+<text x="225" y="206.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">keys [8nt+0, 8nt+8)</text>
+<text x="225" y="232.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d [16kk+0, 16kk+8)</text>
+<rect x="435" y="145" width="360" height="110" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="615" y="180.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">matrix 1 → b[nt][1]</text>
+<text x="615" y="206.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">keys [8nt+0, 8nt+8)</text>
+<text x="615" y="232.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d [16kk+8, 16kk+16)</text>
+<rect x="45" y="278" width="360" height="110" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="225" y="313.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">matrix 2 → b[nt+1][0]</text>
+<text x="225" y="339.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">keys [8nt+8, 8nt+16)</text>
+<text x="225" y="365.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d [16kk+0, 16kk+8)</text>
+<rect x="435" y="278" width="360" height="110" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="615" y="313.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">matrix 3 → b[nt+1][1]</text>
+<text x="615" y="339.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">keys [8nt+8, 8nt+16)</text>
+<text x="615" y="365.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d [16kk+8, 16kk+16)</text>
+<text x="30" y="427" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Lane i supplies row i mod 8 of matrix floor(i / 8).</text>
+<text x="30" y="452" font-size="17" font-weight="400" text-anchor="start" fill="#526579">key = 8nt + 8 floor(i / 16) + (i mod 8)</text>
+<text x="30" y="477" font-size="17" font-weight="400" text-anchor="start" fill="#526579">d = 16kk + 8 (floor(i / 8) mod 2)</text>
+</svg>

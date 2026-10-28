@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="445" viewBox="0 0 840 445" role="img">
+<title>Shared-memory tiles feed one C tile</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="445" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Shared-memory tiles feed one C tile</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · one K tile; matrices are abbreviated</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="45" y="120" font-size="20" font-weight="700" text-anchor="start" fill="#163047">A: M × K</text>
+<rect x="45" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-0-0"/>
+<rect x="92" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-0-1"/>
+<rect x="139" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-0-2"/>
+<rect x="186" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-0-3"/>
+<rect x="45" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-1-0"/>
+<rect x="92" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-1-1"/>
+<rect x="139" y="187" width="47" height="42" rx="0" fill="#fff0da" stroke="#a45b0b" data-entity="A-1-2"/>
+<rect x="186" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-1-3"/>
+<rect x="45" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-2-0"/>
+<rect x="92" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-2-1"/>
+<rect x="139" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-2-2"/>
+<rect x="186" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-2-3"/>
+<rect x="45" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-3-0"/>
+<rect x="92" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-3-1"/>
+<rect x="139" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-3-2"/>
+<rect x="186" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="A-3-3"/>
+<text x="45" y="341" font-size="18" font-weight="400" text-anchor="start" fill="#a45b0b">As: 32 × 32</text>
+<text x="320" y="120" font-size="20" font-weight="700" text-anchor="start" fill="#163047">B: K × N</text>
+<rect x="320" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-0-0"/>
+<rect x="367" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-0-1"/>
+<rect x="414" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-0-2"/>
+<rect x="461" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-0-3"/>
+<rect x="320" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-1-0"/>
+<rect x="367" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-1-1"/>
+<rect x="414" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-1-2"/>
+<rect x="461" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-1-3"/>
+<rect x="320" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-2-0"/>
+<rect x="367" y="229" width="47" height="42" rx="0" fill="#e3f4ef" stroke="#087f78" data-entity="B-2-1"/>
+<rect x="414" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-2-2"/>
+<rect x="461" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-2-3"/>
+<rect x="320" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-3-0"/>
+<rect x="367" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-3-1"/>
+<rect x="414" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-3-2"/>
+<rect x="461" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="B-3-3"/>
+<text x="320" y="341" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">Bs: 32 × 32</text>
+<text x="595" y="120" font-size="20" font-weight="700" text-anchor="start" fill="#163047">C: M × N</text>
+<rect x="595" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-0-0"/>
+<rect x="642" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-0-1"/>
+<rect x="689" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-0-2"/>
+<rect x="736" y="145" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-0-3"/>
+<rect x="595" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-1-0"/>
+<rect x="642" y="187" width="47" height="42" rx="0" fill="#e8f2fb" stroke="#1769aa" data-entity="C-1-1"/>
+<rect x="689" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-1-2"/>
+<rect x="736" y="187" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-1-3"/>
+<rect x="595" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-2-0"/>
+<rect x="642" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-2-1"/>
+<rect x="689" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-2-2"/>
+<rect x="736" y="229" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-2-3"/>
+<rect x="595" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-3-0"/>
+<rect x="642" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-3-1"/>
+<rect x="689" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-3-2"/>
+<rect x="736" y="271" width="47" height="42" rx="0" fill="#ffffff" stroke="#bccbd6" data-entity="C-3-3"/>
+<text x="595" y="341" font-size="18" font-weight="400" text-anchor="start" fill="#1769aa">C tile: 32 × 32</text>
+<text x="256" y="238" font-size="28" font-weight="400" text-anchor="start" fill="#163047">×</text>
+<text x="534" y="238" font-size="28" font-weight="400" text-anchor="start" fill="#163047">→</text>
+<text x="30" y="391" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Load As and Bs → synchronize → compute → synchronize → reuse buffers.</text>
+<text x="30" y="416" font-size="17" font-weight="400" text-anchor="start" fill="#526579">One K tile contributes a matrix product to the same C tile.</text>
+</svg>

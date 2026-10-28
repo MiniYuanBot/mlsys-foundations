@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="740" viewBox="0 0 840 740" role="img">
+<title>Ring reduce-scatter: each rank after each round</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="740" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Ring reduce-scatter: each rank after each round</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived provenance · P=4; synchronous rounds; contributions a/b/c/d come from ranks 0/1/2/3</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="45" y="117" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Send direction: rank 0 → 1 → 2 → 3 → 0</text>
+<text x="45" y="148" font-size="19" font-weight="400" text-anchor="start" fill="#163047">Round s: send (r−s−1) mod 4; receive and add (r−s−2) mod 4</text>
+<text x="132" y="192" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 0</text>
+<rect x="45" y="211" width="174" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="132" y="237.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Initial: all chunks</text>
+<text x="132" y="262.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a0, a1, a2, a3</text>
+<text x="326" y="192" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 1</text>
+<rect x="239" y="211" width="174" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="326" y="237.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Initial: all chunks</text>
+<text x="326" y="262.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">b0, b1, b2, b3</text>
+<text x="520" y="192" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 2</text>
+<rect x="433" y="211" width="174" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="520" y="237.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Initial: all chunks</text>
+<text x="520" y="262.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">c0, c1, c2, c3</text>
+<text x="714" y="192" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 3</text>
+<rect x="627" y="211" width="174" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="714" y="237.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Initial: all chunks</text>
+<text x="714" y="262.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">d0, d1, d2, d3</text>
+<text x="45" y="303" font-size="18" font-weight="700" text-anchor="start" fill="#163047">After step 0: updated chunk at each receiving rank</text>
+<rect x="45" y="318" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="132" y="344.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 2</text>
+<text x="132" y="369.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a2+d2</text>
+<rect x="239" y="318" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="326" y="344.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 3</text>
+<text x="326" y="369.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a3+b3</text>
+<rect x="433" y="318" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="520" y="344.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 0</text>
+<text x="520" y="369.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">b0+c0</text>
+<rect x="627" y="318" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="714" y="344.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 1</text>
+<text x="714" y="369.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">c1+d1</text>
+<text x="45" y="419" font-size="18" font-weight="700" text-anchor="start" fill="#163047">After step 1: updated chunk at each receiving rank</text>
+<rect x="45" y="434" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="132" y="460.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 1</text>
+<text x="132" y="485.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a1+c1+d1</text>
+<rect x="239" y="434" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="326" y="460.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 2</text>
+<text x="326" y="485.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a2+b2+d2</text>
+<rect x="433" y="434" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="520" y="460.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 3</text>
+<text x="520" y="485.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a3+b3+c3</text>
+<rect x="627" y="434" width="174" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="714" y="460.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 0</text>
+<text x="714" y="485.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">b0+c0+d0</text>
+<text x="45" y="535" font-size="18" font-weight="700" text-anchor="start" fill="#163047">After step 2: updated chunk at each receiving rank</text>
+<rect x="45" y="550" width="174" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="132" y="576.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 0</text>
+<text x="132" y="601.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a0+b0+c0+d0</text>
+<rect x="239" y="550" width="174" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="326" y="576.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 1</text>
+<text x="326" y="601.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a1+b1+c1+d1</text>
+<rect x="433" y="550" width="174" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="520" y="576.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 2</text>
+<text x="520" y="601.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a2+b2+c2+d2</text>
+<rect x="627" y="550" width="174" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="714" y="576.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">chunk 3</text>
+<text x="714" y="601.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">a3+b3+c3+d3</text>
+<text x="30" y="663" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Only the received chunk is shown per round; other local chunks keep their state.</text>
+<text x="30" y="688" font-size="17" font-weight="400" text-anchor="start" fill="#526579">End: rank r owns complete chunk r, with every input rank contributing exactly once.</text>
+</svg>

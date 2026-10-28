@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="555" viewBox="0 0 840 555" role="img">
+<title>Token tree: identity is node ID, not token text</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="555" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Token tree: identity is node ID, not token text</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">One target pass · highlighted path: 0 → 1 → 4; bonus token rug</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<line x1="420" y1="155" x2="165" y2="206" stroke="#087f78" stroke-width="2"/>
+<line x1="165" y1="206" x2="172.179" y2="200.572" stroke="#087f78" stroke-width="2"/>
+<line x1="165" y1="206" x2="173.714" y2="208.249" stroke="#087f78" stroke-width="2"/>
+<line x1="420" y1="155" x2="420" y2="206" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="206" x2="416.085" y2="197.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="206" x2="423.915" y2="197.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="155" x2="675" y2="206" stroke="#526579" stroke-width="2"/>
+<line x1="675" y1="206" x2="666.286" y2="208.249" stroke="#526579" stroke-width="2"/>
+<line x1="675" y1="206" x2="667.821" y2="200.572" stroke="#526579" stroke-width="2"/>
+<line x1="165" y1="260" x2="90" y2="311" stroke="#087f78" stroke-width="2"/>
+<line x1="90" y1="311" x2="94.5002" y2="303.206" stroke="#087f78" stroke-width="2"/>
+<line x1="90" y1="311" x2="98.9027" y2="309.68" stroke="#087f78" stroke-width="2"/>
+<line x1="165" y1="260" x2="222" y2="311" stroke="#526579" stroke-width="2"/>
+<line x1="222" y1="311" x2="213.35" y2="308.514" stroke="#526579" stroke-width="2"/>
+<line x1="222" y1="311" x2="218.571" y2="302.679" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="260" x2="354" y2="311" stroke="#526579" stroke-width="2"/>
+<line x1="354" y1="311" x2="358.019" y2="302.947" stroke="#526579" stroke-width="2"/>
+<line x1="354" y1="311" x2="362.806" y2="309.142" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="260" x2="486" y2="311" stroke="#526579" stroke-width="2"/>
+<line x1="486" y1="311" x2="477.194" y2="309.142" stroke="#526579" stroke-width="2"/>
+<line x1="486" y1="311" x2="481.981" y2="302.947" stroke="#526579" stroke-width="2"/>
+<line x1="675" y1="260" x2="618" y2="311" stroke="#526579" stroke-width="2"/>
+<line x1="618" y1="311" x2="621.429" y2="302.679" stroke="#526579" stroke-width="2"/>
+<line x1="618" y1="311" x2="626.65" y2="308.514" stroke="#526579" stroke-width="2"/>
+<line x1="675" y1="260" x2="750" y2="311" stroke="#526579" stroke-width="2"/>
+<line x1="750" y1="311" x2="741.097" y2="309.68" stroke="#526579" stroke-width="2"/>
+<line x1="750" y1="311" x2="745.5" y2="303.206" stroke="#526579" stroke-width="2"/>
+<line x1="90" y1="365" x2="90" y2="406" stroke="#526579" stroke-width="2"/>
+<line x1="90" y1="406" x2="86.0853" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="90" y1="406" x2="93.9147" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="222" y1="365" x2="222" y2="406" stroke="#526579" stroke-width="2"/>
+<line x1="222" y1="406" x2="218.085" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="222" y1="406" x2="225.915" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="354" y1="365" x2="354" y2="406" stroke="#526579" stroke-width="2"/>
+<line x1="354" y1="406" x2="350.085" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="354" y1="406" x2="357.915" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="486" y1="365" x2="486" y2="406" stroke="#526579" stroke-width="2"/>
+<line x1="486" y1="406" x2="482.085" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="486" y1="406" x2="489.915" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="618" y1="365" x2="618" y2="406" stroke="#526579" stroke-width="2"/>
+<line x1="618" y1="406" x2="614.085" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="618" y1="406" x2="621.915" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="750" y1="365" x2="750" y2="406" stroke="#526579" stroke-width="2"/>
+<line x1="750" y1="406" x2="746.085" y2="397.896" stroke="#526579" stroke-width="2"/>
+<line x1="750" y1="406" x2="753.915" y2="397.896" stroke="#526579" stroke-width="2"/>
+<rect x="367" y="105" width="106" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="136.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">0: sat</text>
+<rect x="112" y="210" width="106" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="165" y="241.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">1: on</text>
+<rect x="367" y="210" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="241.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">2: down</text>
+<rect x="622" y="210" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="675" y="241.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">3: by</text>
+<rect x="37" y="315" width="106" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="90" y="346.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">4: the</text>
+<rect x="169" y="315" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="222" y="346.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">5: a</text>
+<rect x="301" y="315" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="354" y="346.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">6: on</text>
+<rect x="433" y="315" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="486" y="346.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">7: and</text>
+<rect x="565" y="315" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="618" y="346.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">8: the</text>
+<rect x="697" y="315" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="750" y="346.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">9: her</text>
+<rect x="37" y="410" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="90" y="441.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">10: mat</text>
+<rect x="169" y="410" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="222" y="441.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">11: rug</text>
+<rect x="301" y="410" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="354" y="441.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">12: the</text>
+<rect x="433" y="410" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="486" y="441.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">13: lay</text>
+<rect x="565" y="410" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="618" y="441.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">14: door</text>
+<rect x="697" y="410" width="106" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="750" y="441.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">15: side</text>
+<text x="30" y="500" font-size="17" font-weight="400" text-anchor="start" fill="#526579">The child of node 4 is mat, not rug: stop there and emit rug as the bonus.</text>
+<text x="30" y="525" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Node 11 also says rug, but belongs to the branch through node 5 (a). It is not accepted.</text>
+</svg>

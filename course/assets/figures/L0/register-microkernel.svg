@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="545" viewBox="0 0 840 545" role="img">
+<title>A 6 × 16 register micro-kernel</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="545" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">A 6 × 16 register micro-kernel</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived operation count · one k-step; one cell = one 8-float YMM</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="320" y="115" width="210" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="425" y="138.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">b0: B[k, 0–7]</text>
+<text x="425" y="163.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">one vector load</text>
+<line x1="425" y1="180" x2="425" y2="208" stroke="#087f78" stroke-width="2"/>
+<line x1="425" y1="208" x2="421.085" y2="199.896" stroke="#087f78" stroke-width="2"/>
+<line x1="425" y1="208" x2="428.915" y2="199.896" stroke="#087f78" stroke-width="2"/>
+<text x="425" y="238" font-size="18" font-weight="700" text-anchor="middle" fill="#163047">C columns 0–7</text>
+<rect x="550" y="115" width="210" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="655" y="138.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">b1: B[k, 8–15]</text>
+<text x="655" y="163.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">one vector load</text>
+<line x1="655" y1="180" x2="655" y2="208" stroke="#087f78" stroke-width="2"/>
+<line x1="655" y1="208" x2="651.085" y2="199.896" stroke="#087f78" stroke-width="2"/>
+<line x1="655" y1="208" x2="658.915" y2="199.896" stroke="#087f78" stroke-width="2"/>
+<text x="655" y="238" font-size="18" font-weight="700" text-anchor="middle" fill="#163047">C columns 8–15</text>
+<text x="45" y="152" font-size="17" font-weight="400" text-anchor="start" fill="#a45b0b">Six A scalars</text>
+<text x="45" y="177" font-size="17" font-weight="400" text-anchor="start" fill="#a45b0b">broadcast one at a time;</text>
+<text x="45" y="202" font-size="17" font-weight="400" text-anchor="start" fill="#a45b0b">reuse one A register.</text>
+<rect x="45" y="255" width="190" height="28" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="140" y="274.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">A[row 0, k] → a</text>
+<line x1="245" y1="269" x2="307" y2="269" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="269" x2="298.896" y2="272.915" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="269" x2="298.896" y2="265.085" stroke="#a45b0b" stroke-width="2"/>
+<rect x="320" y="255" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="425" y="274.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[0,0] += a × b0</text>
+<rect x="550" y="255" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="655" y="274.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[0,1] += a × b1</text>
+<rect x="45" y="285" width="190" height="28" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="140" y="304.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">A[row 1, k] → a</text>
+<line x1="245" y1="299" x2="307" y2="299" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="299" x2="298.896" y2="302.915" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="299" x2="298.896" y2="295.085" stroke="#a45b0b" stroke-width="2"/>
+<rect x="320" y="285" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="425" y="304.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[1,0] += a × b0</text>
+<rect x="550" y="285" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="655" y="304.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[1,1] += a × b1</text>
+<rect x="45" y="315" width="190" height="28" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="140" y="334.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">A[row 2, k] → a</text>
+<line x1="245" y1="329" x2="307" y2="329" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="329" x2="298.896" y2="332.915" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="329" x2="298.896" y2="325.085" stroke="#a45b0b" stroke-width="2"/>
+<rect x="320" y="315" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="425" y="334.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[2,0] += a × b0</text>
+<rect x="550" y="315" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="655" y="334.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[2,1] += a × b1</text>
+<rect x="45" y="345" width="190" height="28" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="140" y="364.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">A[row 3, k] → a</text>
+<line x1="245" y1="359" x2="307" y2="359" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="359" x2="298.896" y2="362.915" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="359" x2="298.896" y2="355.085" stroke="#a45b0b" stroke-width="2"/>
+<rect x="320" y="345" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="425" y="364.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[3,0] += a × b0</text>
+<rect x="550" y="345" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="655" y="364.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[3,1] += a × b1</text>
+<rect x="45" y="375" width="190" height="28" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="140" y="394.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">A[row 4, k] → a</text>
+<line x1="245" y1="389" x2="307" y2="389" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="389" x2="298.896" y2="392.915" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="389" x2="298.896" y2="385.085" stroke="#a45b0b" stroke-width="2"/>
+<rect x="320" y="375" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="425" y="394.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[4,0] += a × b0</text>
+<rect x="550" y="375" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="655" y="394.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[4,1] += a × b1</text>
+<rect x="45" y="405" width="190" height="28" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="140" y="424.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">A[row 5, k] → a</text>
+<line x1="245" y1="419" x2="307" y2="419" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="419" x2="298.896" y2="422.915" stroke="#a45b0b" stroke-width="2"/>
+<line x1="307" y1="419" x2="298.896" y2="415.085" stroke="#a45b0b" stroke-width="2"/>
+<rect x="320" y="405" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="425" y="424.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[5,0] += a × b0</text>
+<rect x="550" y="405" width="210" height="28" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="655" y="424.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">acc[5,1] += a × b1</text>
+<text x="30" y="480" font-size="17" font-weight="400" text-anchor="start" fill="#526579">12 accumulator registers. Per k-step: 22 values loaded; 96 FMAs = 12 vector FMAs.</text>
+<text x="30" y="505" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Register budget: 12 accumulators + 2 B + 1 broadcast A = 15 of 16 YMM.</text>
+</svg>

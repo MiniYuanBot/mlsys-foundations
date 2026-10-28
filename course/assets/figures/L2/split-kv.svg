@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="460" viewBox="0 0 840 460" role="img">
+<title>Split-KV: parallel partial results, then merge</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="460" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Split-KV: parallel partial results, then merge</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived partition · example S=37; intervals are half-open [start, end)</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="40" y="110" width="760" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="420" y="138.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">One (batch, head): six programs process disjoint key ranges</text>
+<rect x="40" y="195" width="118" height="80" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="99" y="216.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">split 0</text>
+<text x="99" y="240.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[0, 6)</text>
+<text x="99" y="264.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">o_s, lse_s</text>
+<line x1="99" y1="280" x2="99" y2="305" stroke="#526579" stroke-width="2"/>
+<rect x="168" y="195" width="118" height="80" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="227" y="216.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">split 1</text>
+<text x="227" y="240.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[6, 12)</text>
+<text x="227" y="264.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">o_s, lse_s</text>
+<line x1="227" y1="280" x2="227" y2="305" stroke="#526579" stroke-width="2"/>
+<rect x="296" y="195" width="118" height="80" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="355" y="216.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">split 2</text>
+<text x="355" y="240.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[12, 18)</text>
+<text x="355" y="264.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">o_s, lse_s</text>
+<line x1="355" y1="280" x2="355" y2="305" stroke="#526579" stroke-width="2"/>
+<rect x="424" y="195" width="118" height="80" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="483" y="216.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">split 3</text>
+<text x="483" y="240.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[18, 24)</text>
+<text x="483" y="264.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">o_s, lse_s</text>
+<line x1="483" y1="280" x2="483" y2="305" stroke="#526579" stroke-width="2"/>
+<rect x="552" y="195" width="118" height="80" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="611" y="216.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">split 4</text>
+<text x="611" y="240.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[24, 30)</text>
+<text x="611" y="264.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">o_s, lse_s</text>
+<line x1="611" y1="280" x2="611" y2="305" stroke="#526579" stroke-width="2"/>
+<rect x="680" y="195" width="118" height="80" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="739" y="216.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">split 5</text>
+<text x="739" y="240.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[30, 37)</text>
+<text x="739" y="264.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">o_s, lse_s</text>
+<line x1="739" y1="280" x2="739" y2="305" stroke="#526579" stroke-width="2"/>
+<line x1="99" y1="305" x2="739" y2="305" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="305" x2="420" y2="337" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="337" x2="416.085" y2="328.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="337" x2="423.915" y2="328.896" stroke="#526579" stroke-width="2"/>
+<rect x="180" y="345" width="480" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="378.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Combine: LSE-weighted sum of partial outputs</text>
+<text x="30" y="435" font-size="17" font-weight="400" text-anchor="start" fill="#526579">B=1, H=8: 8 × 6 = 48 programs. General boundary b_s = floor(s × S / 6).</text>
+</svg>

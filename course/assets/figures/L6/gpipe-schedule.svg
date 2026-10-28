@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="485" viewBox="0 0 840 485" role="img">
+<title>GPipe: 4 stages × 4 micro-batches</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="485" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">GPipe: 4 stages × 4 micro-batches</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Source schedule · equal-duration slots assumed for the bubble calculation</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="133" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1</text>
+<text x="182" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">2</text>
+<text x="231" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">3</text>
+<text x="280" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">4</text>
+<text x="329" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">5</text>
+<text x="378" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">6</text>
+<text x="427" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">7</text>
+<text x="476" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">8</text>
+<text x="525" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">9</text>
+<text x="574" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">10</text>
+<text x="623" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">11</text>
+<text x="672" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">12</text>
+<text x="721" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">13</text>
+<text x="770" y="124" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">14</text>
+<text x="30" y="179" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Stage 0</text>
+<rect x="110" y="150" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="132" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F1</text>
+<rect x="159" y="150" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="181" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F2</text>
+<rect x="208" y="150" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="230" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F3</text>
+<rect x="257" y="150" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="279" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F4</text>
+<rect x="306" y="150" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="328" y="179.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="355" y="150" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="377" y="179.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="404" y="150" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="426" y="179.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="453" y="150" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="475" y="179.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="502" y="150" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="524" y="179.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="551" y="150" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="573" y="179.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="600" y="150" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="622" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B4</text>
+<rect x="649" y="150" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="671" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B3</text>
+<rect x="698" y="150" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="720" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B2</text>
+<rect x="747" y="150" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="769" y="178.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B1</text>
+<text x="30" y="242" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Stage 1</text>
+<rect x="110" y="213" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="132" y="242.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="159" y="213" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="181" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F1</text>
+<rect x="208" y="213" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="230" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F2</text>
+<rect x="257" y="213" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="279" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F3</text>
+<rect x="306" y="213" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="328" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F4</text>
+<rect x="355" y="213" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="377" y="242.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="404" y="213" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="426" y="242.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="453" y="213" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="475" y="242.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="502" y="213" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="524" y="242.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="551" y="213" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="573" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B4</text>
+<rect x="600" y="213" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="622" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B3</text>
+<rect x="649" y="213" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="671" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B2</text>
+<rect x="698" y="213" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="720" y="241.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B1</text>
+<rect x="747" y="213" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="769" y="242.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<text x="30" y="305" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Stage 2</text>
+<rect x="110" y="276" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="132" y="305.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="159" y="276" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="181" y="305.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="208" y="276" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="230" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F1</text>
+<rect x="257" y="276" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="279" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F2</text>
+<rect x="306" y="276" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="328" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F3</text>
+<rect x="355" y="276" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="377" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F4</text>
+<rect x="404" y="276" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="426" y="305.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="453" y="276" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="475" y="305.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="502" y="276" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="524" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B4</text>
+<rect x="551" y="276" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="573" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B3</text>
+<rect x="600" y="276" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="622" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B2</text>
+<rect x="649" y="276" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="671" y="304.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B1</text>
+<rect x="698" y="276" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="720" y="305.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="747" y="276" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="769" y="305.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<text x="30" y="368" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Stage 3</text>
+<rect x="110" y="339" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="132" y="368.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="159" y="339" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="181" y="368.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="208" y="339" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="230" y="368.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="257" y="339" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="279" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F1</text>
+<rect x="306" y="339" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="328" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F2</text>
+<rect x="355" y="339" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="377" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F3</text>
+<rect x="404" y="339" width="44" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="426" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">F4</text>
+<rect x="453" y="339" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="475" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B4</text>
+<rect x="502" y="339" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="524" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B3</text>
+<rect x="551" y="339" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="573" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B2</text>
+<rect x="600" y="339" width="44" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="622" y="367.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">B1</text>
+<rect x="649" y="339" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="671" y="368.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="698" y="339" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="720" y="368.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<rect x="747" y="339" width="44" height="45" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="769" y="368.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">·</text>
+<text x="30" y="430" font-size="17" font-weight="400" text-anchor="start" fill="#526579">F = forward; B = backward; · = idle. Every stage has 8 active and 6 idle slots.</text>
+<text x="30" y="455" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Bubble fraction = 6/14 = (4−1)/(4+4−1) = 3/7. This is a schedule, not a measured trace.</text>
+</svg>

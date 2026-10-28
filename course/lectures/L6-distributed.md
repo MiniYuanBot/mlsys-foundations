@@ -31,19 +31,17 @@ tags: [lecture, distributed, allreduce, ring, ddp, zero, fsdp, tensor-parallel, 
 
 ### 1.1 五个原语
 
-```
-           before                         after
-broadcast  r0:[a]  r1:[ ]  r2:[ ]          r0:[a]  r1:[a]  r2:[a]
-reduce     r0:[a]  r1:[b]  r2:[c]          r0:[a+b+c]
-allreduce  r0:[a]  r1:[b]  r2:[c]          all:[a+b+c]
-reduce-    r0:[a0 a1 a2]                   r0:[s0]
- scatter   r1:[b0 b1 b2]                   r1:[s1]
-           r2:[c0 c1 c2]                   r2:[s2]
-all-gather r0:[x0] r1:[x1] r2:[x2]         all:[x0 x1 x2]
+![五个集合通信原语](../assets/figures/L6/collective-primitives.svg)
 
-```
+图：五个集合通信原语（示意，不按耗时或容量比例）。
 
 其中，$s_i = a_i + b_i + c_i$。关键恒等式是：
+
+$$
+\text{allreduce} = \text{reduce} + \text{broadcast}
+$$
+
+以及：
 
 $$
 \text{allreduce} = \text{reduce-scatter} + \text{all-gather}
@@ -78,13 +76,11 @@ $$
 
 设 $P$ 个 rank、每个 rank 有 $n$ 字节。
 
-### 2.1 star：全部汇到 rank 0
+### 2.1 star：先 reduce，再 broadcast
 
-```
-r1 --\
-r2 ---+--> r0 (adds) --+--> r1, r2, r3
-r3 --/                 |
-```
+![Star reduce 再 broadcast](../assets/figures/L6/star-reduce-broadcast.svg)
+
+图：Star reduce 再 broadcast（按本节参数推导，非实测）。
 
 共有 $2(P-1)$ 条消息，每条 $n$ 字节，都经过 rank 0：
 
@@ -96,23 +92,19 @@ rank 0 的链路是瓶颈，$P$ 越大越慢。lab 实测：64 MB、$P=4$ 时比
 
 ### 2.2 ring：先 reduce-scatter，再 all-gather
 
-把数据切成 $P$ 块。$P=4$ 时，reduce-scatter 的三步（每一格表示该 rank 在这一块上已经累加了哪些 rank 的数据）：
+把数据切成 $P$ 块。$P=4$ 时，reduce-scatter 需要三步。图中先列出全部初始数据，此后每一格只展示该 rank **当轮收到并累加的 chunk**；其他本地 chunk 保持原状态：
 
-```
-chunk:        0        1        2        3
-start  r0:   a0       a1       a2       a3
-       r1:   b0       b1       b2       b3
-       r2:   c0       c1       c2       c3
-       r3:   d0       d1       d2       d3
+![Ring reduce-scatter 中 chunk 0 的传递](../assets/figures/L6/ring-provenance.svg)
 
-after step 0:  r0 has d0+a0      r1 has a1+b1      r2 has b2+c2      r3 has c3+d3
-after step 1:  r0 has c0+d0+a0   r1 has d1+a1+b1   r2 has a2+b2+c2   r3 has b3+c3+d3
-after step 2:  r0 has b0+c0+d0+a0 = full chunk 0 ;  r1 full chunk 1 ;  r2 chunk 2 ;  r3 chunk 3
-```
+图：只追踪 chunk 0，橙色箭头表示实际消息：rank 1 的 b0 先送到 rank 2，加上 c0；再经 rank 3 加上 d0，最后送至 rank 0 加上 a0。各 rank 的列固定不变，其他 chunk 同时沿旋转后的路径传递。
 
-第 $s$ 步，rank $r$ 向右发送块 $(r-s-1) \bmod 4$，并将收到的数据累加。
+![Ring reduce-scatter 各 rank 的逐轮状态](../assets/figures/L6/ring-round-states.svg)
 
-all-gather 再沿环转 $P-1$ 步，把每个完整的块传给所有人。
+图：与上图同一发送规则的完整轮次对照。初态列出全部本地 chunk；此后三行仅列各 rank 当轮收到并累加的 chunk，其他本地块保持状态。最终 rank r 得到完整 chunk r。
+
+令 $s=0,1,2$，每步发送都读取轮初状态。rank $r$ 向右邻居 $(r+1)\bmod4$ 发送块 $(r-s-1)\bmod4$，从左邻居收到块 $(r-s-2)\bmod4$ 并累加到本地同号块。三步后，rank $r$ 得到完整 chunk $r$，其中每个 rank 的贡献恰好出现一次。
+
+all-gather 再沿同方向转 $P-1$ 步，把每个完整块传给所有人。对于上述终态，重新令 $s=0,1,2$：rank $r$ 发送块 $(r-s)\bmod4$，收到块 $(r-s-1)\bmod4$；此阶段只复制，不再求和。
 
 $$
 T_{\text{ring}} = 2(P-1)\alpha + 2\frac{P-1}{P}n\beta
@@ -122,10 +114,16 @@ $$
 
 ### 2.3 recursive doubling
 
-```
-P = 4, mask = 1:  r0 <-> r1,  r2 <-> r3    exchange everything, add
-       mask = 2:  r0 <-> r2,  r1 <-> r3    exchange everything, add  -> done
-```
+P=4 时，每轮交换整个向量并相加：
+
+| XOR mask | 配对 |
+| --- | --- |
+| 1 | rank 0 与 1；rank 2 与 3 |
+| 2 | rank 0 与 2；rank 1 与 3 |
+
+![Recursive doubling 两轮](../assets/figures/L6/recursive-doubling.svg)
+
+图：Recursive doubling 两轮（按本节参数推导，非实测）。
 
 $$
 T_{\mathrm{rd}} = \log_2 P \cdot (\alpha + n\beta)
@@ -154,18 +152,9 @@ $$
 
 lab 实测：在 16 KB 处 RD 仍然更快（$8.4$ 对 $13.1\,\mu\mathrm{s}$），到 64 KB 时两者相当（$22$ 对 $21\,\mu\mathrm{s}$），到 256 KB 时 ring 明显更快。**模型给出了正确的量级**。
 
-```
-time (log)                                        star
-  |                                          ____----
-  |                              rd     ___--
-  |                          ____----_--        ring
-  |                  ____----  __--
-  |  rd/mpi  ____----    __--
-  |  ___----  ring __--
-  |--   ____----
-  +---------------------------------------------> message bytes (log)
-        ~36 KB crossover rd vs ring (P = 4)
-```
+![All-reduce 成本交叉点](../assets/figures/L6/allreduce-crossover.svg)
+
+图：按原文约数 α=0.25 μs、α/β=4.5 kB 绘制的理论成本，P=4，交叉点为约 36 kB；忽略归约和内存复制成本，曲线不是实测。
 
 这正是 MPI 库和 NCCL 内部做的事：按消息大小和 $P$ 选择算法。NCCL 的 `NCCL_ALGO` 环境变量可以强制指定算法（见 lab6 `hpc/README.md`）。
 
@@ -177,23 +166,19 @@ time (log)                                        star
 
 每张卡持有一份完整的模型，处理不同的数据。反向传播结束后，对所有梯度做 allreduce 并取平均，然后各自更新：
 
-```
-compute  [ fwd ][====== bwd ======]
-comm                               [=== allreduce all grads ===]
-                                                                [opt]
-```
+![串行 DDP 关键路径](../assets/figures/L6/ddp-serial.svg)
+
+图：串行 DDP 关键路径（示意，不按耗时或容量比例）。
 
 通信完全暴露在关键路径上。
 
 ### 4.2 bucket + 重叠（[PyTorch DDP](https://arxiv.org/abs/2006.15704)，VLDB'20）
 
-反向传播是**从最后一层往前**算的，后面层的梯度先就绪。把梯度分成若干个 **bucket**，一个 bucket 一凑齐，就在后台开始它的 allreduce，同时反向传播继续往前算：
+反向传播是**从最后一层往前**算的，后面层的梯度先就绪。把梯度分成若干个 **bucket**，只有全部成员的梯度都就绪后，该 bucket 才能启动 allreduce，同时反向传播继续往前算。图中 b0 包含 L3 与 L2，因此必须等 L2 也完成；b1 等 L1，b2 等 L0：
 
-```
-compute  [ fwd ][ bwd L3 ][ bwd L2 ][ bwd L1 ][ bwd L0 ]
-comm                      [ AR b0 (L3+L2) ][ AR b1 (L1) ][ AR b2 (L0) ]
-                                                          ^ only this part is exposed
-```
+![DDP bucket 通信重叠](../assets/figures/L6/bucket-overlap.svg)
+
+图：bucket 重叠的事件顺序示意。b0 要等 L3、L2 都就绪，b1 等 L1，b2 等 L0；本例通信串行，右端标出反向传播结束后仍未完成的通信。间距不代表耗时。
 
 bucket 的大小是一个权衡：
 
@@ -258,13 +243,18 @@ FSDP 是 PyTorch 对 ZeRO-3 的实现：按层（或按模块）分片参数，�
 
 流水线并行的“气泡”：
 
-```
-GPipe, 4 stages, 4 micro-batches (F = forward, B = backward, . = idle)
-stage 0  F1 F2 F3 F4 .  .  .  .  .  .  B4 B3 B2 B1
-stage 1  .  F1 F2 F3 F4 .  .  .  .  B4 B3 B2 B1 .
-stage 2  .  .  F1 F2 F3 F4 .  .  B4 B3 B2 B1 .  .
-stage 3  .  .  .  F1 F2 F3 F4 B4 B3 B2 B1 .  .  .
-```
+原示例的精确事件表如下：F 表示 forward，B 表示 backward，数字 1–4 是 micro-batch 编号；表内值是事件发生的逻辑步，未列出的步为空闲。
+
+| stage | F1 | F2 | F3 | F4 | B4 | B3 | B2 | B1 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 1 | 2 | 3 | 4 | 11 | 12 | 13 | 14 |
+| 1 | 2 | 3 | 4 | 5 | 10 | 11 | 12 | 13 |
+| 2 | 3 | 4 | 5 | 6 | 9 | 10 | 11 | 12 |
+| 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 |
+
+![GPipe 四阶段四微批](../assets/figures/L6/gpipe-schedule.svg)
+
+图：GPipe 四阶段四微批（按本节参数推导，非实测）。
 
 气泡比例为：
 

@@ -35,17 +35,11 @@ tags: [lecture, research-method, statistics, preregistration, reading, proposal]
 
 MLSys 的大多数好论文都遵循同一个模式：
 
-```
-1. measure something real              lab4: chunked prefill only gives 13%
-2. find a gap between expectation      the paper (Sarathi-Serve) reports much more
-   and reality
-3. explain the gap with a model        fit a step-time model; on a 0.6B model
-                                       the prefill share is small
-4. design a mechanism that exploits    choose the chunk per step from the model
-   the explanation
-5. show it works where it should,      SLO met with lower TTFT; no gain when
-   and NOT where it should not         prefill share is small (negative control)
-```
+原例以 lab4 的 13% 改善为起点：拟合 step-time 模型，解释 0.6B 模型中 prefill 占比小的原因，再按模型选择每步 chunk。验证目标是在满足 SLO 的条件下降低 TTFT，并保留“prefill 占比小时不获益”这一负对照。
+
+![从现象到研究机制的五步](../assets/figures/L7/research-gap-process.svg)
+
+图：从现象到研究机制的五步（沿用原文示例或报告值，未重新测量）。
 
 图中的步耗时模型为：
 
@@ -118,12 +112,17 @@ sort the 10000 medians; the 2.5% and 97.5% quantiles are the 95% CI
 
 例如，方向为 "lower"、最小效应为 $\delta = 0.05$ 时，目标比值为 $0.95$：
 
-```
-  CI entirely below 0.95          [0.886 ---- 0.944]  |          supported
-  CI straddles 0.95                     [0.817 ------|-- 1.005]  inconclusive
-  CI entirely above 0.95                             | [0.97 -- 1.02]  refuted
-                                                    0.95
-```
+阈值为 0.95，三个精确置信区间与判定为：
+
+| 置信区间 | 与 0.95 的关系 | 判定 |
+| --- | --- | --- |
+| `[0.886,0.944]` | 整体低于 | supported |
+| `[0.817,1.005]` | 跨越 | inconclusive |
+| `[0.97,1.02]` | 整体高于 | refuted |
+
+![CI 与最小效应判定](../assets/figures/L7/ci-decisions.svg)
+
+图：CI 与最小效应判定（沿用原文示例或报告值，未重新测量）。
 
 **inconclusive 不是失败**，它说明需要更多的重复，或者效应确实太小、噪声太大。在报告里如实写出“$n=5$ 时不足以区分”，比强行宣称有效更可信。
 
@@ -152,13 +151,9 @@ lab7 的工具用 SHA-256 锁住这个文件：锁住之后若有改动，held-o
 
 ### 4.2 dev 与 held-out
 
-```
-dev conditions      look as often as you like; tune, debug, iterate
-                         |
-                    --lock--   (hypothesis, margin and held-out set are now frozen)
-                         |
-held-out conditions run ONCE; report whatever comes out
-```
+![Dev 锁定到 held-out](../assets/figures/L7/heldout-lock.svg)
+
+图：Dev 锁定到 held-out（示意，不按耗时或容量比例）。
 
 lab7 的示例正好说明了留出集的价值：dev 条件（$P=4$，batch 16）的结果是 inconclusive；held-out 条件中，$P=4$、batch 64 是 supported，而 $P=2$ 完全没有效果。如果只看 dev，或者只挑 $P=4$、batch 64 来报告，都会得出误导性的结论。
 

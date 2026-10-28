@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="805" viewBox="0 0 840 805" role="img">
+<title>Qwen3-0.6B: forward-pass stages</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="805" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Qwen3-0.6B: forward-pass stages</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Source model dimensions · sequence of operations; not a timing diagram</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="130" y="105" width="580" height="47" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="420" y="134.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Token IDs [T] → embedding [T, 1024]</text>
+<rect x="45" y="173" width="750" height="485" rx="9" fill="#ffffff" stroke="#bccbd6"/>
+<text x="60" y="197" font-size="18" font-weight="700" text-anchor="start" fill="#526579">Repeat × 28 layers</text>
+<rect x="130" y="210" width="580" height="51" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="229.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">RMSNorm(h + residual); update residual</text>
+<text x="420" y="253.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[T, 1024]</text>
+<line x1="420" y1="263" x2="420" y2="271" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="271" x2="416.085" y2="262.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="271" x2="423.915" y2="262.896" stroke="#526579" stroke-width="2"/>
+<rect x="130" y="273" width="580" height="51" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="292.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Q / K / V projections</text>
+<text x="420" y="316.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Q: [T, 2048]; K,V: [T, 1024]</text>
+<line x1="420" y1="326" x2="420" y2="334" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="334" x2="416.085" y2="325.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="334" x2="423.915" y2="325.896" stroke="#526579" stroke-width="2"/>
+<rect x="130" y="336" width="580" height="51" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="355.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Per-head RMSNorm on Q,K → RoPE</text>
+<text x="420" y="379.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">V bypasses QK-norm and RoPE</text>
+<line x1="420" y1="389" x2="420" y2="397" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="397" x2="416.085" y2="388.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="397" x2="423.915" y2="388.896" stroke="#526579" stroke-width="2"/>
+<rect x="130" y="399" width="580" height="51" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="418.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Write K,V cache → attention(Q, cached K,V)</text>
+<text x="420" y="442.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16 Q heads / 8 KV heads; d = 128</text>
+<line x1="420" y1="452" x2="420" y2="460" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="460" x2="416.085" y2="451.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="460" x2="423.915" y2="451.896" stroke="#526579" stroke-width="2"/>
+<rect x="130" y="462" width="580" height="51" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="481.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Output projection Wo</text>
+<text x="420" y="505.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[T, 2048] → [T, 1024]</text>
+<line x1="420" y1="515" x2="420" y2="523" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="523" x2="416.085" y2="514.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="523" x2="423.915" y2="514.896" stroke="#526579" stroke-width="2"/>
+<rect x="130" y="525" width="580" height="51" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="544.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">RMSNorm(h + residual)</text>
+<text x="420" y="568.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[T, 1024]</text>
+<line x1="420" y1="578" x2="420" y2="586" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="586" x2="416.085" y2="577.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="586" x2="423.915" y2="577.896" stroke="#526579" stroke-width="2"/>
+<rect x="130" y="588" width="580" height="51" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="607.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">SiLU(gate) × up → down projection</text>
+<text x="420" y="631.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">[T, 3072] → [T, 1024]</text>
+<line x1="420" y1="153" x2="420" y2="173" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="173" x2="416.085" y2="164.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="173" x2="423.915" y2="164.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="660" x2="420" y2="680" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="680" x2="416.085" y2="671.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="680" x2="423.915" y2="671.896" stroke="#526579" stroke-width="2"/>
+<rect x="130" y="686" width="580" height="66" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="420" y="712.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Final RMSNorm(h + residual) → LM head</text>
+<text x="420" y="737.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Logits [T, 151936] → argmax at the last position</text>
+<text x="30" y="785" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Residual updates and rounding remain defined by the original pseudocode and surrounding text.</text>
+</svg>

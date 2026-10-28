@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="560" viewBox="0 0 840 560" role="img">
+<title>Three-stage copy / compute pipeline</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="560" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Three-stage copy / compute pipeline</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic event order · not a duration or bandwidth chart</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="45" y="110" width="750" height="55" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="420" y="143.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Prologue: issue load t0 → s0, then load t1 → s1</text>
+<text x="45" y="202" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Iteration</text>
+<text x="190" y="202" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Wait + block sync</text>
+<text x="420" y="202" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Issue next copy</text>
+<text x="635" y="202" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Compute</text>
+<rect x="45" y="220" width="100" height="40" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="95" y="246.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">k=0</text>
+<rect x="170" y="220" width="220" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="280" y="245.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">t0 ready; old readers done</text>
+<rect x="415" y="220" width="185" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="507.5" y="246.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t2 → s2</text>
+<rect x="630" y="220" width="165" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="712.5" y="246.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t0 in s0</text>
+<line x1="393" y1="240" x2="410" y2="240" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="240" x2="401.896" y2="243.915" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="240" x2="401.896" y2="236.085" stroke="#526579" stroke-width="2"/>
+<line x1="604" y1="240" x2="625" y2="240" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="240" x2="616.896" y2="243.915" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="240" x2="616.896" y2="236.085" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="273" width="100" height="40" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="95" y="299.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">k=1</text>
+<rect x="170" y="273" width="220" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="280" y="298.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">t1 ready; old readers done</text>
+<rect x="415" y="273" width="185" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="507.5" y="299.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t3 → s0</text>
+<rect x="630" y="273" width="165" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="712.5" y="299.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t1 in s1</text>
+<line x1="393" y1="293" x2="410" y2="293" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="293" x2="401.896" y2="296.915" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="293" x2="401.896" y2="289.085" stroke="#526579" stroke-width="2"/>
+<line x1="604" y1="293" x2="625" y2="293" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="293" x2="616.896" y2="296.915" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="293" x2="616.896" y2="289.085" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="326" width="100" height="40" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="95" y="352.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">k=2</text>
+<rect x="170" y="326" width="220" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="280" y="351.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">t2 ready; old readers done</text>
+<rect x="415" y="326" width="185" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="507.5" y="352.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t4 → s1</text>
+<rect x="630" y="326" width="165" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="712.5" y="352.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t2 in s2</text>
+<line x1="393" y1="346" x2="410" y2="346" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="346" x2="401.896" y2="349.915" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="346" x2="401.896" y2="342.085" stroke="#526579" stroke-width="2"/>
+<line x1="604" y1="346" x2="625" y2="346" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="346" x2="616.896" y2="349.915" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="346" x2="616.896" y2="342.085" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="379" width="100" height="40" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="95" y="405.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">k=3</text>
+<rect x="170" y="379" width="220" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="280" y="404.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">t3 ready; old readers done</text>
+<rect x="415" y="379" width="185" height="40" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="507.5" y="405.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t5 → s2</text>
+<rect x="630" y="379" width="165" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="712.5" y="405.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t3 in s0</text>
+<line x1="393" y1="399" x2="410" y2="399" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="399" x2="401.896" y2="402.915" stroke="#526579" stroke-width="2"/>
+<line x1="410" y1="399" x2="401.896" y2="395.085" stroke="#526579" stroke-width="2"/>
+<line x1="604" y1="399" x2="625" y2="399" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="399" x2="616.896" y2="402.915" stroke="#526579" stroke-width="2"/>
+<line x1="625" y1="399" x2="616.896" y2="395.085" stroke="#526579" stroke-width="2"/>
+<text x="30" y="465" font-size="17" font-weight="400" text-anchor="start" fill="#526579">For k≥1, the next copy reuses the slot whose tile k−1 has finished computing.</text>
+<text x="30" y="490" font-size="17" font-weight="400" text-anchor="start" fill="#526579">wait_group&lt;1&gt; leaves at most the newest group pending; then synchronize.</text>
+<text x="30" y="515" font-size="17" font-weight="400" text-anchor="start" fill="#526579">One stage: load → wait → compute → next load (no copy/compute overlap).</text>
+</svg>

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="380" viewBox="0 0 840 380" role="img">
+<title>Packing makes each k-step contiguous</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="380" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Packing makes each k-step contiguous</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived ordering · k-major panels</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="50" y="120" font-size="21" font-weight="700" text-anchor="start" fill="#163047">Packed A: MR = 6</text>
+<text x="460" y="120" font-size="21" font-weight="700" text-anchor="start" fill="#163047">Packed B: NR = 16</text>
+<text x="50" y="182" font-size="17" font-weight="400" text-anchor="start" fill="#163047">k=0</text>
+<rect x="100" y="155" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="125" y="182.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a00</text>
+<rect x="152" y="155" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="177" y="182.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a10</text>
+<rect x="204" y="155" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="229" y="182.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a20</text>
+<rect x="256" y="155" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="281" y="182.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a30</text>
+<rect x="308" y="155" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="333" y="182.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a40</text>
+<rect x="360" y="155" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="385" y="182.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a50</text>
+<rect x="460" y="155" width="320" height="44" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="620" y="183.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">b00  b01  ...  b0,15</text>
+<text x="50" y="257" font-size="17" font-weight="400" text-anchor="start" fill="#163047">k=1</text>
+<rect x="100" y="230" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="125" y="257.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a01</text>
+<rect x="152" y="230" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="177" y="257.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a11</text>
+<rect x="204" y="230" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="229" y="257.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a21</text>
+<rect x="256" y="230" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="281" y="257.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a31</text>
+<rect x="308" y="230" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="333" y="257.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a41</text>
+<rect x="360" y="230" width="50" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="385" y="257.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a51</text>
+<rect x="460" y="230" width="320" height="44" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="620" y="258.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">b10  b11  ...  b1,15</text>
+<text x="30" y="325" font-size="17" font-weight="400" text-anchor="start" fill="#526579">A: (k, row-within-MR) order.     B: (k, col-within-NR) order.</text>
+<text x="30" y="350" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Both packed panels are read sequentially by the micro-kernel.</text>
+</svg>

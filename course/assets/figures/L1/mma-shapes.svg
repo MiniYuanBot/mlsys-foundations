@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="380" viewBox="0 0 840 380" role="img">
+<title>One warp executes m16n8k16</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="380" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">One warp executes m16n8k16</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived dimensions · 2048 scalar FMAs per MMA instruction</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="70" y="145" width="205" height="125" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="172.5" y="200.48" font-size="22" font-weight="400" text-anchor="middle" fill="#163047">A: 16 × 16</text>
+<text x="172.5" y="229.48" font-size="22" font-weight="400" text-anchor="middle" fill="#163047">fp16</text>
+<text x="297" y="218" font-size="30" font-weight="400" text-anchor="start" fill="#163047">×</text>
+<rect x="350" y="145" width="165" height="125" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="432.5" y="200.48" font-size="22" font-weight="400" text-anchor="middle" fill="#163047">B: 16 × 8</text>
+<text x="432.5" y="229.48" font-size="22" font-weight="400" text-anchor="middle" fill="#163047">fp16</text>
+<text x="539" y="218" font-size="28" font-weight="400" text-anchor="start" fill="#163047">→</text>
+<rect x="610" y="145" width="165" height="125" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="692.5" y="200.48" font-size="22" font-weight="400" text-anchor="middle" fill="#163047">D: 16 × 8</text>
+<text x="692.5" y="229.48" font-size="22" font-weight="400" text-anchor="middle" fill="#163047">fp32</text>
+<text x="30" y="320" font-size="17" font-weight="400" text-anchor="start" fill="#526579">D ← D + A × B      M=16, N=8, K=16</text>
+<text x="30" y="345" font-size="17" font-weight="400" text-anchor="start" fill="#526579">The 32 lanes collectively hold A, B and D fragments; no lane owns the full tile.</text>
+</svg>

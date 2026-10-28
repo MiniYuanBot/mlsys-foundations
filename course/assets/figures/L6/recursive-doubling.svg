@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="570" viewBox="0 0 840 570" role="img">
+<title>Recursive doubling: exchange round-start buffers</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="570" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Recursive doubling: exchange round-start buffers</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">P=4 · sum reduction · each message carries the full n-byte buffer</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="135" y="122" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">rank 0</text>
+<text x="325" y="122" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">rank 1</text>
+<text x="515" y="122" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">rank 2</text>
+<text x="705" y="122" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">rank 3</text>
+<rect x="50" y="150" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="135" y="186.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a</text>
+<rect x="240" y="150" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="325" y="186.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">b</text>
+<rect x="430" y="150" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="515" y="186.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">c</text>
+<rect x="620" y="150" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="705" y="186.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<text x="40" y="249" font-size="19" font-weight="700" text-anchor="start" fill="#163047">Round 1, mask 1: r0 ↔ r1; r2 ↔ r3</text>
+<line x1="135" y1="258" x2="135" y2="283" stroke="#526579" stroke-width="2"/>
+<line x1="135" y1="283" x2="131.085" y2="274.896" stroke="#526579" stroke-width="2"/>
+<line x1="135" y1="283" x2="138.915" y2="274.896" stroke="#526579" stroke-width="2"/>
+<line x1="325" y1="258" x2="325" y2="283" stroke="#526579" stroke-width="2"/>
+<line x1="325" y1="283" x2="321.085" y2="274.896" stroke="#526579" stroke-width="2"/>
+<line x1="325" y1="283" x2="328.915" y2="274.896" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="258" x2="515" y2="283" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="283" x2="511.085" y2="274.896" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="283" x2="518.915" y2="274.896" stroke="#526579" stroke-width="2"/>
+<line x1="705" y1="258" x2="705" y2="283" stroke="#526579" stroke-width="2"/>
+<line x1="705" y1="283" x2="701.085" y2="274.896" stroke="#526579" stroke-width="2"/>
+<line x1="705" y1="283" x2="708.915" y2="274.896" stroke="#526579" stroke-width="2"/>
+<rect x="50" y="292" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="135" y="328.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a+b</text>
+<rect x="240" y="292" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="325" y="328.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a+b</text>
+<rect x="430" y="292" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="515" y="328.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">c+d</text>
+<rect x="620" y="292" width="170" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="705" y="328.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">c+d</text>
+<text x="40" y="391" font-size="19" font-weight="700" text-anchor="start" fill="#163047">Round 2, mask 2: r0 ↔ r2; r1 ↔ r3</text>
+<line x1="135" y1="400" x2="135" y2="425" stroke="#526579" stroke-width="2"/>
+<line x1="135" y1="425" x2="131.085" y2="416.896" stroke="#526579" stroke-width="2"/>
+<line x1="135" y1="425" x2="138.915" y2="416.896" stroke="#526579" stroke-width="2"/>
+<line x1="325" y1="400" x2="325" y2="425" stroke="#526579" stroke-width="2"/>
+<line x1="325" y1="425" x2="321.085" y2="416.896" stroke="#526579" stroke-width="2"/>
+<line x1="325" y1="425" x2="328.915" y2="416.896" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="400" x2="515" y2="425" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="425" x2="511.085" y2="416.896" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="425" x2="518.915" y2="416.896" stroke="#526579" stroke-width="2"/>
+<line x1="705" y1="400" x2="705" y2="425" stroke="#526579" stroke-width="2"/>
+<line x1="705" y1="425" x2="701.085" y2="416.896" stroke="#526579" stroke-width="2"/>
+<line x1="705" y1="425" x2="708.915" y2="416.896" stroke="#526579" stroke-width="2"/>
+<rect x="50" y="434" width="170" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="135" y="470.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a+b+c+d</text>
+<rect x="240" y="434" width="170" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="325" y="470.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a+b+c+d</text>
+<rect x="430" y="434" width="170" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="515" y="470.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a+b+c+d</text>
+<rect x="620" y="434" width="170" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="705" y="470.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a+b+c+d</text>
+<text x="30" y="540" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Both peers send their old state before adding the received state. Two rounds complete all-reduce.</text>
+</svg>

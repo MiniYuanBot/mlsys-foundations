@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="450" viewBox="0 0 840 450" role="img">
+<title>CUDA and Triton: who maps work to threads?</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="450" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">CUDA and Triton: who maps work to threads?</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="45" y="110" width="350" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="220" y="133.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">CUDA: one thread</text>
+<text x="220" y="160.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">one scalar index i</text>
+<rect x="445" y="110" width="350" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="620" y="133.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">Triton: one program</text>
+<text x="620" y="160.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">a block of offsets</text>
+<rect x="45" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="64.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i0</text>
+<rect x="445" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="464.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">0</text>
+<rect x="89" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="108.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i1</text>
+<rect x="489" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="508.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1</text>
+<rect x="133" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="152.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i2</text>
+<rect x="533" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="552.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">2</text>
+<rect x="177" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="196.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i3</text>
+<rect x="577" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="596.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">3</text>
+<rect x="221" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="240.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i4</text>
+<rect x="621" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="640.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">4</text>
+<rect x="265" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="284.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i5</text>
+<rect x="665" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="684.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">5</text>
+<rect x="309" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="328.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i6</text>
+<rect x="709" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="728.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">6</text>
+<rect x="353" y="215" width="39" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="372.5" y="240.1" font-size="15" font-weight="400" text-anchor="middle" fill="#163047">i7</text>
+<rect x="753" y="215" width="39" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="772.5" y="240.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">7</text>
+<text x="45" y="200" font-size="18" font-weight="400" text-anchor="start" fill="#163047">Independent thread instructions</text>
+<text x="445" y="200" font-size="18" font-weight="400" text-anchor="start" fill="#163047">One vector operation + mask</text>
+<line x1="220" y1="270" x2="220" y2="305" stroke="#526579" stroke-width="2"/>
+<line x1="220" y1="305" x2="216.085" y2="296.896" stroke="#526579" stroke-width="2"/>
+<line x1="220" y1="305" x2="223.915" y2="296.896" stroke="#526579" stroke-width="2"/>
+<line x1="620" y1="270" x2="620" y2="305" stroke="#526579" stroke-width="2"/>
+<line x1="620" y1="305" x2="616.085" y2="296.896" stroke="#526579" stroke-width="2"/>
+<line x1="620" y1="305" x2="623.915" y2="296.896" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="310" width="350" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="220" y="336.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">You: threads, shared memory, sync</text>
+<text x="220" y="360.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Boundary: i &lt; n</text>
+<rect x="445" y="310" width="350" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="620" y="336.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Compiler: thread map, smem, vectors</text>
+<text x="620" y="360.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Boundary: offsets &lt; n</text>
+<text x="30" y="420" font-size="17" font-weight="400" text-anchor="start" fill="#526579">In Triton you still choose BLOCK, grid and dataflow. Eight cells illustrate a block.</text>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="500" viewBox="0 0 840 500" role="img">
+<title>Chunked prefill: share a total token budget</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="500" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Chunked prefill: share a total token budget</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived token counts · one decode token each step; no latency prediction</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="45" y="110" width="750" height="65" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="420" y="135.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">Total budget = 256 input tokens / step</text>
+<text x="420" y="162.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">1 decode token + at most 255 prefill tokens</text>
+<text x="93" y="215" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">Step 1</text>
+<rect x="45" y="240" width="96" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="93" y="267.94" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1 decode</text>
+<rect x="45" y="295" width="96" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="93" y="320.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">255</text>
+<text x="93" y="346.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">prefill</text>
+<text x="93" y="395" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">256 total</text>
+<text x="201" y="215" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">Step 2</text>
+<rect x="153" y="240" width="96" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="201" y="267.94" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1 decode</text>
+<rect x="153" y="295" width="96" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="201" y="320.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">255</text>
+<text x="201" y="346.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">prefill</text>
+<text x="201" y="395" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">256 total</text>
+<text x="309" y="215" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">Step 3</text>
+<rect x="261" y="240" width="96" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="309" y="267.94" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1 decode</text>
+<rect x="261" y="295" width="96" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="309" y="320.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">255</text>
+<text x="309" y="346.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">prefill</text>
+<text x="309" y="395" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">256 total</text>
+<text x="417" y="215" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">Step 4</text>
+<rect x="369" y="240" width="96" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="417" y="267.94" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1 decode</text>
+<rect x="369" y="295" width="96" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="417" y="320.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">255</text>
+<text x="417" y="346.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">prefill</text>
+<text x="417" y="395" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">256 total</text>
+<text x="525" y="215" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">Step 5</text>
+<rect x="477" y="240" width="96" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="525" y="267.94" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1 decode</text>
+<rect x="477" y="295" width="96" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="525" y="320.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">255</text>
+<text x="525" y="346.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">prefill</text>
+<text x="525" y="395" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">256 total</text>
+<text x="633" y="215" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">Step 6</text>
+<rect x="585" y="240" width="96" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="633" y="267.94" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1 decode</text>
+<rect x="585" y="295" width="96" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="633" y="320.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">255</text>
+<text x="633" y="346.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">prefill</text>
+<text x="633" y="395" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">256 total</text>
+<text x="741" y="215" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">Step 7</text>
+<rect x="693" y="240" width="96" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="741" y="267.94" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1 decode</text>
+<rect x="693" y="295" width="96" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="741" y="320.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">6</text>
+<text x="741" y="346.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">prefill</text>
+<text x="741" y="395" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">7 total</text>
+<text x="30" y="443" font-size="17" font-weight="400" text-anchor="start" fill="#526579">6 × 255 + 6 = 1536 prefill tokens over 7 steps; final step uses 7 of 256 tokens.</text>
+<text x="30" y="468" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Equal token counts do not guarantee equal step times. No milliseconds are inferred.</text>
+</svg>

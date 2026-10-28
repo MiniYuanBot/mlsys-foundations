@@ -30,11 +30,9 @@ L0 Part C 用解释器执行融合后的计算图，L1、L2 是手写 kernel。�
 
 ## §1 编译器流水线
 
-```
- user code           graph capture           IR (a DAG)               lowering
- y = softmax(x)  ->  trace / Dynamo  ->  x -> RowMax -> Sub -> Exp  -> fusion groups -> kernel source -> binary
-                                                       \-> RowSum -/        (lab3 B1)      (A3, B2, B3)    (NVRTC)
-```
+![从用户代码到二进制](../assets/figures/L3/compiler-pipeline.svg)
+
+图：从用户代码到二进制（示意，不按耗时或容量比例）。
 
 lab3 实现的就是从 “IR” 到 “binary” 这一段：
 
@@ -64,15 +62,20 @@ lab3 实现的就是从 “IR” 到 “binary” 这一段：
 
 以 softmax 为例（$x$ 为 $[R,C]$）：
 
-```
-reverse topo order        decision
- Div  (output)        ->  new kernel K0 (Elementwise)
- RowSum(e)            ->  consumers {Div} all in K0, reduction of width C -> joins, K0 becomes Row
- Exp  = e             ->  consumers {RowSum, Div} both in K0 -> joins
- Sub                  ->  joins
- RowMax(x)            ->  consumers {Sub} in K0, same width C -> joins
-=> ONE kernel: read x, write y.  Unfused: 5 kernels, 4 temporaries of [R, C]
-```
+未融合时，五个算子产生四个中间张量：
+
+| 算子 | 临时量 | 形状 |
+| --- | --- | --- |
+| RowMax | m | `[R,1]` |
+| Sub | z | `[R,C]` |
+| Exp | e | `[R,C]` |
+| RowSum | l | `[R,1]` |
+
+合计 $2RC+2R$ 个元素。例如 R=2、C=3 时为 16 个元素；广播的行归约结果不需要预先物化成 `[R,C]`。
+
+![逆拓扑融合轨迹](../assets/figures/L3/fusion-trace.svg)
+
+图：完整 softmax 依赖图与逆拓扑融合。未融合有 5 个 kernel，四个临时张量分别是 [R,1]、[R,C]、[R,C]、[R,1]，合计 2RC+2R 个元素；不把广播视为额外物化。
 
 不能融合的典型情况：
 
@@ -117,14 +120,27 @@ tc_kernel(in0, out, R, C) {
 
 GEMM 不适合从零开始生成，它的性能来自 L1 介绍的精细分块。编译器的通常做法是：**保留一个手写的 GEMM 模板，只把三个“钩子”函数交给代码生成**：
 
-```
-template (provided):                       hooks (generated, lab B3):
-  for k-tile:                                tc_load_a(i, j)   = prologue ops on A(i, j)
-    As[..] = tc_load_a(i, j)       <------   tc_load_b(i, j)   = B(i, j)
-    Bs[..] = tc_load_b(i, j)                 tc_epilogue(acc, i, j) = epilogue ops on acc
+提供的 GEMM 模板（伪代码）：
+
+```text
+for k-tile:
+    As[..] = tc_load_a(i, j)
+    Bs[..] = tc_load_b(i, j)
     acc += As * Bs
-  out[i, j] = tc_epilogue(acc, i, j)
+out[i, j] = tc_epilogue(acc, i, j)
 ```
+
+lab B3 生成的 hooks：
+
+```text
+tc_load_a(i, j) = prologue ops on A(i, j)
+tc_load_b(i, j) = B(i, j)
+tc_epilogue(acc, i, j) = epilogue ops on acc
+```
+
+![GEMM 模板与生成钩子](../assets/figures/L3/gemm-hooks.svg)
+
+图：GEMM 模板与生成钩子（示意，不按耗时或容量比例）。
 
 - **尾声**（epilogue）：matmul 之后的逐元素运算，比如 `+ bias`、`gelu`、`+ residual`，在写回之前就地完成。
 - **序言**（prologue）：$A$ 操作数上的逐元素运算，比如 `x * gamma`，在把 $A$ 读进 shared memory 时完成。
@@ -182,12 +198,9 @@ lab 的 `bench_search` 对比了模型的排序与实测的排序。参考实现
 
 lab 的搜索只在**图**这一层改写。Mirage 的搜索空间同时跨越三个层次：
 
-```
-kernel graph        : which ops form one kernel                    (lab3 Part B)
-thread-block graph  : how one kernel's work is split into tiles,
-                      what goes through shared memory, loop order  (FlashAttention lives here)
-thread graph        : what each thread computes in registers
-```
+![μGraph 的三层关系](../assets/figures/L3/mugraph-levels.svg)
+
+图：μGraph 的三层关系（示意，不按耗时或容量比例）。
 
 它把这三层统称为 **$\mu$Graph**。Mirage 正是在 thread-block 层上搜索，才能自动发现 FlashAttention 那样的 kernel：把 softmax 的归约和 matmul 放进同一个 kernel，按 tile 处理，并在线重缩放。lab 可选挑战 C6 要求你思考：为了做到这一步，还需要什么样的改写规则和 kernel 模板？
 

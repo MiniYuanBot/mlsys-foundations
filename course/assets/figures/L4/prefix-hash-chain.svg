@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="515" viewBox="0 0 840 515" role="img">
+<title>Prefix cache: hash the whole preceding context</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="515" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Prefix cache: hash the whole preceding context</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic token abbreviations · each actual full block contains 16 tokens</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="40" y="120" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Request A</text>
+<rect x="40" y="150" width="225" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="152.5" y="173.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">h1: shared system</text>
+<text x="152.5" y="198.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">full 16-token block</text>
+<line x1="270" y1="180" x2="300" y2="180" stroke="#526579" stroke-width="2"/>
+<line x1="300" y1="180" x2="291.896" y2="183.915" stroke="#526579" stroke-width="2"/>
+<line x1="300" y1="180" x2="291.896" y2="176.085" stroke="#526579" stroke-width="2"/>
+<rect x="305" y="150" width="225" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="417.5" y="173.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">h2: shared system</text>
+<text x="417.5" y="198.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">full 16-token block</text>
+<line x1="535" y1="180" x2="565" y2="180" stroke="#526579" stroke-width="2"/>
+<line x1="565" y1="180" x2="556.896" y2="183.915" stroke="#526579" stroke-width="2"/>
+<line x1="565" y1="180" x2="556.896" y2="176.085" stroke="#526579" stroke-width="2"/>
+<rect x="570" y="150" width="225" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="682.5" y="173.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">h3: sys + q1</text>
+<text x="682.5" y="198.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">full 16-token block</text>
+<text x="40" y="280" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Request B</text>
+<rect x="40" y="310" width="225" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="152.5" y="333.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">h1: shared system</text>
+<text x="152.5" y="358.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">full 16-token block</text>
+<line x1="270" y1="340" x2="300" y2="340" stroke="#526579" stroke-width="2"/>
+<line x1="300" y1="340" x2="291.896" y2="343.915" stroke="#526579" stroke-width="2"/>
+<line x1="300" y1="340" x2="291.896" y2="336.085" stroke="#526579" stroke-width="2"/>
+<rect x="305" y="310" width="225" height="60" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="417.5" y="333.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">h2: shared system</text>
+<text x="417.5" y="358.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">full 16-token block</text>
+<line x1="535" y1="340" x2="565" y2="340" stroke="#526579" stroke-width="2"/>
+<line x1="565" y1="340" x2="556.896" y2="343.915" stroke="#526579" stroke-width="2"/>
+<line x1="565" y1="340" x2="556.896" y2="336.085" stroke="#526579" stroke-width="2"/>
+<rect x="570" y="310" width="225" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="682.5" y="333.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">h3′: sys + q2</text>
+<text x="682.5" y="358.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">full 16-token block</text>
+<text x="152" y="402" font-size="19" font-weight="400" text-anchor="middle" fill="#087f78">hit → reuse</text>
+<text x="417" y="402" font-size="19" font-weight="400" text-anchor="middle" fill="#087f78">hit → reuse</text>
+<text x="682" y="402" font-size="19" font-weight="400" text-anchor="middle" fill="#a45b0b">miss → compute</text>
+<text x="30" y="455" font-size="17" font-weight="400" text-anchor="start" fill="#526579">h_i = H(h_(i−1), tokens in block i): the predecessor hash is part of the key.</text>
+<text x="30" y="480" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Always recompute the last input token for its logits; a cache hit alone does not supply them.</text>
+</svg>

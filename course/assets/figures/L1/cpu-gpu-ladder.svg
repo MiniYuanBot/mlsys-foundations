@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="470" viewBox="0 0 840 470" role="img">
+<title>One optimization idea, two machines</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="470" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">One optimization idea, two machines</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="60" y="125" font-size="22" font-weight="700" text-anchor="start" fill="#163047">CPU (lab0)</text>
+<text x="470" y="125" font-size="22" font-weight="700" text-anchor="start" fill="#163047">GPU (lab1)</text>
+<rect x="45" y="150" width="320" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="175.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Loop reorder · B1</text>
+<rect x="465" y="150" width="330" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="630" y="175.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Coalescing · B1</text>
+<line x1="385" y1="170" x2="445" y2="170" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="170" x2="436.896" y2="173.915" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="170" x2="436.896" y2="166.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="170" x2="393.104" y2="166.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="170" x2="393.104" y2="173.915" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="203" width="320" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="228.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Cache blocking · B2</text>
+<rect x="465" y="203" width="330" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="630" y="228.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Shared-memory tiling · B2</text>
+<line x1="385" y1="223" x2="445" y2="223" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="223" x2="436.896" y2="226.915" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="223" x2="436.896" y2="219.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="223" x2="393.104" y2="219.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="223" x2="393.104" y2="226.915" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="256" width="320" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="281.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Register micro-kernel · B3</text>
+<rect x="465" y="256" width="330" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="630" y="281.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Register blocking · B3/B4</text>
+<line x1="385" y1="276" x2="445" y2="276" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="276" x2="436.896" y2="279.915" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="276" x2="436.896" y2="272.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="276" x2="393.104" y2="272.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="276" x2="393.104" y2="279.915" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="309" width="320" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="334.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Packing · B3</text>
+<rect x="465" y="309" width="330" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="630" y="334.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">A transpose + float4 · B4</text>
+<line x1="385" y1="329" x2="445" y2="329" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="329" x2="436.896" y2="332.915" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="329" x2="436.896" y2="325.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="329" x2="393.104" y2="325.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="329" x2="393.104" y2="332.915" stroke="#526579" stroke-width="2"/>
+<rect x="45" y="362" width="320" height="40" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="205" y="387.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">CPU threads · B4</text>
+<rect x="465" y="362" width="330" height="40" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="630" y="387.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Many CUDA threads</text>
+<line x1="385" y1="382" x2="445" y2="382" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="382" x2="436.896" y2="385.915" stroke="#526579" stroke-width="2"/>
+<line x1="445" y1="382" x2="436.896" y2="378.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="382" x2="393.104" y2="378.085" stroke="#526579" stroke-width="2"/>
+<line x1="385" y1="382" x2="393.104" y2="385.915" stroke="#526579" stroke-width="2"/>
+<text x="30" y="445" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Arrows denote conceptual correspondences, not data movement or equal performance.</text>
+</svg>

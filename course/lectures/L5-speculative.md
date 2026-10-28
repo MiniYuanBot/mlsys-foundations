@@ -31,16 +31,9 @@ L4 §2 算过：decode 每一步都要把全部权重读一遍。对 Qwen3-1.7B 
 
 如果一次送进 $k+1$ 个 token，GEMM 就变成 $[k+1, d] \times [d, d']$：读的权重一样多，计算量变成 $k+1$ 倍，但计算单元本来就闲着。只要 $k+1$ 远小于拐点处的批大小（4060 上约为一百多），**耗时几乎不变**：
 
-```
-time of one target forward pass vs number of tokens fed (bandwidth-bound regime)
+![验证宽度与目标 forward 成本](../assets/figures/L5/verify-width-cost.svg)
 
- time |
-      |                                          ___----   compute-bound
-      |                                 ___---
-      |________________________________/                  <- flat: weights are read once
-      +----+----+----+----+----+----+----+----+----> tokens fed
-      1    2    4    8   16   32   64  128
-```
+图：验证宽度与目标 forward 成本（示意，不按耗时或容量比例）。
 
 推测解码就利用了这段平坦区域：先用便宜的办法猜出 $k$ 个 token，再用一次目标模型 forward 验证全部。猜对几个，就省下几次 forward。
 
@@ -50,16 +43,20 @@ time of one target forward pass vs number of tokens fed (bandwidth-bound regime)
 
 ### 2.1 一轮推测
 
-```
-committed: ... The cat sat          (last = "sat", its KV not yet computed)
-draft:     on   the  mat             (k = 3 guesses)
-target fed [sat, on, the, mat] in ONE pass, argmax at each position:
-           on   the  rug  .
-accept "on" (== on), "the" (== the), reject "mat" (!= rug), bonus = "rug"
-new tokens: on the rug               (3 tokens from 1 target pass)
-KV cache: positions of sat, on, the are valid; the KV written for "mat" is stale
-          -> truncate; the next round overwrites it
-```
+例中已提交文本为 `The cat sat`，最后一个 token `sat` 的 KV 尚未计算；draft 的三个猜测是 `on, the, mat`。target 一次输入 `[sat,on,the,mat]`：
+
+| target 输入位置 | 该位置预测的下一个 token | 验证结果 |
+| --- | --- | --- |
+| `sat` | `on` | 接受 draft 的 `on` |
+| `on` | `the` | 接受 draft 的 `the` |
+| `the` | `rug` | 拒绝 draft 的 `mat`，补充 `rug` |
+| `mat` | 未使用 | 分支已被拒绝 |
+
+一次 target pass 产出 `on the rug` 共 3 个 token。保留 `sat,on,the` 的 KV；`mat` 的 KV 已失效，截断后由下一轮覆盖。新 token `rug` 的 KV 要等下一轮输入时计算。
+
+![Greedy 接受拒绝与 KV 回滚](../assets/figures/L5/accept-reject-kv.svg)
+
+图：Greedy 接受拒绝与 KV 回滚（示意，不按耗时或容量比例）。
 
 不管猜对多少，每一轮至少产出 1 个 token（bonus），所以推测解码每次目标 forward 产出的 token 数**永远不会少于 plain**，只可能因为草稿成本而变慢。
 
@@ -128,15 +125,9 @@ $$
 P(\text{out}=y) = \min(p(y), q(y)) + \max(0, p(y)-q(y)) = p(y) \qquad \blacksquare
 $$
 
-```
-probability mass of each token y:
+![接受与残差概率质量](../assets/figures/L5/rejection-mass.svg)
 
-   p(y)  |######             accepted part = min(p, q)      (the overlap)
-   q(y)  |#########          over-proposed: q > p -> rejected sometimes
-         |
-   p(y)  |#########          residual part = p - q           (only when p > q)
-   q(y)  |####               under-proposed -> made up by resampling from r
-```
+图：接受与残差概率质量（示意，不按耗时或容量比例）。
 
 lab B1 的测试用两条马尔可夫链，生成 20 万条长度为 3 的序列，参考实现的经验分布与精确分布的最大误差为 0.0017。
 
@@ -165,29 +156,24 @@ $$
 1 + 3 + 6 + 6 = 16
 $$
 
-```
-Verified in ONE target pass
+本例 target 在 `sat` 后选择 `on`，在 `on` 后选择 `the`，在 `the` 后选择 `rug`。接受路径为 `on, the`，bonus 为 `rug`。链 `[on,the,mat]` 在本例得到相同结果；若只猜 `[down,...]`，则一个 draft token 也接受不了，仍可得到 target 给出的 bonus token。
 
-                       sat (root)
-             /          |           \
-           on          down         by
-          /   \        /   \       /   \
-        the    a     on    and   the   her
-         |     |      |     |     |     |
-        mat   rug    the   lay  door  side
+![Token tree 与接受路径](../assets/figures/L5/token-tree.svg)
 
-target argmax:  after "sat" -> "on", after "on" -> "the", after "the" -> "rug"
-accepted path:  on -> the,  bonus "rug"   (the chain [on, the, mat] gives the same here,
-                                           but a chain [down, ...] would have lost everything)
-```
+图：Token tree 与接受路径（示意，不按耗时或容量比例）。
 
 关键在于 **tree attention**：每个节点只能看到前缀和它自己的祖先，不能看到兄弟和其他分支。实现时，用一个祖先位掩码代替因果掩码：
 
+保留位掩码的可复制写法，节点编号为 `0:sat, 1:on, 2:down, 3:by, 4:the, 5:a`：
+
+```python
+mask[4] = (1 << 0) | (1 << 1) | (1 << 4)  # sat, on, the
+mask[5] = (1 << 0) | (1 << 1) | (1 << 5)  # sat, on, a
 ```
-node:      0(sat) 1(on) 2(down) 3(by) 4(the) 5(a) ...
-mask[4] =  bit 0 | bit 1 | bit 4          (sat, on, the)
-mask[5] =  bit 0 | bit 1 | bit 5          (sat, on, a)
-```
+
+![Tree attention 祖先位掩码](../assets/figures/L5/tree-mask.svg)
+
+图：Tree attention 祖先位掩码（按本节参数推导，非实测）。
 
 节点 $i$ 的 RoPE 位置和 KV 存储位置分别为：
 

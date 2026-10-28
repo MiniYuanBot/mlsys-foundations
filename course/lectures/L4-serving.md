@@ -33,22 +33,30 @@ tags: [lecture, serving, kv-cache, paged-attention, batching, scheduling, prefix
 
 Qwen3-0.6B：$\mathrm{hidden} = 1024$，28 层，16 个 query head、8 个 KV head（GQA），$\mathrm{head\_dim} = 128$，MLP 中间维度 3072，词表 151936。
 
-```
-token ids [T]
-  |  embedding                                         [T, 1024]
-  v
+前向过程的形状与计算伪代码：
+
+```text
+token ids: [T]
+embedding output: [T, 1024]
 for each of 28 layers:
-  x = RMSNorm(h + residual)  (fused, also updates residual)
-  q = x Wq [T, 16*128]   k = x Wk [T, 8*128]   v = x Wv [T, 8*128]
-  q, k = RMSNorm per head (QK-norm, new in Qwen3), then RoPE(position)
-  write k, v into the KV cache                         <- what makes decoding cheap
-  o = attention(q, all cached k, v of this sequence)   [T, 16*128]
-  h = o Wo                                             [T, 1024]
-  x = RMSNorm(h + residual)
-  h = (SiLU(x Wgate) * (x Wup)) Wdown                  [T, 3072] -> [T, 1024]
-x = RMSNorm(h + residual);  logits = x Wlm             [T, 151936]
+    x = RMSNorm(h + residual)  # fused; also updates residual
+    q = x Wq                  # [T, 16*128]
+    k = x Wk                  # [T, 8*128]
+    v = x Wv                  # [T, 8*128]
+    q, k = RMSNorm per head (QK-norm), then RoPE(position)
+    write k, v into the KV cache
+    o = attention(q, all cached k, v of this sequence)  # [T, 16*128]
+    h = o Wo                  # [T, 1024]
+    x = RMSNorm(h + residual)
+    h = (SiLU(x Wgate) * (x Wup)) Wdown  # intermediate [T,3072]; output [T,1024]
+x = RMSNorm(h + residual)
+logits = x Wlm                # [T, 151936]
 next token = argmax(logits of the last position)
 ```
+
+![Qwen3 前向数据流](../assets/figures/L4/qwen-forward.svg)
+
+图：Qwen3 前向数据流（沿用原文示例或报告值，未重新测量）。
 
 **GQA**（grouped-query attention）：16 个 query head 共用 8 组 K/V，每 2 个 query head 读同一组 K/V。KV cache 因此缩小一半。
 
@@ -105,11 +113,18 @@ $$
 
 最直接的做法：给每个请求按“最大长度”预留一整段连续显存。问题在于：
 
-```
-request A reserves 2048 slots, uses 300      [AAA.........................]   85% wasted
-request B reserves 2048 slots, uses 1900     [BBBBBBBBBBBBBBBBBBBBBBBBBBB.]
-request C cannot start: no contiguous 2048-slot hole left, though 40% is free
-```
+保留原例中的数值：
+
+| 请求 | 预留 token slot | 已用 slot | 内部浪费 |
+| --- | --- | --- | --- |
+| A | 2048 | 300 | 1748（约 85%） |
+| B | 2048 | 1900 | 148 |
+
+外部碎片的示例是：即使池中还有 40% 空闲，请求 C 也可能找不到一段连续的 2048-slot 空间而无法启动。
+
+![连续 KV 分配与碎片](../assets/figures/L4/kv-fragmentation.svg)
+
+图：连续 KV 分配与碎片（沿用原文示例或报告值，未重新测量）。
 
 - **内部碎片**：输出长度事先不知道，只能按最大值预留；
 - **外部碎片**：请求结束后留下的空洞大小不一；
@@ -121,14 +136,20 @@ vLLM 论文测得，已有的系统中只有 20–40% 的 KV 显存真正存放�
 
 借鉴操作系统的虚拟内存：把 KV cache 切成固定大小的**块**（lab 中每块 16 个 token），每个序列维护一张 **block table**，记录逻辑块到物理块的映射：
 
-```
-physical KV pool (blocks of 16 token slots):
-  [ 0 ][ 1 ][ 2 ][ 3 ][ 4 ][ 5 ][ 6 ][ 7 ] ...
+每块容纳 16 个 token slot，原例的 block table 为：
 
-seq A (37 tokens): block table [7, 3, 11]     positions 0-15 -> block 7, 16-31 -> 3, 32-36 -> 11
-seq B (9 tokens):  block table [2]
-token at position p of seq A lives at slot  table[p / 16] * 16 + p % 16
+| 序列 | token 数 | block table | 已用逻辑位置与物理块 |
+| --- | --- | --- | --- |
+| A | 37 | `[7,3,11]` | `0..15` 在块 7，`16..31` 在块 3，`32..36` 在块 11 |
+| B | 9 | `[2]` | `0..8` 在块 2 |
+
+```python
+slot = table[p // 16] * 16 + p % 16
 ```
+
+![分页 KV 与 block table](../assets/figures/L4/paged-kv.svg)
+
+图：分页 KV 与 block table（按本节参数推导，非实测）。
 
 - 只有最后一块可能没用满，内部碎片 $< 1$ 块；
 - 任何空闲块都能用，没有外部碎片；
@@ -140,13 +161,20 @@ token at position p of seq A lives at slot  table[p / 16] * 16 + p % 16
 
 lab 的朴素版本用一个线程串行完成一个 (token, head) 的计算，用三遍 softmax，因此 K 要读两遍。B2 的版本改成：
 
-```
-one warp per (query token, head);  lane l owns dims 4l .. 4l+3 (8 bytes)
+一个 warp 负责一个 `(query token, head)`。lane 编号为 `lane`，负责维度 `[4*lane,4*lane+4)`（4 个 half，共 8 B）。计算伪代码如下，分母 `l` 表示 softmax 的累积行和：
+
+```text
 for each key j:
-  s = warp_sum(q[4l..4l+3] . k_j[4l..4l+3])     # 32 lanes read one 256-byte K row: coalesced
-  online softmax update of (m, l, acc[4])         # lab2 B2, one key at a time
-out[4l..4l+3] = acc / l
+    s = warp_sum(dot(q[4*lane:4*lane+4], k_j[4*lane:4*lane+4]))
+    online softmax update of (m, l, acc[4])
+out[4*lane:4*lane+4] = acc / l
 ```
+
+32 个 lane 合并读取一个 256 B 的 K 行；每轮处理一个 key，使用 lab2 B2 的 online softmax 更新。
+
+![Warp 级 paged attention](../assets/figures/L4/warp-attention.svg)
+
+图：Warp 级 paged attention（按本节参数推导，非实测）。
 
 lab 实测，decode 为主的负载下吞吐从 19 提升到 224 tok/s，快了 11.8 倍。vLLM 的 paged attention kernel 更进一步：一个 block 处理多个 key，并且做 split-K，也就是 lab2 C2 的 FlashDecoding 思路。
 
@@ -158,13 +186,9 @@ lab 实测，decode 为主的负载下吞吐从 19 提升到 224 tok/s，快了 
 
 凑齐一批请求，一起 prefill，一起 decode，直到这批中**最长的**那个请求结束，再处理下一批：
 
-```
-time ->
-req 0  [P][d][d][d]                               (finished, slot idle)
-req 1  [P][d][d][d][d][d][d][d][d][d]
-req 2  [P][d][d][d][d][d]                          (finished, slot idle)
-req 3                                  [P][d]...  waits for the whole batch
-```
+![Static batching 时间线](../assets/figures/L4/static-batching.svg)
+
+图：每行固定为一个执行槽位。R0、R2 提前结束后槽位保持空闲，直到第 10 步整批结束，R3 才在第 11 步进入槽位 0。R3 的箭头表示继续执行，其他新请求未指定；步宽不表示耗时。
 
 输出长度差异很大时，大部分槽位都在空转，后来的请求要等整批结束才能开始。
 
@@ -172,14 +196,9 @@ req 3                                  [P][d]...  waits for the whole batch
 
 **以迭代为调度单位**：每一步都重新决定这一步跑哪些序列。完成的序列立即退出，新请求立即加入：
 
-```
-time ->
-req 0  [P][d][d][d]
-req 1  [P][d][d][d][d][d][d][d][d][d]
-req 2  [P][d][d][d][d][d]
-req 3              [P][d][d][d][d][d]              joins as soon as req 0 leaves
-req 4                       [P][d][d]...
-```
+![Continuous batching 时间线](../assets/figures/L4/continuous-batching.svg)
+
+图：每行固定为一个执行槽位。R0 结束后，R3 在第 5 步接入槽位 0；R2 结束后，R4 在第 7 步接入槽位 2。R4 的省略号表示仍占用槽位、后续事件未展开。步宽不表示耗时。
 
 一个关键细节：同一步中，各序列的长度不同，有的处于 prefill 阶段，有的处于 decode 阶段。lab 把这一步所有序列的 token 拼平成一个 $[T]$ 的数组（见 `batch.rs`），GEMM 一次算完，attention 再按各自的 block table 和位置分别处理。这正是 paged KV 让 continuous batching 变得简单的原因：每个序列的 KV 位置互相独立，不需要对齐。
 
@@ -195,26 +214,37 @@ lab 实测（64 个请求，输出长度在 32–224 之间均匀分布）：con
 
 ### 5.1 问题：prefill 与 decode 抢占同一步
 
-continuous batching 中，一个 1536 token 的 prefill 加入某一步后，这一步要算 1536 个 token，同一步中处于 decode 阶段的所有序列都要等它，它们的 TPOT 瞬间变成平常的好几倍：
+continuous batching 中，一个 1536 token 的 prefill 加入某一步后，这一步新增 1536 个 prefill token 的计算，同时还要处理 decode token。同一步中处于 decode 阶段的序列都要等它，它们的 TPOT 可能变成平常的好几倍：
 
-```
-step:     1    2    3       4                5    6
-decode  [d]  [d]  [d]  [d + 1536 prefill]  [d]  [d]        <- step 4 is 5x longer
-TPOT     15   15   15      75               15   15  ms
-```
+原文的示意耗时数据（单位 ms，未重新测量）：
+
+| step | 1 | 2 | 3 | 4 | 5 | 6 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 工作 | decode | decode | decode | decode + 1536 prefill | decode | decode |
+| TPOT（ms） | 15 | 15 | 15 | 75 | 15 | 15 |
+
+![长 prefill 对 decode 的干扰](../assets/figures/L4/prefill-stall.svg)
+
+图：长 prefill 对 decode 的干扰（沿用原文示例或报告值，未重新测量）。
 
 ### 5.2 [Sarathi-Serve](https://arxiv.org/abs/2403.02310)（OSDI'24）的解法
 
-把长 prompt 切成多块，每块不超过本步的 token 预算。每一步固定为“所有 decode + 一块 prefill”，步长因此稳定：
+把长 prompt 切成多块，并让 **decode 与 prefill 共享每步的总 token 预算**。在预算允许时先安排 decode，再把剩余预算分给 prefill；这样可以限制单次 prefill 对 decode 的干扰。相同的 token 数并不保证相同的步耗时：
 
-```
-budget = 256 tokens per step
-step:     1         2         3         4         5         6
-decode  [d+256p]  [d+256p]  [d+256p]  [d+256p]  [d+256p]  [d+256p]   1536 = 6 chunks
-TPOT      25        25        25        25        25        25
-```
+以总预算 256、每步恰有 1 个 decode token、prompt 长度 1536 为手算例：
 
-代价是：prefill 被拆成 6 步，TTFT 可能变长；每块 attention 都要重新读一遍前面已经缓存的 KV。
+| 调度步 | decode token | prefill token | 总 token | 剩余预算 |
+| --- | --- | --- | --- | --- |
+| 1–6（每步） | 1 | 255 | 256 | 0 |
+| 7 | 1 | 6 | 7 | 249 |
+
+因此 $1536=6\times255+6$，共需 7 步。
+
+![Chunked prefill 的 token 预算](../assets/figures/L4/chunked-prefill-budget.svg)
+
+图：总 token 预算为 256，假定连续 7 步各有 1 个 decode token；prefill 使用 255×6+6 个 token，恰好完成 1536-token prompt。横向顺序表示调度步，不表示实测耗时。
+
+代价是：本例的 prefill 被拆成 7 步，TTFT 可能变长；每块 attention 都要重新读一遍前面已经缓存的 KV。具体 TPOT（例如 25 ms）需要时间模型或测量支持，不能由总 token 预算直接推导。
 
 ### 5.3 lab 中的两个发现
 
@@ -296,12 +326,9 @@ C 被抢占时丢失了 7 个位置的有效 KV，因此实际计算量为 $35+7
 
 为每个**写满**的块计算一个内容 hash，并将它与前一块的 hash 串成链：$H(\text{前一块的 hash}, \text{本块的 16 个 token})$。维护一张表：hash → 物理块。
 
-```
-request A: [sys sys sys sys | sys sys sys sys | sys q1 q1 q1 | q1 ...]
-             block h1           block h2          block h3
-request B: [sys sys sys sys | sys sys sys sys | sys q2 q2 q2 | ...]
-             h1 hit -> reuse    h2 hit -> reuse   h3' miss -> compute from here
-```
+![前缀 hash 链与命中](../assets/figures/L4/prefix-hash-chain.svg)
+
+图：前缀 hash 链与命中（示意，不按耗时或容量比例）。
 
 - 采用**链式** hash 的原因：一个块的 KV 不仅取决于它自己的 16 个 token，还取决于它前面的所有 token（attention 会看到它们）。只有前缀完全相同，KV 才相同。
 - **最后一个 token 永远不复用**：需要它的 logits 来采样下一个 token，所以至少要重新计算一个 token。
@@ -313,15 +340,9 @@ lab 实测（512 token 的 prompt 中有 448 token 是共享的）：吞吐提�
 
 把 hash 链换成一棵 **token 级的基数树**：
 
-```
-            root
-             |
-     "You are a helpful..."            (shared system prompt)
-        /              \
-  "Q: capital of"    "Q: translate"
-    /      \               \
- "France"  "Japan"       "hello"
-```
+![RadixAttention 前缀树](../assets/figures/L4/radix-tree.svg)
+
+图：RadixAttention 前缀树（示意，不按耗时或容量比例）。
 
 - 能匹配任意长度的前缀，不必以块为单位；
 - 树的结构直接反映请求之间的共享关系，调度器可以优先调度能命中缓存的请求（cache-aware scheduling）；

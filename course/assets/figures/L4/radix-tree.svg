@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="480" viewBox="0 0 840 480" role="img">
+<title>RadixAttention: shared prefixes form a tree</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="480" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">RadixAttention: shared prefixes form a tree</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<line x1="420" y1="150" x2="420" y2="191" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="191" x2="416.085" y2="182.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="191" x2="423.915" y2="182.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="245" x2="235" y2="291" stroke="#526579" stroke-width="2"/>
+<line x1="235" y1="291" x2="241.92" y2="285.245" stroke="#526579" stroke-width="2"/>
+<line x1="235" y1="291" x2="243.809" y2="292.844" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="245" x2="640" y2="291" stroke="#526579" stroke-width="2"/>
+<line x1="640" y1="291" x2="631.266" y2="293.173" stroke="#526579" stroke-width="2"/>
+<line x1="640" y1="291" x2="632.869" y2="285.51" stroke="#526579" stroke-width="2"/>
+<line x1="235" y1="345" x2="135" y2="391" stroke="#526579" stroke-width="2"/>
+<line x1="135" y1="391" x2="140.726" y2="384.057" stroke="#526579" stroke-width="2"/>
+<line x1="135" y1="391" x2="143.998" y2="391.17" stroke="#526579" stroke-width="2"/>
+<line x1="235" y1="345" x2="335" y2="391" stroke="#526579" stroke-width="2"/>
+<line x1="335" y1="391" x2="326.002" y2="391.17" stroke="#526579" stroke-width="2"/>
+<line x1="335" y1="391" x2="329.274" y2="384.057" stroke="#526579" stroke-width="2"/>
+<line x1="640" y1="345" x2="640" y2="391" stroke="#526579" stroke-width="2"/>
+<line x1="640" y1="391" x2="636.085" y2="382.896" stroke="#526579" stroke-width="2"/>
+<line x1="640" y1="391" x2="643.915" y2="382.896" stroke="#526579" stroke-width="2"/>
+<rect x="370" y="100" width="100" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="420" y="131.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">root</text>
+<rect x="230" y="195" width="380" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="226.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">You are a helpful…</text>
+<rect x="100" y="295" width="270" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="235" y="326.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Q: capital of</text>
+<rect x="505" y="295" width="270" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="640" y="326.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Q: translate</text>
+<rect x="50" y="395" width="170" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="135" y="426.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">France</text>
+<rect x="250" y="395" width="170" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="335" y="426.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Japan</text>
+<rect x="555" y="395" width="170" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="640" y="426.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">hello</text>
+</svg>

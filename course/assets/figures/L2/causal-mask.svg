@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="475" viewBox="0 0 840 475" role="img">
+<title>Causal blocks: key rows, query columns</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="475" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Causal blocks: key rows, query columns</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived mask · equal-size aligned blocks; allowed token relation: key ≤ query</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="290" y="120" font-size="21" font-weight="700" text-anchor="start" fill="#163047">Query block →</text>
+<text x="260" y="157" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">0</text>
+<text x="350" y="157" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">1</text>
+<text x="440" y="157" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">2</text>
+<text x="530" y="157" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">3</text>
+<text x="60" y="203" font-size="20" font-weight="400" text-anchor="start" fill="#163047">Key block 0</text>
+<rect x="215" y="175" width="84" height="50" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="257" y="206.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Mask</text>
+<rect x="305" y="175" width="84" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="347" y="206.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Full</text>
+<rect x="395" y="175" width="84" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="437" y="206.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Full</text>
+<rect x="485" y="175" width="84" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="527" y="206.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Full</text>
+<text x="60" y="262" font-size="20" font-weight="400" text-anchor="start" fill="#163047">Key block 1</text>
+<rect x="215" y="234" width="84" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="257" y="265.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Skip</text>
+<rect x="305" y="234" width="84" height="50" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="347" y="265.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Mask</text>
+<rect x="395" y="234" width="84" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="437" y="265.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Full</text>
+<rect x="485" y="234" width="84" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="527" y="265.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Full</text>
+<text x="60" y="321" font-size="20" font-weight="400" text-anchor="start" fill="#163047">Key block 2</text>
+<rect x="215" y="293" width="84" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="257" y="324.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Skip</text>
+<rect x="305" y="293" width="84" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="347" y="324.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Skip</text>
+<rect x="395" y="293" width="84" height="50" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="437" y="324.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Mask</text>
+<rect x="485" y="293" width="84" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="527" y="324.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Full</text>
+<text x="60" y="380" font-size="20" font-weight="400" text-anchor="start" fill="#163047">Key block 3</text>
+<rect x="215" y="352" width="84" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="257" y="383.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Skip</text>
+<rect x="305" y="352" width="84" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="347" y="383.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Skip</text>
+<rect x="395" y="352" width="84" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="437" y="383.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Skip</text>
+<rect x="485" y="352" width="84" height="50" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="527" y="383.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Mask</text>
+<rect x="615" y="182" width="180" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="705" y="203.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">Full: key &lt; query</text>
+<text x="705" y="226.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">No element mask</text>
+<rect x="615" y="257" width="180" height="55" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="705" y="278.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">Diagonal block</text>
+<text x="705" y="301.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">Mask key &gt; query</text>
+<rect x="615" y="332" width="180" height="55" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="705" y="353.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">Skip: key &gt; query</text>
+<text x="705" y="376.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">Lower-left here</text>
+<text x="30" y="447" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Axes are transposed relative to the usual score matrix S[query, key].</text>
+</svg>

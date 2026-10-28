@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="610" viewBox="0 0 840 610" role="img">
+<title>Coalescing: useful bytes vs sectors moved</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="610" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Coalescing: useful bytes vs sectors moved</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived traffic · aligned 4-byte elements; 32-byte sectors</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="45" y="125" font-size="21" font-weight="700" text-anchor="start" fill="#163047">Contiguous: lane i reads a[i]</text>
+<rect x="45" y="150" width="174" height="76" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="132" y="169.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">sector 0</text>
+<text x="132" y="193.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">lanes 0–7</text>
+<text x="132" y="217.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">32 bytes</text>
+<rect x="237" y="150" width="174" height="76" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="324" y="169.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">sector 1</text>
+<text x="324" y="193.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">lanes 8–15</text>
+<text x="324" y="217.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">32 bytes</text>
+<rect x="429" y="150" width="174" height="76" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="516" y="169.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">sector 2</text>
+<text x="516" y="193.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">lanes 16–23</text>
+<text x="516" y="217.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">32 bytes</text>
+<rect x="621" y="150" width="174" height="76" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="708" y="169.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">sector 3</text>
+<text x="708" y="193.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">lanes 24–31</text>
+<text x="708" y="217.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">32 bytes</text>
+<text x="45" y="260" font-size="19" font-weight="700" text-anchor="start" fill="#087f78">128 useful bytes / 128 transferred bytes = 100%</text>
+<text x="45" y="310" font-size="21" font-weight="700" text-anchor="start" fill="#163047">Strided: lane i reads a[i × 1024]</text>
+<text x="123" y="350" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">lane 0</text>
+<line x1="123" y1="360" x2="123" y2="388" stroke="#a45b0b" stroke-width="2"/>
+<line x1="123" y1="388" x2="119.085" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="123" y1="388" x2="126.915" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<rect x="45" y="395" width="156" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="123" y="423.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">sector 0</text>
+<rect x="45" y="447" width="19.5" height="25" rx="0" fill="#fff0da" stroke="#a45b0b"/>
+<rect x="64.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="84" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="103.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="123" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="142.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="162" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="181.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<text x="308" y="350" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">lane 1</text>
+<line x1="308" y1="360" x2="308" y2="388" stroke="#a45b0b" stroke-width="2"/>
+<line x1="308" y1="388" x2="304.085" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="308" y1="388" x2="311.915" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<rect x="230" y="395" width="156" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="308" y="423.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">sector 128</text>
+<rect x="230" y="447" width="19.5" height="25" rx="0" fill="#fff0da" stroke="#a45b0b"/>
+<rect x="249.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="269" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="288.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="308" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="327.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="347" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="366.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<text x="493" y="350" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">lane 2</text>
+<line x1="493" y1="360" x2="493" y2="388" stroke="#a45b0b" stroke-width="2"/>
+<line x1="493" y1="388" x2="489.085" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="493" y1="388" x2="496.915" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<rect x="415" y="395" width="156" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="493" y="423.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">sector 256</text>
+<rect x="415" y="447" width="19.5" height="25" rx="0" fill="#fff0da" stroke="#a45b0b"/>
+<rect x="434.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="454" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="473.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="493" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="512.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="532" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="551.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<text x="718" y="350" font-size="19" font-weight="700" text-anchor="middle" fill="#163047">lane 31</text>
+<line x1="718" y1="360" x2="718" y2="388" stroke="#a45b0b" stroke-width="2"/>
+<line x1="718" y1="388" x2="714.085" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="718" y1="388" x2="721.915" y2="379.896" stroke="#a45b0b" stroke-width="2"/>
+<rect x="640" y="395" width="156" height="44" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="718" y="423.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">sector 3968</text>
+<rect x="640" y="447" width="19.5" height="25" rx="0" fill="#fff0da" stroke="#a45b0b"/>
+<rect x="659.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="679" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="698.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="718" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="737.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="757" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<rect x="776.5" y="447" width="19.5" height="25" rx="0" fill="#ffffff" stroke="#bccbd6"/>
+<text x="604" y="419" font-size="25" font-weight="400" text-anchor="middle" fill="#163047">…</text>
+<text x="45" y="505" font-size="17" font-weight="400" text-anchor="start" fill="#163047">Relative sector IDs = 128i; 28 other accessed sectors omitted (lanes 3–30).</text>
+<text x="45" y="535" font-size="17" font-weight="400" text-anchor="start" fill="#163047">Each sector: 4 B useful + 28 B unused. Address gaps are not to scale.</text>
+<text x="30" y="575" font-size="17" font-weight="400" text-anchor="start" fill="#526579">32 × 32 B = 1024 B transferred / 128 B useful = 8× traffic, not 8× latency.</text>
+</svg>

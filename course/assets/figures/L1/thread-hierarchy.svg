@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="450" viewBox="0 0 840 450" role="img">
+<title>CUDA hierarchy: grid → block → warp</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="450" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">CUDA hierarchy: grid → block → warp</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="50" y="120" font-size="20" font-weight="700" text-anchor="start" fill="#163047">One grid: gridDim.x = 4</text>
+<rect x="50" y="145" width="174" height="58" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="137" y="180.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">block 0</text>
+<rect x="242" y="145" width="174" height="58" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="329" y="180.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">block 1</text>
+<rect x="434" y="145" width="174" height="58" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="521" y="180.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">block 2</text>
+<rect x="626" y="145" width="174" height="58" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="713" y="180.8" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">block 3</text>
+<line x1="137" y1="213" x2="137" y2="265" stroke="#1769aa" stroke-width="2"/>
+<line x1="137" y1="265" x2="133.085" y2="256.896" stroke="#1769aa" stroke-width="2"/>
+<line x1="137" y1="265" x2="140.915" y2="256.896" stroke="#1769aa" stroke-width="2"/>
+<text x="50" y="292" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Expand block 0: 128 threads = 4 warps</text>
+<rect x="50" y="315" width="174" height="68" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="137" y="342.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">warp 0</text>
+<text x="137" y="367.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t0 … t31</text>
+<rect x="242" y="315" width="174" height="68" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="329" y="342.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">warp 1</text>
+<text x="329" y="367.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t32 … t63</text>
+<rect x="434" y="315" width="174" height="68" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="521" y="342.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">warp 2</text>
+<text x="521" y="367.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t64 … t95</text>
+<rect x="626" y="315" width="174" height="68" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="713" y="342.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">warp 3</text>
+<text x="713" y="367.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">t96 … t127</text>
+<text x="30" y="425" font-size="17" font-weight="400" text-anchor="start" fill="#526579">One block stays on one SM; blocks may be scheduled independently, in any order.</text>
+</svg>

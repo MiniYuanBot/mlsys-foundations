@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="515" viewBox="0 0 840 515" role="img">
+<title>ldmatrix padding spreads bank traffic</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="515" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">ldmatrix padding spreads bank traffic</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived bank model · 8 lanes × 16 bytes per loading phase</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="45" y="120" font-size="20" font-weight="700" text-anchor="start" fill="#163047">64-byte row pitch: start bank = 16r mod 32</text>
+<rect x="45" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="87" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 0</text>
+<text x="87" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–3</text>
+<rect x="141" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="183" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 1</text>
+<text x="183" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–19</text>
+<rect x="237" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="279" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 2</text>
+<text x="279" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–3</text>
+<rect x="333" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="375" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 3</text>
+<text x="375" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–19</text>
+<rect x="429" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="471" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 4</text>
+<text x="471" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–3</text>
+<rect x="525" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="567" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 5</text>
+<text x="567" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–19</text>
+<rect x="621" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="663" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 6</text>
+<text x="663" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–3</text>
+<rect x="717" y="145" width="84" height="60" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="759" y="168.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 7</text>
+<text x="759" y="192.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–19</text>
+<text x="45" y="239" font-size="18" font-weight="400" text-anchor="start" fill="#163047">Rows 0/2/4/6 share banks 0–3; rows 1/3/5/7 share 16–19.</text>
+<text x="45" y="267" font-size="18" font-weight="400" text-anchor="start" fill="#a45b0b">Four addresses per bank group → 4-way conflict in this phase.</text>
+<text x="45" y="322" font-size="20" font-weight="700" text-anchor="start" fill="#163047">80-byte row pitch: start bank = 20r mod 32</text>
+<rect x="45" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="87" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 0</text>
+<text x="87" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">0–3</text>
+<rect x="141" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="183" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 1</text>
+<text x="183" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">20–23</text>
+<rect x="237" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="279" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 2</text>
+<text x="279" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">8–11</text>
+<rect x="333" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="375" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 3</text>
+<text x="375" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">28–31</text>
+<rect x="429" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="471" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 4</text>
+<text x="471" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">16–19</text>
+<rect x="525" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="567" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 5</text>
+<text x="567" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">4–7</text>
+<rect x="621" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="663" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 6</text>
+<text x="663" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">24–27</text>
+<rect x="717" y="345" width="84" height="60" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="759" y="368.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">row 7</text>
+<text x="759" y="392.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">12–15</text>
+<text x="30" y="456" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Eight disjoint four-bank groups cover all 32 banks once.</text>
+<text x="30" y="481" font-size="17" font-weight="400" text-anchor="start" fill="#526579">A pitch: (32 + 8) halves. B pitch: (128 + 8) halves gives start bank 4r mod 32.</text>
+</svg>

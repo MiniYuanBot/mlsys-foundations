@@ -33,16 +33,11 @@ tags: [lecture, cuda, gpu, gemm, tensor-core, shared-memory]
 
 CPU 核心侧重降低**单线程延迟**：大缓存、乱序执行、分支预测，目的是让一个线程尽快跑完。GPU 为**吞吐量**而设计：同时运行成千上万个线程。某个线程要等内存时，硬件立刻切换去执行另一个线程，靠“人多”把等待时间填满。
 
-```
-CPU core (latency-oriented)          GPU SM (throughput-oriented)
-+--------------------------+         +--------------------------------------+
-| big control + OoO logic  |         | 4 warp schedulers                    |
-| big caches               |         | 128 FP32 lanes, 4 Tensor Cores       |
-| 1-2 threads              |         | 64K registers, up to 1536 threads    |
-| a few wide SIMD units    |         | 100 KB shared memory (+L1)           |
-+--------------------------+         +--------------------------------------+
-   x 8-24 cores                          x 24 SMs (RTX 4060 Laptop) ... 132 (H100)
-```
+原例的整机规模为 CPU 的 8–24 个核心、RTX 4060 Laptop 的 24 个 SM，以及 H100 的 132 SM 配置。下图的单 SM 资源参数属于 Ada 示例；不同架构的单 SM 配置需分别查阅。
+
+![CPU core 与 GPU SM](../assets/figures/L1/cpu-gpu-resources.svg)
+
+图：CPU core 与 GPU SM（沿用原文示例或报告值，未重新测量）。
 
 ### 1.2 线程层次：grid → block → warp → thread
 
@@ -53,19 +48,9 @@ CPU core (latency-oriented)          GPU SM (throughput-oriented)
 - **warp**：硬件把 block 内的线程每 32 个分成一组，这一组就是 warp。**一个 warp 中的 32 个线程同时执行同一条指令**，这就是 SIMT（single instruction, multiple threads）；
 - **thread**：每个线程用 `blockIdx`、`threadIdx` 算出自己负责哪个数据。
 
-```
-grid (gridDim.x = 4 blocks)
-+-----------+-----------+-----------+-----------+
-|  block 0  |  block 1  |  block 2  |  block 3  |   blocks are scheduled onto SMs
-+-----------+-----------+-----------+-----------+   independently, in any order
-      |
-      v  block 0 (blockDim.x = 128 threads = 4 warps)
-+--------------+--------------+--------------+--------------+
-| warp 0       | warp 1       | warp 2       | warp 3       |
-| t0 ... t31   | t32 ... t63  | t64 ... t95  | t96 ... t127 |
-+--------------+--------------+--------------+--------------+
-  one instruction is issued for all 32 lanes of a warp at once
-```
+![Grid/block/warp/thread 层次](../assets/figures/L1/thread-hierarchy.svg)
+
+图：Grid/block/warp/thread 层次（示意，不按耗时或容量比例）。
 
 **全局下标**：`i = blockIdx.x * blockDim.x + threadIdx.x`。lab A1 的 grid-stride 循环是 `for (i = ...; i < n; i += blockDim.x * gridDim.x)`：线程总数少于元素数时，每个线程处理多个元素。
 
@@ -135,21 +120,24 @@ lab 报告要求你用 `cudaGetDeviceProperties`（测试 `A0_device_is_visible`
 
 一个 warp 执行一条 load 指令时，32 个线程各给出一个地址。硬件把这些地址合并成若干个 **32 字节的 sector** 去读。
 
-```
-coalesced: lane i reads a[i]            32 lanes x 4 B = 128 B = 4 sectors  (ideal)
-  lanes:  0  1  2  3 ...                31
-  addr :  [  sector 0  ][  sector 1  ][  sector 2  ][  sector 3  ]
+在 4 字节元素、32 字节 sector 且起始地址对齐的模型中：
 
-strided: lane i reads a[i * 1024]       32 different sectors, 32 x 32 B = 1024 B moved
-  lanes:  0            1            2              ...
-  addr :  [s0]...      [s1]...      [s2]...          for 128 B of useful data: 8x waste
-```
+| lane i 的地址 | sector 数 | 传输量 | 有效数据量 |
+| --- | --- | --- | --- |
+| `a[i]` | 4 | 128 B | 128 B |
+| `a[i * 1024]` | 32 | 1024 B | 128 B |
+
+后一种访问的流量放大为 8 倍；这不是耗时倍数的测量结果。
+
+![合并访存与跨步访问](../assets/figures/L1/coalescing-sectors.svg)
+
+图：连续访问覆盖四个相邻 sector；跨步访问中，lane 0、1、2、31 分别落入相对 sector 0、128、256、3968，中间 28 个被访问 sector 省略。地址间隔不按比例；每个小格代表 4 B，跨步访问每个 sector 仅一个格子有效。
 
 **lab B0 → B1** 演示的正是这一点。naive kernel 让 `threadIdx.x` 对应 $C$ 的**行**，一个 warp 的 32 个线程分别读 $A$ 的 32 行（相距 $K$ 个 float），写 $C$ 的 32 行（相距 $N$ 个 float），完全无法合并。只要交换 `x`、`y` 的角色，同一个 warp 就读 $B$ 的同一行中连续 32 个 float（合并），并且读 $A$ 的同一个元素（广播，一次读取供给全部 32 个线程）。
 
 ### 2.3 shared memory 的 bank
 
-shared memory 分成 **32 个 bank**，每个 bank 宽 4 字节；地址 `addr` 落在 bank $\lfloor\mathrm{addr}/4\rfloor\bmod 32$。一个 warp 中的 32 个线程如果访问 32 个不同的 bank，一个周期就能完成；**如果有 $k$ 个线程访问同一个 bank 的不同地址，就要串行 $k$ 次**，这叫 $k$-way bank conflict。所有线程读同一个地址则是广播，不算冲突。
+本节采用 **32 个 bank、每个 bank 宽 4 字节**的模型；地址 `addr` 落在 bank $\lfloor\mathrm{addr}/4\rfloor\bmod 32$。分析冲突要以**单个 shared memory 事务**为单位：若同一事务中有 $k$ 个不同字地址落入同一 bank，就需要串行服务，称为 $k$-way bank conflict；读取同一字地址可以广播。下面先讨论每个 lane 读取一个 FP32 的情形，64 位访问的事务划分见自测 2.2。
 
 以 lab A3 的转置为例。tile 是 `float tile[32][32]`，写回阶段每个线程读 `tile[tx][j]`，也就是 32 个线程读**同一列**：
 
@@ -165,35 +153,32 @@ $$
 \mathrm{word}=33r+c,\qquad \mathrm{bank}=(r+c)\bmod 32.
 $$
 
-```
-tile[32][32], reading column j (lane r reads tile[r][j]):
-  lane 0 -> bank j
-  lane 1 -> bank j        all 32 lanes hit bank j  ->  32-way conflict
-  ...
-  lane 31-> bank j
+![Bank padding 与字宽自测](../assets/figures/L1/bank-padding.svg)
 
-tile[32][33], one padding column:
-  lane 0 -> bank j
-  lane 1 -> bank j+1      32 lanes hit 32 different banks  ->  no conflict
-  ...
-  lane 31-> bank j+31 (mod 32)
-```
+图：FP32 按列读取的 bank 分布，示例固定 j=0；其他列只会循环平移 bank 编号。32-way 与无冲突指本节的 4 字节 bank 模型，double 的事务分析见折叠自测。
 
-只多加一列 padding，这个阶段就从串行 32 次变成一次完成。lab A3b 只要求改这一处，然后测出差别。
+在上述 FP32 bank 模型中，多加一列 padding 就消除了这次按列读取的 32-way bank conflict。lab A3b 只要求改这一处，然后测出差别。
 
 ### 2.4 warp shuffle：在寄存器之间交换数据
 
-`__shfl_down_sync(mask, v, d)` 让 lane $i$ 读到 lane $i+d$ 的寄存器值，不经过 shared memory。归约的树形结构如下：
+`__shfl_down_sync(mask, v, d)` 在来源 lane 有效且参与调用时，让 lane $i$ 读到 lane $i+d$ 的寄存器值，不经过 shared memory。下面按 offset 16、8、4、2、1 跟踪来源集合：
 
-```
-offset 16:  lane i += lane i+16    (lanes 0..15 now hold pair sums)
-offset  8:  lane i += lane i+8
-offset  4:  lane i += lane i+4
-offset  2:  lane i += lane i+2
-offset  1:  lane i += lane i+1     lane 0 holds the sum of all 32 lanes
+以下示例明确假设整个 warp 的 32 个 lane 都参与，`width=32`。所有 lane 都调用 shuffle，只在来源未越界时累加：
 
-after offset d, lane i holds the sum of lanes i .. i+2d-1
+```cpp
+unsigned lane = threadIdx.x & 31;
+for (int d = 16; d > 0; d >>= 1) {
+    float other = __shfl_down_sync(0xffffffffu, v, d);
+    if (lane + d < 32) v += other;
+}
+// lane 0 now holds the reduction result.
 ```
+
+`lane+d>=32` 时 shuffle 返回本 lane 的值，不能把它算作新的来源；若目标 lane 未参与，读取结果无定义。图只跟踪 lane 0，每一轮都读取轮初状态。
+
+![Descending shuffle 来源集合](../assets/figures/L1/shuffle-provenance.svg)
+
+图：递减 offset 的 shuffle 归约，展示 lane 0 的完整来源集合。每轮读取轮初状态；最后才覆盖全部 32 个 lane。
 
 lab A2 的三级结构，是所有 GPU 归约（包括 softmax、LayerNorm）共同的骨架：每个线程先在寄存器里累加，再在 warp 内用 shuffle 归约，然后在 block 内借助 shared memory 汇总，最后在 grid 层面再启动一次 kernel。
 
@@ -201,7 +186,11 @@ lab A2 的三级结构，是所有 GPU 归约（包括 softmax、LayerNorm）共
 > 地址跨度为 64 个 float，即 $256\,\mathrm{B}$，共 8 个 sector；有效数据为 $128\,\mathrm{B}$，**利用率为 $50\%$**。
 
 > [!question]- 自测 2.2：`double tile[32][32]`（8 字节元素）按列读时，冲突几路？加一列 padding 还管用吗？
-> 每个 double 占两个 bank。元素 $(r,c)$ 的起始字为 $2(32r+c)$，$\mathrm{bank}=(64r+2c)\bmod 32=2c\bmod 32$，与 $r$ 无关，所以按列读仍然是 32-way 冲突（硬件会把 64 位访问拆成两半来处理，实际冲突路数取决于具体架构）。padding 成 `[32][33]` 后，$\mathrm{bank}=(66r+2c)\bmod 32=(2r+2c)\bmod 32$，只能取到 16 个偶数 bank，变成 2-way 冲突。要完全消除，需要另行设计布局，比如 swizzle。
+> 不能只数整个 warp 中重复的起始 bank；需要先知道指令如何划分事务。下面作一个明确的条件式分析：32 个 lane 各读一个 8 B 的 double，总共 256 B，按 lane 0–15 与 16–31 分成两个 128 B 事务，每个 bank 按 4 B 字服务。
+>
+> 无 padding 时，元素 $(r,c)$ 的起始字为 $2(32r+c)$，起始 bank 为 $(64r+2c)\bmod32$。每个事务内 16 个不同 double 都访问同一对 bank，因此在这个模型中是 16-way 冲突。
+>
+> padding 成 `[32][33]` 后，起始 bank 为 $(66r+2c)\bmod32=(2r+2c)\bmod32$，每个 double 还占下一个 bank。**在各自的 16-lane 事务内，32 个 bank 恰好各被访问一次，没有额外 bank conflict。**两个事务来自 256 B 的请求量，不能把它们等同于 2-way 冲突。实际结论取决于编译出的指令、架构与事务拆分方式；本题未作硬件测量。
 
 ---
 
@@ -220,31 +209,17 @@ lab A2 的三级结构，是所有 GPU 归约（包括 softmax、LayerNorm）共
 
 从 B2 起，读取来源变成了 shared memory；从 B3 起，被复用的值留在寄存器里。这和 lab0 的 CPU 路线一一对应：
 
-```
-CPU (lab0)                         GPU (lab1)
-loop reorder        (B1)   <-->    coalescing          (B1)
-cache blocking      (B2)   <-->    shared-mem tiling   (B2)
-register micro-kernel (B3) <-->    register blocking   (B3, B4)
-packing             (B3)   <-->    A^T in shared, float4 loads (B4)
-threads             (B4)   <-->    (already 100k threads)
-```
+![CPU/GPU 优化阶梯对应](../assets/figures/L1/cpu-gpu-ladder.svg)
+
+图：CPU/GPU 优化阶梯对应（示意，不按耗时或容量比例）。
 
 ### 3.2 B2：shared memory 分块
 
 一个 $32\times 32$ 的 block 负责 $C$ 的一个 $32\times 32$ tile。沿 $K$ 方向，每次把 $A$ 的 $32\times 32$ 块和 $B$ 的 $32\times 32$ 块搬进 shared memory，算完再搬下一块：
 
-```
-              K                          N
-        +-----------+             +-----------+
-        |           |          K  |  | Bs |   |
-   M    |-- As -----|  x          |  |    |   |
-        |           |             +-----------+
-        +-----------+                   |
-              \_________________________|
-                        v
-                  C tile (32 x 32): each element reads a 32-long row of As
-                  and a 32-long column of Bs per step, all from shared memory
-```
+![Shared memory GEMM 分块](../assets/figures/L1/shared-memory-tiles.svg)
+
+图：Shared memory GEMM 分块（示意，不按耗时或容量比例）。
 
 每个元素从 global memory 读进来一次，之后被 block 内的 32 个线程复用，global 访问量因此减少到原来的 $1/32$。两次 `__syncthreads()` 缺一不可：第一次保证 tile 已经全部写入，第二次保证所有线程都用完了旧 tile，下一轮才能覆盖它。
 
@@ -260,20 +235,19 @@ threads             (B4)   <-->    (already 100k threads)
 
 B2 中每次 FMA 仍要读两次 shared memory，而 shared memory 的带宽也有限。办法和 lab0 的微内核一样：**让一个线程计算多个输出，把重复使用的值留在寄存器里。**
 
-```
-B4: one thread, one d-step (outer product of two 8-vectors)
+每个 d 步，线程读取 `reg_m[0:8]`（As 的第 d 列）和 `reg_n[0:8]`（Bs 的第 d 行），再执行：
 
-           reg_n[0..7]  (8 loads from Bs row d)
-           b0 b1 b2 b3 b4 b5 b6 b7
-         +-------------------------+
-reg_m a0 | .  .  .  .  .  .  .  .  |
-[0..7] a1| .  .  .  .  .  .  .  .  |   64 FMAs: acc[i][j] += a_i * b_j
-(8 loads | .  .  .  .  .  .  .  .  |
-from As  | ...                     |
-col d)   | .  .  .  .  .  .  .  .  |
-       a7+-------------------------+
-       16 shared loads -> 64 FMAs
+```text
+for i in 0..7:
+    for j in 0..7:
+        acc[i][j] += reg_m[i] * reg_n[j]
 ```
+
+合计 16 次 shared memory 标量读取、64 次标量 FMA。
+
+![线程内 8×8 外积](../assets/figures/L1/register-outer-product.svg)
+
+图：线程内 8×8 外积（按本节参数推导，非实测）。
 
 B4 另有两个细节：
 
@@ -293,15 +267,9 @@ siboehm 在 A6000 上测得，到这一步（他的 kernel 6）能达到 cuBLAS 
 
 FP32 单元一次做一个 `a*b+c`。Tensor Core 一条 `mma` 指令由整个 warp 协作完成一块矩阵乘，例如 `m16n8k16`：$D_{16\times 8}\leftarrow D_{16\times 8}+A_{16\times 16}\times B_{16\times 8}$，共 $16\times 8\times 16=2048$ 次 FMA。
 
-```
-            k=16                   n=8
-        +----------+           +-------+         +-------+
-   m=16 |    A     |   x   k=16|   B   |  +=  m=16|   D   |
-        | (fp16)   |           | (fp16)|         | (fp32)|
-        +----------+           +-------+         +-------+
-   the 32 lanes of the warp each hold a piece of A, B and D in registers
-   ("fragments"); one instruction does 2048 FMAs
-```
+![m16n8k16 矩阵形状](../assets/figures/L1/mma-shapes.svg)
+
+图：m16n8k16 矩阵形状（按本节参数推导，非实测）。
 
 数据由 32 个线程分别持有，每个线程只持有 $A$、$B$、$D$ 的一小片，称为 **fragment**。每个线程持有哪些元素，由硬件布局规定。
 
@@ -315,26 +283,36 @@ WMMA 的局限是：fragment 布局对你不透明，无法控制数据怎样从
 
 `m16n8k16` 的 $A$ fragment 布局（PTX ISA 规定，记 $g=\lfloor\mathrm{lane}/4\rfloor$，$t=\mathrm{lane}\bmod 4$）：
 
-```
-A (16 x 16), each lane holds 8 halves in 4 registers:
-            cols 0..7                cols 8..15
-rows 0..7   a[0]: (g, 2t..2t+1)      a[2]: (g, 2t+8..2t+9)
-rows 8..15  a[1]: (g+8, 2t..2t+1)    a[3]: (g+8, 2t+8..2t+9)
+各寄存器的精确坐标如下；`g=lane//4`，`t=lane%4`，每个寄存器装两个 half：
 
--> the 16x16 tile is four 8x8 blocks:  [0][2]
-                                        [1][3]
-```
+| 寄存器 / 子块 | 行 | 两个列下标 |
+| --- | --- | --- |
+| `a[0]` / 0 | `g` | `2t, 2t+1` |
+| `a[1]` / 1 | `g+8` | `2t, 2t+1` |
+| `a[2]` / 2 | `g` | `2t+8, 2t+9` |
+| `a[3]` / 3 | `g+8` | `2t+8, 2t+9` |
+
+![A fragment 的 lane 映射](../assets/figures/L1/mma-a-fragment.svg)
+
+图：A fragment 的 lane 映射（按本节参数推导，非实测）。
 
 `ldmatrix.x4` 一次加载 4 个 $8\times 8$ 矩阵，lane $i$ 提供第 $i$ 行的地址：lane 0–7 给矩阵 0 的 8 行，lane 8–15 给矩阵 1 的 8 行，以此类推。加载完成后，lane $i$ 在 $r[m]$ 里拿到矩阵 $m$ 中第 $\lfloor i/4\rfloor$ 行、第 $2(i\bmod 4)$ 和 $2(i\bmod 4)+1$ 列的元素，**恰好就是 mma 要求的 fragment 布局**。
 
 于是地址公式只需要让“矩阵 $m$”对上“块 $m$”：
 
+提供行起始地址的 lane 使用以下整数索引：
+
+```text
+row = lane % 16
+col = (lane // 16) * 8
+matrix = lane // 8
 ```
-lanes  0- 7 -> block 0: rows  0..7 , col 0   -> row = lane,      col = 0
-lanes  8-15 -> block 1: rows  8..15, col 0   -> row = lane,      col = 0
-lanes 16-23 -> block 2: rows  0..7 , col 8   -> row = lane - 16, col = 8
-lanes 24-31 -> block 3: rows  8..15, col 8   -> row = lane - 16, col = 8
-```
+
+lane 0–7、8–15、16–23、24–31 分别提供 matrix 0、1、2、3 的八个行地址；这与最终 fragment 的寄存器持有者映射是不同角色。
+
+![ldmatrix.x4 行地址](../assets/figures/L1/ldmatrix-addresses.svg)
+
+图：16×16 的 A tile 按实际行列拆成四个 8×8 子矩阵。框内 lane 只负责提供行起始地址；最终 fragment 中各寄存器的持有者见前一图。
 
 因此，C2b 的地址公式为：
 
@@ -349,17 +327,18 @@ $B$ 在 shared memory 中按 `Bs[k][n]` 存放，而 mma 要求 $B$ fragment 中
 
 `ldmatrix` 每个阶段由 8 个 lane 各读 16 字节，即一个 $8\times 8$ 矩阵的 8 行。$A$ tile 每行有 $\mathrm{BK}=32$ 个 half，即 64 字节；第 $r$ 行的起始 bank 为 $(64r/4)\bmod 32=16r\bmod 32$：
 
-```
-row pitch 64 B (BK = 32 halves, no padding):
-  row 0 -> banks  0..3
-  row 1 -> banks 16..19
-  row 2 -> banks  0..3    <- conflicts with row 0
-  row 3 -> banks 16..19   <- conflicts with row 1      => 4-way conflict
-  ...
+每个加载阶段为 8 个 lane 各读取 16 B（四个相邻 bank）：
 
-row pitch 80 B (BK + 8 = 40 halves):  start bank = 20r % 32
-  rows 0..7 -> 0, 20, 8, 28, 16, 4, 24, 12   (each +0..3)  => all 32 banks, no conflict
-```
+| 行距 | rows 0..7 的起始 bank | 阶段内冲突 |
+| --- | --- | --- |
+| 64 B（32 halves） | `0,16,0,16,0,16,0,16` | 4-way |
+| 80 B（40 halves） | `0,20,8,28,16,4,24,12` | 无 |
+
+80 B 行距的起始 bank 为 `20*r % 32`，每行再覆盖该 bank 后的三个 bank。
+
+![ldmatrix 的 bank 分布](../assets/figures/L1/ldmatrix-padding.svg)
+
+图：ldmatrix 的 bank 分布（按本节参数推导，非实测）。
 
 所以 lab 中 `As` 的行宽取 $\mathrm{BK}+8=40$，`Bs` 取 $\mathrm{BN}+8=136$（行宽 $272\,\mathrm{B}$，起始 $\mathrm{bank}=4r\bmod 32$，同样无冲突）。代价是多占 $25\%$ 的 shared memory。CUTLASS 改用 **XOR swizzle** 打乱列地址，不占额外空间（lab 可选挑战 C3）。
 
@@ -369,18 +348,9 @@ row pitch 80 B (BK + 8 = 40 halves):  start bank = 20r % 32
 
 于是可以搭建一条**软件流水线**：shared memory 中开 $S$ 个缓冲区（stage），计算第 $k$ 块的同时，第 $k+1,\ldots,k+S-1$ 块正在路上。
 
-```
-STAGES = 3, time ->
+![三缓冲 cp.async 流水线](../assets/figures/L1/cp-async-pipeline.svg)
 
-load : [ t0 ][ t1 ][ t2 ]      [ t3 ]      [ t4 ]      [ t5 ] ...
-math :             [ t0  ][ t1  ][ t2  ][ t3  ][ t4  ] ...
-                   ^ wait(t0); sync; issue load t2 (into the buffer t-1 used); compute t0
-buffers:  t0 -> s0, t1 -> s1, t2 -> s2, t3 -> s0 (reused after t0 is done), ...
-
-without pipelining (STAGES = 1):
-load : [ t0 ]       [ t1 ]       [ t2 ]
-math :       [ t0 ]       [ t1 ]       [ t2 ]      <- every load latency is exposed
-```
+图：三缓冲的事件顺序示意，非实测时间线。预填充、等待、同步、发起下一次拷贝与计算分开表示；尾部仍按原文提交空组。
 
 lab C2c 中，`cp_async_wait<S-2>()` 的含义是“除最近发出的 $S-2$ 组之外，其余都已完成”，也就是第 $\mathrm{kt}$ 块已经到达。紧接着的 `__syncthreads()` 同时保证两件事：所有线程都能看到第 $\mathrm{kt}$ 块；所有线程都算完了第 $\mathrm{kt}-1$ 块，它占用的缓冲区可以覆盖了。
 

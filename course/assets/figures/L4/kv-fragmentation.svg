@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="480" viewBox="0 0 840 480" role="img">
+<title>Contiguous KV allocation: two kinds of waste</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="480" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Contiguous KV allocation: two kinds of waste</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Source examples · internal bars are proportional; external layout is not specified</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="40" y="120" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Request A: 300 used / 2048 reserved slots</text>
+<rect x="40" y="138" width="755" height="35" rx="0" fill="#f5f8fb" stroke="#bccbd6"/>
+<rect x="40" y="138" width="110.596" height="35" rx="0" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="40" y="198" font-size="18" font-weight="400" text-anchor="start" fill="#526579">1748 reserved but unused slots</text>
+<text x="40" y="220" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Request B: 1900 used / 2048 reserved slots</text>
+<rect x="40" y="238" width="755" height="35" rx="0" fill="#f5f8fb" stroke="#bccbd6"/>
+<rect x="40" y="238" width="700.439" height="35" rx="0" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="40" y="298" font-size="18" font-weight="400" text-anchor="start" fill="#526579">148 reserved but unused slots</text>
+<rect x="40" y="340" width="230" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="155" y="366.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Aggregate free: 40%</text>
+<text x="155" y="391.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">source example</text>
+<rect x="300" y="340" width="230" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="415" y="366.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Largest free hole</text>
+<text x="415" y="391.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">&lt; 2048 slots</text>
+<rect x="560" y="340" width="235" height="65" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="677.5" y="366.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Request C: needs 2048</text>
+<text x="677.5" y="391.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">cannot allocate</text>
+<text x="30" y="455" font-size="17" font-weight="400" text-anchor="start" fill="#526579">A wastes 1748/2048 ≈ 85%. Free capacity can be split into holes too small for C.</text>
+</svg>

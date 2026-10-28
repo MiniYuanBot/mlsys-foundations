@@ -35,12 +35,16 @@ tags: [lecture, tensor, stride, gemm, roofline, fusion, compiler]
 
 无论张量有几维，内存都只是一长串地址。一个 $2\times 3$ 的矩阵：
 
+对应的逻辑值和底层数据仍可直接复制：
+
+```python
+logical = [[0, 1, 2], [3, 4, 5]]
+storage = [0, 1, 2, 3, 4, 5]
 ```
-logical view (in your head)          physical storage (in memory)
-        col0 col1 col2
-row0  [  0    1    2  ]         storage: [ 0 | 1 | 2 | 3 | 4 | 5 ]
-row1  [  3    4    5  ]          index:    0   1   2   3   4   5
-```
+
+![逻辑矩阵与一维存储](../assets/figures/L0/storage-layout.svg)
+
+图：逻辑矩阵与一维存储（按本节参数推导，非实测）。
 
 把逻辑位置 $(i,j)$ 映射到存储下标的规则，就是张量的**布局**。最常见的是**行优先**（row-major，也叫 C order），同一行的元素在内存里挨在一起。
 
@@ -115,15 +119,18 @@ flowchart LR
 
 一个切片例子：`arange(12).view({3,4})` 取第 1 维的 `1:4:2`，也就是第 1、3 列：
 
-```
-original: shape=[3,4] strides=[4,1]     slice: shape=[3,2] strides=[4,2] offset=1
+这个切片的精确元数据与取值为：
 
-   0  1  2  3                               1  3
-   4  5  6  7          ------->             5  7
-   8  9 10 11                               9 11
+| 对象 | shape | strides | offset | 逻辑值 |
+| --- | --- | --- | --- | --- |
+| 原张量 | `[3,4]` | `[4,1]` | `0` | `[[0,1,2,3],[4,5,6,7],[8,9,10,11]]` |
+| 切片 | `[3,2]` | `[4,2]` | `1` | `[[1,3],[5,7],[9,11]]` |
 
-storage: [ 0 |*1*| 2 |*3*| 4 |*5*| 6 |*7*| 8 |*9*|10 |*11*]   *x* = reachable from the slice
-```
+底层 storage 仍为 `0..11`；切片可达的下标是 `[1,3,5,7,9,11]`。
+
+![步长切片与可达地址](../assets/figures/L0/slice-strides.svg)
+
+图：步长切片与可达地址（按本节参数推导，非实测）。
 
 ### 2.2 广播：stride 为 0 的魔法
 
@@ -139,16 +146,18 @@ $$
 
 实现上，把大小为 1 的维度“拉伸”成 $n$，只需把它的 stride 设成 **0**：沿这一维无论走多少步，地址都不变，读到的永远是同一个元素。
 
-```
-row = [1, 2, 3]   shape=[3] stride=[1]
-row.broadcast_to([4, 3])  ->  shape=[4,3] strides=[0,1]
+广播的元数据（API 示意）：
 
-logical view         storage index read
-[1 2 3]              0 1 2
-[1 2 3]              0 1 2     <- every row points at the same memory
-[1 2 3]              0 1 2
-[1 2 3]              0 1 2
+```text
+row = [1, 2, 3]                  # shape=[3], stride=[1]
+row.broadcast_to([4, 3])         # shape=[4,3], strides=[0,1]
 ```
+
+四行的逻辑值都是 `[1,2,3]`，各行都读取同一组 storage 下标 `[0,1,2]`。
+
+![stride 为零的广播](../assets/figures/L0/broadcast-zero-stride.svg)
+
+图：stride 为零的广播（按本节参数推导，非实测）。
 
 所以 `x + bias`（`x` 的 shape 为 $[B,D]$，`bias` 的 shape 为 $[D]$）不需要先把 bias 复制 $B$ 份。lab A8 的 `zip` 就是这样做的：先把两个输入都广播成视图，再逐元素计算。
 
@@ -220,22 +229,9 @@ $$
 \text{可达性能} = \min(\text{峰值 FLOP/s},\ I \times \text{内存带宽})
 $$
 
-```
- GFLOP/s (log)
-   ^
-150|- - - - - - - - - - -+-------------------  <- compute roof (peak)
-   |                    /:
-   |                  /  :
-   |                /    :       GEMM n=1024
-   |              /      :         o  I~170
- 10|            /        :
-   |          /  <- slope = memory bandwidth
-   |        /            :
-  1|  o   /              :
-   |  elementwise add, I~0.08
-   +-----------------------------------------> arithmetic intensity I (FLOP/Byte, log)
-       0.1      1     ~7.5 (ridge)   100
-```
+![CPU Roofline 与算术强度](../assets/figures/L0/roofline.svg)
+
+图：假设峰值 150 GFLOP/s、带宽 20 GB/s 的理论上界；空心点标出两种算术强度对应的上界，非实测性能。
 
 两个例子（float32，每个元素 4 字节）：
 
@@ -268,14 +264,9 @@ for i: for k: { a = A[i][k];  for j: C[i][j] += a * B[k][j]; }
 
 现在最内层沿 $j$ 走，`B[k][j]` 和 `C[i][j]` 都是连续访问，编译器还可以把这个循环自动向量化，一次处理 8 个 $j$。只是交换了两层循环，速度就能提升 10–30 倍。
 
-```
-i-j-k: inner loop reads a COLUMN of B     i-k-j: inner loop reads a ROW of B
-   B                                        B
-  [# . . .]                                [. . . .]
-  [# . . .]  <- each # is on a             [# # # #]  <- one cache line holds 16 floats
-  [# . . .]     different cache line       [. . . .]
-  [# . . .]                                [. . . .]
-```
+![按列与按行访问 B](../assets/figures/L0/row-column-access.svg)
+
+图：行优先 B 的访问模式示意；网格缩略，不按真实缓存行长度绘制。
 
 ### 3.5 第二步：分块（lab B2）
 
@@ -283,14 +274,19 @@ i-k-j 循环中，对每个 $i$ 都要把**整个 $B$**（$N\times N$）扫一�
 
 **分块**（blocking / tiling）的思路是：把 $B$ 切成能装进缓存的小块，在每一块被挤出缓存之前尽量多次复用它。
 
+分块循环的伪代码：
+
+```text
+for each KC × NC block of B (fits in L2/L3):
+    for each MC-row block of A:
+        update the matching MC × NC block of C
 ```
-          N                        Cut C = A*B into blocks:
-   +---+---+---+---+               for each KC x NC block of B (fits in L2/L3):
- K |B00|B01|...|   |                 for each MC-row block of A:
-   +---+---+---+---+                   update the matching block of C
-   |B10|...|   |   |               -> each B block is read from memory once
-   +---+---+---+---+                  and reused by M/MC row blocks
-```
+
+目标是在 B 块驻留缓存期间，供各个 A 行块复用；M 能整除 MC 时共有 `M/MC` 个行块。
+
+![B 的缓存分块与循环](../assets/figures/L0/cache-blocking.svg)
+
+图：固定 B 的 KC×NC 块，多次复用于不同 A 行块，并累加到对应的 C 行块。中间行块省略；M 能整除 MC 时共 M/MC 次，非整除时最后一块较短。
 
 只套三层分块循环通常能再快 1.5 倍左右（lab 参考实现从 $31$ 提到 $47\,\mathrm{GFLOP/s}$）。要进一步接近 BLAS 的性能，还需要下一步。
 
@@ -300,27 +296,39 @@ Kazushige Goto 的方法（[Goto & van de Geijn, TOMS 2008](https://www.cs.utexa
 
 **想法 1：在寄存器里分块（微内核）。** 用 $\mathrm{MR}\times\mathrm{NR}$ 个累加器把 $C$ 的一个小块整块留在寄存器里。每一步 $k$：
 
+每个 k 步的寄存器累加伪代码：
+
+```text
+b0 = load8(Bpack[k, 0:8])
+b1 = load8(Bpack[k, 8:16])
+for r in 0..5:
+    a = broadcast8(Apack[k, r])
+    acc[r, 0:8] = fma8(a, b0, acc[r, 0:8])
+    acc[r, 8:16] = fma8(a, b1, acc[r, 8:16])
 ```
-         NR=16 (2 YMM registers)
-        +------------------+
-  b_k ->| b b b b ... b b  |   16 floats from packed B (2 vector loads)
-        +------------------+
- MR=6  a0 --> acc[0][0..15] += a0 * b    a_r is broadcast to 8 lanes
-       a1 --> acc[1][0..15] += a1 * b
-       ...                               6 x 2 = 12 FMA instructions
-       a5 --> acc[5][0..15] += a5 * b
-```
+
+一次读取 B 的 16 个 float（2 次 YMM 向量 load），执行 `6×2=12` 条向量 FMA；每条处理 8 个 float。
+
+![6×16 寄存器微内核](../assets/figures/L0/register-microkernel.svg)
+
+图：两列分别对应 C 的 0–7、8–15 列，每个格子是一个 YMM 累加器。六个 A 标量依次广播，共用一个寄存器；每步 k 的两个 B 向量在六行间复用。
 
 寄存器预算（AVX2 共 16 个 YMM）：12 个累加器、2 个放 $b$、1 个放广播的 $a$，共 $12+2+1=15$ 个，刚好装下。每一步读 $6+16=22$ 个 float，做 $6\times 16=96$ 次 FMA，计算/访存比很高。
 
 **想法 2：打包（packing）。** 把 $A$ 的 $\mathrm{MC}\times\mathrm{KC}$ 块和 $B$ 的 $\mathrm{KC}\times\mathrm{NC}$ 块，事先复制成微内核要求的顺序（lab B3a、B3b）：
 
+打包后的线性地址按 k 优先推进（下标单位为元素）：
+
+```text
+Apack[k * MR + r] = A[row_base + r, k_base + k]  # MR=6
+Bpack[k * NR + c] = B[k_base + k, col_base + c]  # NR=16
 ```
-packed A panel (MR rows, k-major)            packed B panel (NR cols, k-major)
-k=0: a00 a10 a20 a30 a40 a50                 k=0: b00 b01 ... b0,15
-k=1: a01 a11 a21 a31 a41 a51                 k=1: b10 b11 ... b1,15
-...  (the micro-kernel reads both sequentially)
-```
+
+例如 A 的 k=0 段依次为 `a00,a10,a20,a30,a40,a50`，k=1 段为 `a01,a11,a21,a31,a41,a51`；B 的对应两段分别为 `b00..b0,15`、`b10..b1,15`。
+
+![A/B 的 k-major packing](../assets/figures/L0/packed-panels.svg)
+
+图：A/B 的 k-major packing（按本节参数推导，非实测）。
 
 打包要多花一次复制，但换来：微内核的读取完全连续、能对齐、不会有 TLB 缺失；边界补零后，微内核里不需要任何 if。
 

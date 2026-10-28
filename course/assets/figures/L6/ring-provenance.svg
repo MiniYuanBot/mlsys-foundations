@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="660" viewBox="0 0 840 660" role="img">
+<title>Ring reduce-scatter: follow chunk 0</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="660" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Ring reduce-scatter: follow chunk 0</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived message trace · P=4; only chunk 0 is expanded; ranks stay in fixed columns</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="132" y="120" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 0</text>
+<line x1="132" y1="196" x2="132" y2="553" stroke="#bccbd6" stroke-width="1" stroke-dasharray="4 5"/>
+<rect x="50" y="145" width="164" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="132" y="176.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Initial: a0</text>
+<text x="324" y="120" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 1</text>
+<line x1="324" y1="196" x2="324" y2="553" stroke="#bccbd6" stroke-width="1" stroke-dasharray="4 5"/>
+<rect x="242" y="145" width="164" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="324" y="176.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Initial: b0</text>
+<text x="516" y="120" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 2</text>
+<line x1="516" y1="196" x2="516" y2="553" stroke="#bccbd6" stroke-width="1" stroke-dasharray="4 5"/>
+<rect x="434" y="145" width="164" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="516" y="176.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Initial: c0</text>
+<text x="708" y="120" font-size="21" font-weight="700" text-anchor="middle" fill="#163047">Rank 3</text>
+<line x1="708" y1="196" x2="708" y2="553" stroke="#bccbd6" stroke-width="1" stroke-dasharray="4 5"/>
+<rect x="626" y="145" width="164" height="50" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="708" y="176.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">Initial: d0</text>
+<text x="45" y="237" font-size="18" font-weight="700" text-anchor="start" fill="#163047">Step 0</text>
+<line x1="324" y1="200" x2="516" y2="257" stroke="#a45b0b" stroke-width="2"/>
+<line x1="516" y1="257" x2="507.117" y2="258.446" stroke="#a45b0b" stroke-width="2"/>
+<line x1="516" y1="257" x2="509.345" y2="250.941" stroke="#a45b0b" stroke-width="2"/>
+<text x="420" y="217.5" font-size="18" font-weight="400" text-anchor="middle" fill="#a45b0b">b0</text>
+<rect x="434" y="262" width="164" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="516" y="280.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">b0+c0</text>
+<text x="516" y="304.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">local +c0</text>
+<text x="45" y="353" font-size="18" font-weight="700" text-anchor="start" fill="#163047">Step 1</text>
+<line x1="516" y1="317" x2="708" y2="373" stroke="#a45b0b" stroke-width="2"/>
+<line x1="708" y1="373" x2="699.124" y2="374.489" stroke="#a45b0b" stroke-width="2"/>
+<line x1="708" y1="373" x2="701.316" y2="366.973" stroke="#a45b0b" stroke-width="2"/>
+<text x="612" y="334" font-size="18" font-weight="400" text-anchor="middle" fill="#a45b0b">b0+c0</text>
+<rect x="626" y="378" width="164" height="50" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="708" y="396.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">b0+c0+d0</text>
+<text x="708" y="420.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">local +d0</text>
+<text x="45" y="469" font-size="18" font-weight="700" text-anchor="start" fill="#163047">Step 2</text>
+<line x1="708" y1="433" x2="132" y2="489" stroke="#a45b0b" stroke-width="2"/>
+<line x1="132" y1="489" x2="139.687" y2="484.319" stroke="#a45b0b" stroke-width="2"/>
+<line x1="132" y1="489" x2="140.445" y2="492.112" stroke="#a45b0b" stroke-width="2"/>
+<text x="420" y="450" font-size="18" font-weight="400" text-anchor="middle" fill="#a45b0b">b0+c0+d0</text>
+<rect x="50" y="494" width="164" height="50" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="132" y="512.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">a0+b0+c0+d0</text>
+<text x="132" y="536.78" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">complete chunk 0</text>
+<text x="30" y="601" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Orange arrows carry partial sums; the receiver adds its own chunk-0 contribution.</text>
+<text x="30" y="626" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Send rule: (r−s−1) mod 4. Other chunks follow rotated routes (see next figure).</text>
+</svg>

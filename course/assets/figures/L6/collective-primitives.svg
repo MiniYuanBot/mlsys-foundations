@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="675" viewBox="0 0 840 675" role="img">
+<title>Five collectives: inputs and specified outputs</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="675" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Five collectives: inputs and specified outputs</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">P=3 · reduction operator = sum · payload letters denote equal-size buffers</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="190" y="120" font-size="19" font-weight="700" text-anchor="start" fill="#163047">BEFORE: r0 / r1 / r2</text>
+<text x="570" y="120" font-size="19" font-weight="700" text-anchor="start" fill="#163047">AFTER</text>
+<text x="30" y="181" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Broadcast</text>
+<rect x="185" y="145" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="229.5" y="171.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r0</text>
+<text x="229.5" y="194.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a</text>
+<rect x="281" y="145" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="325.5" y="171.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r1</text>
+<text x="325.5" y="194.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">—</text>
+<rect x="377" y="145" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="421.5" y="171.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r2</text>
+<text x="421.5" y="194.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">—</text>
+<line x1="475" y1="177" x2="515" y2="177" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="177" x2="506.896" y2="180.915" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="177" x2="506.896" y2="173.085" stroke="#526579" stroke-width="2"/>
+<rect x="530" y="145" width="280" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="670" y="183.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">r0 / r1 / r2: each [a]</text>
+<text x="30" y="275" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Reduce</text>
+<rect x="185" y="239" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="229.5" y="265.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r0</text>
+<text x="229.5" y="288.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a</text>
+<rect x="281" y="239" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="325.5" y="265.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r1</text>
+<text x="325.5" y="288.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">b</text>
+<rect x="377" y="239" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="421.5" y="265.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r2</text>
+<text x="421.5" y="288.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">c</text>
+<line x1="475" y1="271" x2="515" y2="271" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="271" x2="506.896" y2="274.915" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="271" x2="506.896" y2="267.085" stroke="#526579" stroke-width="2"/>
+<rect x="530" y="239" width="280" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="670" y="277.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">r0: [a+b+c]</text>
+<text x="30" y="369" font-size="17" font-weight="700" text-anchor="start" fill="#163047">All-reduce</text>
+<rect x="185" y="333" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="229.5" y="359.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r0</text>
+<text x="229.5" y="382.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a</text>
+<rect x="281" y="333" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="325.5" y="359.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r1</text>
+<text x="325.5" y="382.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">b</text>
+<rect x="377" y="333" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="421.5" y="359.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r2</text>
+<text x="421.5" y="382.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">c</text>
+<line x1="475" y1="365" x2="515" y2="365" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="365" x2="506.896" y2="368.915" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="365" x2="506.896" y2="361.085" stroke="#526579" stroke-width="2"/>
+<rect x="530" y="333" width="280" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="670" y="371.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">every rank: [a+b+c]</text>
+<text x="30" y="463" font-size="17" font-weight="700" text-anchor="start" fill="#163047">Reduce-scatter</text>
+<rect x="185" y="427" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="229.5" y="453.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r0</text>
+<text x="229.5" y="476.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">a0 a1 a2</text>
+<rect x="281" y="427" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="325.5" y="453.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r1</text>
+<text x="325.5" y="476.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">b0 b1 b2</text>
+<rect x="377" y="427" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="421.5" y="453.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r2</text>
+<text x="421.5" y="476.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">c0 c1 c2</text>
+<line x1="475" y1="459" x2="515" y2="459" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="459" x2="506.896" y2="462.915" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="459" x2="506.896" y2="455.085" stroke="#526579" stroke-width="2"/>
+<rect x="530" y="427" width="280" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="670" y="465.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">r0: [s0]; r1: [s1]; r2: [s2]</text>
+<text x="30" y="557" font-size="17" font-weight="700" text-anchor="start" fill="#163047">All-gather</text>
+<rect x="185" y="521" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="229.5" y="547.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r0</text>
+<text x="229.5" y="570.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">x0</text>
+<rect x="281" y="521" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="325.5" y="547.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r1</text>
+<text x="325.5" y="570.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">x1</text>
+<rect x="377" y="521" width="89" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="421.5" y="547.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">r2</text>
+<text x="421.5" y="570.44" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">x2</text>
+<line x1="475" y1="553" x2="515" y2="553" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="553" x2="506.896" y2="556.915" stroke="#526579" stroke-width="2"/>
+<line x1="515" y1="553" x2="506.896" y2="549.085" stroke="#526579" stroke-width="2"/>
+<rect x="530" y="521" width="280" height="65" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="670" y="559.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">every rank: [x0 x1 x2]</text>
+<text x="30" y="630" font-size="17" font-weight="400" text-anchor="start" fill="#526579">s_i = a_i + b_i + c_i. All-gather concatenates chunks; it does not sum them.</text>
+<text x="30" y="655" font-size="17" font-weight="400" text-anchor="start" fill="#526579">“—” denotes no input. Reduce specifies the result at the root only.</text>
+</svg>

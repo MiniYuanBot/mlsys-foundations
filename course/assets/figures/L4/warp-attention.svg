@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="460" viewBox="0 0 840 460" role="img">
+<title>One warp computes one query / head</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="460" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">One warp computes one query / head</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived coverage · 32 lanes, head dimension 128, fp16 K values</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="40" y="115" width="165" height="70" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="122.5" y="143.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">lane 0</text>
+<text x="122.5" y="169.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">dims 0–3</text>
+<line x1="122" y1="192" x2="122" y2="228" stroke="#526579" stroke-width="2"/>
+<line x1="122" y1="228" x2="118.085" y2="219.896" stroke="#526579" stroke-width="2"/>
+<line x1="122" y1="228" x2="125.915" y2="219.896" stroke="#526579" stroke-width="2"/>
+<rect x="40" y="235" width="165" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="122.5" y="263.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">local dot: 4 pairs</text>
+<rect x="238" y="115" width="165" height="70" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="320.5" y="143.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">lane 1</text>
+<text x="320.5" y="169.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">dims 4–7</text>
+<line x1="320" y1="192" x2="320" y2="228" stroke="#526579" stroke-width="2"/>
+<line x1="320" y1="228" x2="316.085" y2="219.896" stroke="#526579" stroke-width="2"/>
+<line x1="320" y1="228" x2="323.915" y2="219.896" stroke="#526579" stroke-width="2"/>
+<rect x="238" y="235" width="165" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="320.5" y="263.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">local dot: 4 pairs</text>
+<rect x="436" y="115" width="165" height="70" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="518.5" y="143.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">lane 2</text>
+<text x="518.5" y="169.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">dims 8–11</text>
+<line x1="518" y1="192" x2="518" y2="228" stroke="#526579" stroke-width="2"/>
+<line x1="518" y1="228" x2="514.085" y2="219.896" stroke="#526579" stroke-width="2"/>
+<line x1="518" y1="228" x2="521.915" y2="219.896" stroke="#526579" stroke-width="2"/>
+<rect x="436" y="235" width="165" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="518.5" y="263.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">local dot: 4 pairs</text>
+<rect x="634" y="115" width="165" height="70" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="716.5" y="143.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">lane 31</text>
+<text x="716.5" y="169.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">dims 124–127</text>
+<line x1="716" y1="192" x2="716" y2="228" stroke="#526579" stroke-width="2"/>
+<line x1="716" y1="228" x2="712.085" y2="219.896" stroke="#526579" stroke-width="2"/>
+<line x1="716" y1="228" x2="719.915" y2="219.896" stroke="#526579" stroke-width="2"/>
+<rect x="634" y="235" width="165" height="45" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="716.5" y="263.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">local dot: 4 pairs</text>
+<text x="618" y="155" font-size="23" font-weight="400" text-anchor="middle" fill="#163047">…</text>
+<rect x="150" y="315" width="540" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="420" y="348.96" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">warp_sum → score for key j → online softmax</text>
+<line x1="122" y1="295" x2="716" y2="295" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="295" x2="420" y2="310" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="310" x2="416.085" y2="301.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="310" x2="423.915" y2="301.896" stroke="#526579" stroke-width="2"/>
+<line x1="122" y1="284" x2="122" y2="295" stroke="#526579" stroke-width="2"/>
+<line x1="320" y1="284" x2="320" y2="295" stroke="#526579" stroke-width="2"/>
+<line x1="518" y1="284" x2="518" y2="295" stroke="#526579" stroke-width="2"/>
+<line x1="716" y1="284" x2="716" y2="295" stroke="#526579" stroke-width="2"/>
+<text x="30" y="410" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Each lane keeps 4 output accumulators; normalize by the row sum at the end.</text>
+<text x="30" y="435" font-size="17" font-weight="400" text-anchor="start" fill="#526579">32 × 4 × 2 B = 256 B per K row. Repeat for each key via its paged address.</text>
+</svg>

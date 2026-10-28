@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="535" viewBox="0 0 840 535" role="img">
+<title>Cache blocking: one B panel, several A row panels</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="535" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Cache blocking: one B panel, several A row panels</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic · not to scale</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="45" y="115" width="205" height="95" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="147.5" y="144.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">Same cached B panel</text>
+<text x="147.5" y="168.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">KC × NC</text>
+<text x="147.5" y="192.28" font-size="17" font-weight="400" text-anchor="middle" fill="#163047">fixed k / column range</text>
+<text x="320" y="121" font-size="20" font-weight="700" text-anchor="start" fill="#163047">A row panels</text>
+<text x="625" y="121" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Matching C tiles</text>
+<rect x="320" y="160" width="175" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="407.5" y="186.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">A row panel 0</text>
+<text x="407.5" y="211.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">MC × KC</text>
+<rect x="625" y="160" width="175" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="712.5" y="186.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">C row tile 0</text>
+<text x="712.5" y="211.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">MC × NC</text>
+<line x1="285" y1="193" x2="305" y2="193" stroke="#087f78" stroke-width="2"/>
+<line x1="305" y1="193" x2="320" y2="193" stroke="#087f78" stroke-width="2"/>
+<line x1="320" y1="193" x2="311.896" y2="196.915" stroke="#087f78" stroke-width="2"/>
+<line x1="320" y1="193" x2="311.896" y2="189.085" stroke="#087f78" stroke-width="2"/>
+<line x1="500" y1="193" x2="615" y2="193" stroke="#526579" stroke-width="2"/>
+<line x1="615" y1="193" x2="606.896" y2="196.915" stroke="#526579" stroke-width="2"/>
+<line x1="615" y1="193" x2="606.896" y2="189.085" stroke="#526579" stroke-width="2"/>
+<text x="557.5" y="184" font-size="16" font-weight="400" text-anchor="middle" fill="#526579">C += A × B</text>
+<rect x="320" y="260" width="175" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="407.5" y="286.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">A row panel 1</text>
+<text x="407.5" y="311.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">MC × KC</text>
+<rect x="625" y="260" width="175" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="712.5" y="286.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">C row tile 1</text>
+<text x="712.5" y="311.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">MC × NC</text>
+<line x1="285" y1="293" x2="305" y2="293" stroke="#087f78" stroke-width="2"/>
+<line x1="305" y1="293" x2="320" y2="293" stroke="#087f78" stroke-width="2"/>
+<line x1="320" y1="293" x2="311.896" y2="296.915" stroke="#087f78" stroke-width="2"/>
+<line x1="320" y1="293" x2="311.896" y2="289.085" stroke="#087f78" stroke-width="2"/>
+<line x1="500" y1="293" x2="615" y2="293" stroke="#526579" stroke-width="2"/>
+<line x1="615" y1="293" x2="606.896" y2="296.915" stroke="#526579" stroke-width="2"/>
+<line x1="615" y1="293" x2="606.896" y2="289.085" stroke="#526579" stroke-width="2"/>
+<text x="557.5" y="284" font-size="16" font-weight="400" text-anchor="middle" fill="#526579">C += A × B</text>
+<rect x="320" y="360" width="175" height="65" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="407.5" y="386.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">A row panel last</text>
+<text x="407.5" y="411.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">MC × KC</text>
+<rect x="625" y="360" width="175" height="65" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="712.5" y="386.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">C row tile last</text>
+<text x="712.5" y="411.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">MC × NC</text>
+<line x1="285" y1="393" x2="305" y2="393" stroke="#087f78" stroke-width="2"/>
+<line x1="305" y1="393" x2="320" y2="393" stroke="#087f78" stroke-width="2"/>
+<line x1="320" y1="393" x2="311.896" y2="396.915" stroke="#087f78" stroke-width="2"/>
+<line x1="320" y1="393" x2="311.896" y2="389.085" stroke="#087f78" stroke-width="2"/>
+<line x1="500" y1="393" x2="615" y2="393" stroke="#526579" stroke-width="2"/>
+<line x1="615" y1="393" x2="606.896" y2="396.915" stroke="#526579" stroke-width="2"/>
+<line x1="615" y1="393" x2="606.896" y2="389.085" stroke="#526579" stroke-width="2"/>
+<text x="557.5" y="384" font-size="16" font-weight="400" text-anchor="middle" fill="#526579">C += A × B</text>
+<polyline points="250,163 285,163 285,393" fill="none" stroke="#087f78" stroke-width="2"/>
+<text x="405" y="347" font-size="23" font-weight="400" text-anchor="middle" fill="#163047">…</text>
+<text x="710" y="347" font-size="23" font-weight="400" text-anchor="middle" fill="#163047">…</text>
+<text x="45" y="270" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">Reuse B while it</text>
+<text x="45" y="296" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">stays in cache;</text>
+<text x="45" y="322" font-size="18" font-weight="400" text-anchor="start" fill="#087f78">advance A / C rows.</text>
+<text x="30" y="475" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Same KC reduction range and NC output columns for every update shown.</text>
+<text x="30" y="500" font-size="17" font-weight="400" text-anchor="start" fill="#526579">M/MC row panels when divisible; the last panel is shorter if there is a remainder.</text>
+</svg>

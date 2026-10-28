@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="500" viewBox="0 0 840 500" role="img">
+<title>Bucket overlap starts only after gradients are ready</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="500" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Bucket overlap starts only after gradients are ready</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic event order · horizontal spacing is not measured time</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="40" y="142" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Compute</text>
+<text x="40" y="268" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Comm</text>
+<rect x="170" y="110" width="105" height="55" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="222.5" y="143.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Forward</text>
+<rect x="280" y="110" width="105" height="55" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="332.5" y="143.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Bwd L3</text>
+<rect x="390" y="110" width="105" height="55" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="442.5" y="143.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Bwd L2</text>
+<rect x="500" y="110" width="105" height="55" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="552.5" y="143.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Bwd L1</text>
+<rect x="610" y="110" width="105" height="55" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="662.5" y="143.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Bwd L0</text>
+<rect x="500" y="235" width="105" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="552.5" y="268.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">AR b0</text>
+<rect x="610" y="235" width="105" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="662.5" y="268.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">AR b1</text>
+<rect x="720" y="235" width="80" height="55" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="760" y="268.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">AR b2</text>
+<line x1="500" y1="173" x2="500" y2="228" stroke="#a45b0b" stroke-width="2"/>
+<line x1="500" y1="228" x2="496.085" y2="219.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="500" y1="228" x2="503.915" y2="219.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="610" y1="173" x2="610" y2="228" stroke="#a45b0b" stroke-width="2"/>
+<line x1="610" y1="228" x2="606.085" y2="219.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="610" y1="228" x2="613.915" y2="219.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="720" y1="173" x2="720" y2="228" stroke="#a45b0b" stroke-width="2"/>
+<line x1="720" y1="228" x2="716.085" y2="219.896" stroke="#a45b0b" stroke-width="2"/>
+<line x1="720" y1="228" x2="723.915" y2="219.896" stroke="#a45b0b" stroke-width="2"/>
+<text x="45" y="335" font-size="19" font-weight="400" text-anchor="start" fill="#163047">b0 = {L3, L2}; start only after both gradients are ready.</text>
+<text x="45" y="370" font-size="19" font-weight="400" text-anchor="start" fill="#163047">b1 = {L1}; b2 = {L0}. This example serializes all-reduces.</text>
+<line x1="720" y1="100" x2="720" y2="310" stroke="#a45b0b" stroke-width="2" stroke-dasharray="5 5"/>
+<text x="725" y="201" font-size="16" font-weight="400" text-anchor="start" fill="#a45b0b">Bwd end</text>
+<line x1="720" y1="310" x2="800" y2="310" stroke="#a45b0b" stroke-width="3"/>
+<text x="760" y="335" font-size="17" font-weight="700" text-anchor="middle" fill="#a45b0b">Tail</text>
+<text x="30" y="432" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Dependencies: AR b0 ≥ done L2; AR b1 ≥ max(done L1, end AR b0).</text>
+<text x="30" y="457" font-size="17" font-weight="400" text-anchor="start" fill="#526579">AR b2 ≥ max(done L0, end AR b1); optimizer waits for all communication.</text>
+</svg>

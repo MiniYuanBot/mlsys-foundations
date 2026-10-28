@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="500" viewBox="0 0 840 500" role="img">
+<title>ldmatrix.x4: row addresses within a 16 × 16 A tile</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="500" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">ldmatrix.x4: row addresses within a 16 × 16 A tile</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived address map · address suppliers are not destination register owners</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="295" y="120" font-size="20" font-weight="700" text-anchor="middle" fill="#163047">columns 0–7</text>
+<text x="635" y="120" font-size="20" font-weight="700" text-anchor="middle" fill="#163047">columns 8–15</text>
+<text x="35" y="205" font-size="18" font-weight="400" text-anchor="start" fill="#163047">rows</text>
+<text x="35" y="231" font-size="18" font-weight="400" text-anchor="start" fill="#163047">0–7</text>
+<text x="35" y="335" font-size="18" font-weight="400" text-anchor="start" fill="#163047">rows</text>
+<text x="35" y="361" font-size="18" font-weight="400" text-anchor="start" fill="#163047">8–15</text>
+<rect x="135" y="145" width="320" height="110" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="295" y="181.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Matrix 0: 8 × 8</text>
+<text x="295" y="206.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Address lanes 0–7</text>
+<text x="295" y="231.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">8 row starts, at column 0</text>
+<rect x="135" y="275" width="320" height="110" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="295" y="311.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Matrix 1: 8 × 8</text>
+<text x="295" y="336.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Address lanes 8–15</text>
+<text x="295" y="361.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">8 row starts, at column 0</text>
+<rect x="475" y="145" width="320" height="110" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="635" y="181.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Matrix 2: 8 × 8</text>
+<text x="635" y="206.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Address lanes 16–23</text>
+<text x="635" y="231.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">8 row starts, at column 8</text>
+<rect x="475" y="275" width="320" height="110" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="635" y="311.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Matrix 3: 8 × 8</text>
+<text x="635" y="336.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Address lanes 24–31</text>
+<text x="635" y="361.12" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">8 row starts, at column 8</text>
+<text x="30" y="438" font-size="17" font-weight="400" text-anchor="start" fill="#526579">row = lane % 16; col = (lane // 16) × 8; matrix = lane // 8.</text>
+<text x="30" y="463" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Each lane supplies one row start; the load reads 8 halves from that address.</text>
+</svg>

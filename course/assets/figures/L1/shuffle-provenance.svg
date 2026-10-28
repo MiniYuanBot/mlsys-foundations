@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="620" viewBox="0 0 840 620" role="img">
+<title>Descending shuffle: what contributes to lane 0?</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="620" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Descending shuffle: what contributes to lane 0?</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Derived source sets · full 32-lane warp; synchronous exchanges</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="45" y="117" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Round</text>
+<text x="475" y="117" font-size="17" font-weight="400" text-anchor="middle" fill="#526579">Original source lanes</text>
+<text x="770" y="117" font-size="17" font-weight="400" text-anchor="middle" fill="#526579">Count</text>
+<text x="45" y="168" font-size="20" font-weight="700" text-anchor="start" fill="#163047">Initial</text>
+<rect x="210" y="140" width="530" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="475" y="169.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">{0}</text>
+<text x="770" y="168" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">1</text>
+<line x1="475" y1="188" x2="475" y2="200" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="200" x2="471.085" y2="191.896" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="200" x2="478.915" y2="191.896" stroke="#526579" stroke-width="2"/>
+<text x="45" y="232" font-size="20" font-weight="700" text-anchor="start" fill="#163047">offset 16</text>
+<rect x="210" y="204" width="530" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="475" y="233.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">{0, 16}</text>
+<text x="770" y="232" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">2</text>
+<line x1="475" y1="252" x2="475" y2="264" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="264" x2="471.085" y2="255.896" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="264" x2="478.915" y2="255.896" stroke="#526579" stroke-width="2"/>
+<text x="45" y="296" font-size="20" font-weight="700" text-anchor="start" fill="#163047">offset 8</text>
+<rect x="210" y="268" width="530" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="475" y="297.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">{0, 8, 16, 24}</text>
+<text x="770" y="296" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">4</text>
+<line x1="475" y1="316" x2="475" y2="328" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="328" x2="471.085" y2="319.896" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="328" x2="478.915" y2="319.896" stroke="#526579" stroke-width="2"/>
+<text x="45" y="360" font-size="20" font-weight="700" text-anchor="start" fill="#163047">offset 4</text>
+<rect x="210" y="332" width="530" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="475" y="361.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">{0, 4, 8, 12, 16, 20, 24, 28}</text>
+<text x="770" y="360" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">8</text>
+<line x1="475" y1="380" x2="475" y2="392" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="392" x2="471.085" y2="383.896" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="392" x2="478.915" y2="383.896" stroke="#526579" stroke-width="2"/>
+<text x="45" y="424" font-size="20" font-weight="700" text-anchor="start" fill="#163047">offset 2</text>
+<rect x="210" y="396" width="530" height="45" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="475" y="425.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">{0, 2, 4, …, 30}  (all even lanes)</text>
+<text x="770" y="424" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">16</text>
+<line x1="475" y1="444" x2="475" y2="456" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="456" x2="471.085" y2="447.896" stroke="#526579" stroke-width="2"/>
+<line x1="475" y1="456" x2="478.915" y2="447.896" stroke="#526579" stroke-width="2"/>
+<text x="45" y="488" font-size="20" font-weight="700" text-anchor="start" fill="#163047">offset 1</text>
+<rect x="210" y="460" width="530" height="45" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="475" y="489.3" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">{0, 1, 2, …, 31}  (all lanes)</text>
+<text x="770" y="488" font-size="20" font-weight="400" text-anchor="middle" fill="#163047">32</text>
+<text x="30" y="554" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Each label lists original lanes, not a contiguous range implied by the offset.</text>
+<text x="30" y="579" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Only lane 0 is shown. Out-of-range shuffle reads must not be added as new inputs.</text>
+</svg>

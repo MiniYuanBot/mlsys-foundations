@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="570" viewBox="0 0 840 570" role="img">
+<title>Static batching: wait for the longest request</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="570" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Static batching: wait for the longest request</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Three fixed slots · scheduling steps, not measured durations</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<text x="133" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">1</text>
+<text x="189" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">2</text>
+<text x="245" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">3</text>
+<text x="301" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">4</text>
+<text x="357" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">5</text>
+<text x="413" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">6</text>
+<text x="469" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">7</text>
+<text x="525" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">8</text>
+<text x="581" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">9</text>
+<text x="637" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">10</text>
+<text x="693" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">11</text>
+<text x="749" y="120" font-size="16" font-weight="400" text-anchor="middle" fill="#163047">12</text>
+<text x="25" y="203" font-size="19" font-weight="700" text-anchor="start" fill="#163047">Slot 0</text>
+<rect x="108" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="133" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="164" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="189" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="220" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="245" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="276" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="301" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="332" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="357" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="388" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="413" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="444" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="469" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="500" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="525" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="556" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="581" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="612" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="637" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="668" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="693" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="724" y="175" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="749" y="203" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<text x="25" y="303" font-size="19" font-weight="700" text-anchor="start" fill="#163047">Slot 1</text>
+<rect x="108" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="133" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="164" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="189" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="220" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="245" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="276" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="301" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="332" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="357" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="388" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="413" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="444" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="469" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="500" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="525" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="556" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="581" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="612" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="637" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="668" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="693" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="724" y="275" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="749" y="303" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<text x="25" y="403" font-size="19" font-weight="700" text-anchor="start" fill="#163047">Slot 2</text>
+<rect x="108" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="133" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="164" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="189" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="220" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="245" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="276" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="301" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="332" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="357" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="388" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="413" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="444" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="469" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="500" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="525" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="556" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="581" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="612" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="637" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="668" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="693" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<rect x="724" y="375" width="51" height="42" rx="3" fill="#ffffff" stroke="#bccbd6"/>
+<text x="749" y="403" font-size="19" font-weight="400" text-anchor="middle" fill="#526579">·</text>
+<text x="217.5" y="161" font-size="19" font-weight="700" text-anchor="middle" fill="#1769aa">R0</text>
+<line x1="108" y1="169" x2="327" y2="169" stroke="#1769aa" stroke-width="2"/>
+<rect x="108" y="175" width="51" height="42" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="133.5" y="202.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">P</text>
+<rect x="164" y="175" width="51" height="42" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="189.5" y="202.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="220" y="175" width="51" height="42" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="245.5" y="202.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="276" y="175" width="51" height="42" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="301.5" y="202.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<text x="385.5" y="261" font-size="19" font-weight="700" text-anchor="middle" fill="#087f78">R1</text>
+<line x1="108" y1="269" x2="663" y2="269" stroke="#087f78" stroke-width="2"/>
+<rect x="108" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="133.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">P</text>
+<rect x="164" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="189.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="220" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="245.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="276" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="301.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="332" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="357.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="388" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="413.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="444" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="469.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="500" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="525.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="556" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="581.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="612" y="275" width="51" height="42" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="637.5" y="302.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<text x="273.5" y="361" font-size="19" font-weight="700" text-anchor="middle" fill="#7543a3">R2</text>
+<line x1="108" y1="369" x2="439" y2="369" stroke="#7543a3" stroke-width="2"/>
+<rect x="108" y="375" width="51" height="42" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="133.5" y="402.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">P</text>
+<rect x="164" y="375" width="51" height="42" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="189.5" y="402.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="220" y="375" width="51" height="42" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="245.5" y="402.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="276" y="375" width="51" height="42" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="301.5" y="402.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="332" y="375" width="51" height="42" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="357.5" y="402.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<rect x="388" y="375" width="51" height="42" rx="7" fill="#f0eafa" stroke="#7543a3"/>
+<text x="413.5" y="402.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<text x="721.5" y="161" font-size="19" font-weight="700" text-anchor="middle" fill="#a45b0b">R3</text>
+<line x1="668" y1="169" x2="775" y2="169" stroke="#a45b0b" stroke-width="2"/>
+<rect x="668" y="175" width="51" height="42" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="693.5" y="202.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">P</text>
+<rect x="724" y="175" width="51" height="42" rx="7" fill="#fff0da" stroke="#a45b0b"/>
+<text x="749.5" y="202.46" font-size="19" font-weight="400" text-anchor="middle" fill="#163047">d</text>
+<line x1="780" y1="196" x2="807" y2="196" stroke="#a45b0b" stroke-width="2"/>
+<line x1="807" y1="196" x2="798.896" y2="199.915" stroke="#a45b0b" stroke-width="2"/>
+<line x1="807" y1="196" x2="798.896" y2="192.085" stroke="#a45b0b" stroke-width="2"/>
+<rect x="332" y="175" width="331" height="42" rx="3" fill="#f5f8fb" stroke="#bccbd6"/>
+<text x="497.5" y="203" font-size="18" font-weight="400" text-anchor="middle" fill="#526579">held idle</text>
+<rect x="444" y="375" width="219" height="42" rx="3" fill="#f5f8fb" stroke="#bccbd6"/>
+<text x="553.5" y="403" font-size="18" font-weight="400" text-anchor="middle" fill="#526579">held idle</text>
+<line x1="665" y1="130" x2="665" y2="432" stroke="#a45b0b" stroke-width="2" stroke-dasharray="5 5"/>
+<text x="30" y="465" font-size="17" font-weight="400" text-anchor="start" fill="#526579">Batch boundary after step 10: only then can R3 enter slot 0 (step 11).</text>
+<text x="30" y="490" font-size="17" font-weight="400" text-anchor="start" fill="#526579">R3 continues beyond this view; other new requests are not specified.</text>
+<text x="30" y="530" font-size="17" font-weight="400" text-anchor="start" fill="#526579">P = prefill; d = decode; · = free slot; … = unshown events, slot still occupied.</text>
+</svg>

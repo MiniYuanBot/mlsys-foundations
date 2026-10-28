@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="455" viewBox="0 0 840 455" role="img">
+<title>Why a wider verification pass can be cheap</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="455" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">Why a wider verification pass can be cheap</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Qualitative schematic · no measured points or calibrated crossover</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<line x1="100" y1="345" x2="790" y2="345" stroke="#526579" stroke-width="2"/>
+<line x1="790" y1="345" x2="781.896" y2="348.915" stroke="#526579" stroke-width="2"/>
+<line x1="790" y1="345" x2="781.896" y2="341.085" stroke="#526579" stroke-width="2"/>
+<line x1="100" y1="345" x2="100" y2="110" stroke="#526579" stroke-width="2"/>
+<line x1="100" y1="110" x2="103.915" y2="118.104" stroke="#526579" stroke-width="2"/>
+<line x1="100" y1="110" x2="96.0853" y2="118.104" stroke="#526579" stroke-width="2"/>
+<text x="30" y="135" font-size="16" font-weight="400" text-anchor="start" fill="#163047">Forward</text>
+<text x="30" y="159" font-size="16" font-weight="400" text-anchor="start" fill="#163047">time</text>
+<polyline points="105,285 440,285 510,280 590,240 680,180 760,115" fill="none" stroke="#1769aa" stroke-width="4"/>
+<text x="155" y="240" font-size="19" font-weight="400" text-anchor="start" fill="#1769aa">Weight bandwidth dominates</text>
+<text x="155" y="267" font-size="19" font-weight="400" text-anchor="start" fill="#1769aa">Read the weights once</text>
+<text x="500" y="140" font-size="18" font-weight="400" text-anchor="start" fill="#a45b0b">Compute cost</text>
+<text x="500" y="166" font-size="18" font-weight="400" text-anchor="start" fill="#a45b0b">starts to dominate</text>
+<text x="120" y="380" font-size="18" font-weight="400" text-anchor="start" fill="#163047">Few input tokens</text>
+<text x="595" y="380" font-size="18" font-weight="400" text-anchor="start" fill="#163047">More input tokens</text>
+<text x="30" y="425" font-size="17" font-weight="400" text-anchor="start" fill="#526579">A pass consumes last token + k guesses. Draft cost still matters for end-to-end speedup.</text>
+</svg>

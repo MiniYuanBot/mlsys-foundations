@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="615" viewBox="0 0 840 615" role="img">
+<title>From an observed gap to a research mechanism</title>
+<desc>Technical teaching figure. The caption and editable source specify its assumptions.</desc>
+<style>text{font-family:Arial,Helvetica,sans-serif} line,polyline{stroke-linecap:round;stroke-linejoin:round}</style>
+<rect x="0" y="0" width="840" height="615" fill="#ffffff"/>
+<text x="30" y="38" font-size="25" font-weight="700" text-anchor="start" fill="#163047">From an observed gap to a research mechanism</text>
+<text x="30" y="66" font-size="16" font-weight="400" text-anchor="start" fill="#526579">Schematic process · the 13% observation is source-reported</text>
+<line x1="30" y1="82" x2="810" y2="82" stroke="#bccbd6" stroke-width="1"/>
+<rect x="40" y="110" width="755" height="64" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="417.5" y="135.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">1  Measure</text>
+<text x="417.5" y="160.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Lab4: chunked prefill improves TPOT p99 by about 13%</text>
+<line x1="420" y1="177" x2="420" y2="195" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="195" x2="416.085" y2="186.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="195" x2="423.915" y2="186.896" stroke="#526579" stroke-width="2"/>
+<rect x="40" y="199" width="755" height="64" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="417.5" y="224.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">2  Find a gap</text>
+<text x="417.5" y="249.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Sarathi-Serve reports larger benefits under different conditions</text>
+<line x1="420" y1="266" x2="420" y2="284" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="284" x2="416.085" y2="275.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="284" x2="423.915" y2="275.896" stroke="#526579" stroke-width="2"/>
+<rect x="40" y="288" width="755" height="64" rx="7" fill="#e8f2fb" stroke="#1769aa"/>
+<text x="417.5" y="313.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">3  Explain</text>
+<text x="417.5" y="338.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Model step time; quantify the prefill share on the 0.6B model</text>
+<line x1="420" y1="355" x2="420" y2="373" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="373" x2="416.085" y2="364.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="373" x2="423.915" y2="364.896" stroke="#526579" stroke-width="2"/>
+<rect x="40" y="377" width="755" height="64" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="417.5" y="402.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">4  Design</text>
+<text x="417.5" y="427.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Choose the per-step chunk size using the model</text>
+<line x1="420" y1="444" x2="420" y2="462" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="462" x2="416.085" y2="453.896" stroke="#526579" stroke-width="2"/>
+<line x1="420" y1="462" x2="423.915" y2="453.896" stroke="#526579" stroke-width="2"/>
+<rect x="40" y="466" width="755" height="64" rx="7" fill="#e3f4ef" stroke="#087f78"/>
+<text x="417.5" y="491.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">5  Validate boundaries</text>
+<text x="417.5" y="516.62" font-size="18" font-weight="400" text-anchor="middle" fill="#163047">Test SLO / TTFT and a low-prefill-share negative control</text>
+<text x="30" y="590" font-size="17" font-weight="400" text-anchor="start" fill="#526579">The last two stages describe the proposed research method, not new results from this migration.</text>
+</svg>
